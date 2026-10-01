@@ -1,0 +1,1595 @@
+{
+ "generator": "uzbek_text_norm v0.3.0",
+ "pairs": [
+  {
+   "mode": "reference",
+   "in": "hozir 20 ga kirganlar 30 ga kirganlar hashpash deguncha 5060 ga kirasizlar inshaalloh",
+   "out": "hozir yigirma ga kirganlar oʻttiz ga kirganlar hashpash deguncha besh ming oltmish ga kirasizlar inshaalloh"
+  },
+  {
+   "mode": "reference",
+   "in": "ha lekin to'xtatib qo'yib masalan mana ijro ishini alimentda mana umuman boshqa ishlarni ham ijrosini to'xtatib yana qayta tiklash mumkinda uch yildan oshmagan bo'lsa sud qarori chiqqaniga bemalol imkoni borda buni ham tushunib oling ertaga ha bo'lar ekan desa bo'lib turib keyin o'xshamay qolsa kimdir ayblab yurmanglarda to'laqonli darajada",
+   "out": "ha lekin toʻxtatib qoʻyib masalan mana ijro ishini alimentda mana umuman boshqa ishlarni ham ijrosini toʻxtatib yana qayta tiklash mumkinda uch yildan oshmagan boʻlsa sud qarori chiqqaniga bemalol imkoni borda buni ham tushunib oling ertaga ha boʻlar ekan desa boʻlib turib keyin oʻxshamay qolsa kimdir ayblab yurmanglarda toʻlaqonli darajada"
+  },
+  {
+   "mode": "reference",
+   "in": "katta bir ummon",
+   "out": "katta bir ummon"
+  },
+  {
+   "mode": "reference",
+   "in": "oʻsha tumandagi masʼullarimiz nima qilishgan oʻsha gʻoliblarga",
+   "out": "oʻsha tumandagi masʻullarimiz nima qilishgan oʻsha gʻoliblarga"
+  },
+  {
+   "mode": "reference",
+   "in": "o'sha qachon bergan bo'lsangiz ham o'sha to'lagan to'lovini 1000 so'm to'laganmi 2000 so'm to'lagan hammasini",
+   "out": "oʻsha qachon bergan boʻlsangiz ham oʻsha toʻlagan toʻlovini bir ming soʻm toʻlaganmi ikki ming soʻm toʻlagan hammasini"
+  },
+  {
+   "mode": "reference",
+   "in": "tushundinglarmi unaqa bo'lar bo'lmas narsani falon joyda falonliklar kanalida chiqqanku nimaga bu",
+   "out": "tushundinglarmi unaqa boʻlar boʻlmas narsani falon joyda falonliklar kanalida chiqqanku nimaga bu"
+  },
+  {
+   "mode": "reference",
+   "in": "yashamayman dedi men qanday qilib rasululloh yo'q bo'lgan madinada yashayman dedi ko'chalarida yursam rasulullohni eslayman yashamayman bu yerda bu yerga o'tsam bu joyga kirsam masjidga kirsam ustunlaru minbarlar har bir joy rasululloh sallallohu alayhi vasallamni eslatadi",
+   "out": "yashamayman dedi men qanday qilib rasululloh yoʻq boʻlgan madinada yashayman dedi koʻchalarida yursam rasulullohni eslayman yashamayman bu yerda bu yerga oʻtsam bu joyga kirsam masjidga kirsam ustunlaru minbarlar har bir joy rasululloh sallallohu alayhi vasallamni eslatadi"
+  },
+  {
+   "mode": "reference",
+   "in": "biz o'sha aytgan ish bo'yicha sizlar shu ishni bajarasizlar",
+   "out": "biz oʻsha aytgan ish boʻyicha sizlar shu ishni bajarasizlar"
+  },
+  {
+   "mode": "reference",
+   "in": "falon joyga borib analiz topshirasiz deydi faqat o'sha joydan topshirasiz deydi",
+   "out": "falon joyga borib analiz topshirasiz deydi faqat oʻsha joydan topshirasiz deydi"
+  },
+  {
+   "mode": "reference",
+   "in": "ichsin mayli yig'lamayman sababi yonginamda onam bor sevinib borar joyim ichimdagi chirog'im u bor ko'rinmas bog'im yonginamda onam bor o'tda yondirolmaysiz suvda cho'ktira olmaysiz sababi nima dersiz",
+   "out": "ichsin mayli yigʻlamayman sababi yonginamda onam bor sevinib borar joyim ichimdagi chirogʻim u bor koʻrinmas bogʻim yonginamda onam bor oʻtda yondirolmaysiz suvda choʻktira olmaysiz sababi nima dersiz"
+  },
+  {
+   "mode": "reference",
+   "in": "qonun talabi bo'yicha uch oy bo'ladi sud bo'ladi ikki oy",
+   "out": "qonun talabi boʻyicha uch oy boʻladi sud boʻladi ikki oy"
+  },
+  {
+   "mode": "reference",
+   "in": "bo'ldi o'yinga qo'shilaman",
+   "out": "boʻldi oʻyinga qoʻshilaman"
+  },
+  {
+   "mode": "reference",
+   "in": "oʻsha boʻyicha muxlatda borasizlar uch oy qoʻyadimi olti oy qoʻyadimi bu sudning ixtiyorida",
+   "out": "oʻsha boʻyicha muxlatda borasizlar uch oy qoʻyadimi olti oy qoʻyadimi bu sudning ixtiyorida"
+  },
+  {
+   "mode": "reference",
+   "in": "googlega yozing skachat",
+   "out": "googlega yozing skachat"
+  },
+  {
+   "mode": "reference",
+   "in": "noto'g'ri chiqib keladiku asosi yo'q tagi yo'q",
+   "out": "notoʻgʻri chiqib keladiku asosi yoʻq tagi yoʻq"
+  },
+  {
+   "mode": "reference",
+   "in": "tarbingiz yumshamaydimi",
+   "out": "tarbingiz yumshamaydimi"
+  },
+  {
+   "mode": "reference",
+   "in": "akam menga e'tibor bermay qo'ydi",
+   "out": "akam menga eʻtibor bermay qoʻydi"
+  },
+  {
+   "mode": "reference",
+   "in": "tushundinglarmi",
+   "out": "tushundinglarmi"
+  },
+  {
+   "mode": "reference",
+   "in": "assalomu alaykum qarang uchastkovoyda tan olgan bo'lsa uchastkovoyda tan olgani o'tadi deb o'ylaysizmi uchastkovoy ha menda keldi degan deb guvoh bo'lmaydi u narsa tushundingizmi yo ovozini yozdirib oling yo tilxat bilan yozdirib olish kerak yo o'sha uchastkovoyda qo'zg'atadigan",
+   "out": "assalomu alaykum qarang uchastkovoyda tan olgan boʻlsa uchastkovoyda tan olgani oʻtadi deb oʻylaysizmi uchastkovoy ha menda keldi degan deb guvoh boʻlmaydi u narsa tushundingizmi yo ovozini yozdirib oling yo tilxat bilan yozdirib olish kerak yo oʻsha uchastkovoyda qoʻzgʻatadigan"
+  },
+  {
+   "mode": "reference",
+   "in": "shuning uchun ham o'zinglar bundoq qilinglarda insoniylik yuzasidan shaxsiy sahifaga yozasizlar javob beramiz endi javob bermasa ha unaqa ekansan bunaqa ekansan deb yozib qo'yasizlar sendan umid kutgandim javob bermas ekansan",
+   "out": "shuning uchun ham oʻzinglar bundoq qilinglarda insoniylik yuzasidan shaxsiy sahifaga yozasizlar javob beramiz endi javob bermasa ha unaqa ekansan bunaqa ekansan deb yozib qoʻyasizlar sendan umid kutgandim javob bermas ekansan"
+  },
+  {
+   "mode": "reference",
+   "in": "bizlar bu narsani faqat o'rtamizdagi oldiberdilarda qudaandalarimiz o'rtalaridagi mojarolarda ishlatamiz xolos buni ey xudodan qo'rqmaysizmi xudoga nima deysiz deymiz lekin buni aytish oson xudodan qo'rqish oson emas bu dun",
+   "out": "bizlar bu narsani faqat oʻrtamizdagi oldiberdilarda qudaandalarimiz oʻrtalaridagi mojarolarda ishlatamiz xolos buni ey xudodan qoʻrqmaysizmi xudoga nima deysiz deymiz lekin buni aytish oson xudodan qoʻrqish oson emas bu dun"
+  },
+  {
+   "mode": "reference",
+   "in": "mana shu ishlarning o'rtasida otaona tarjimon bo'lar ekan",
+   "out": "mana shu ishlarning oʻrtasida otaona tarjimon boʻlar ekan"
+  },
+  {
+   "mode": "reference",
+   "in": "jami besh oy surishtiruv muddatini qo'shing salkam ariza kelib tushib uni tegishli xodimga o'tkazib o'sha ichki ishlarni o'ziga qilgan bo'lsangiz uni boshqa bir xodimga ya'ni o'sha surishtiruvchiga o'tkazadida u surishtiruvchi qabul qilgan kundan boshlab",
+   "out": "jami besh oy surishtiruv muddatini qoʻshing salkam ariza kelib tushib uni tegishli xodimga oʻtkazib oʻsha ichki ishlarni oʻziga qilgan boʻlsangiz uni boshqa bir xodimga yaʻni oʻsha surishtiruvchiga oʻtkazadida u surishtiruvchi qabul qilgan kundan boshlab"
+  },
+  {
+   "mode": "reference",
+   "in": "ayollarga erlariga itoat qilishlik erlariga qalblariga surur xursandchilik uni ko'nglini ko'tarishlik ibodatida yordamchi bo'lishlikni alloh taolo farz qilgan shunday ekan bugungi ana shu savollarni juda ham ko'plari oilaviy shariat ahkomi alohida bu to'g'risida fursat kelganda erxotinlarning o'rtasidagi munosabatda yana to'xtalamiz",
+   "out": "ayollarga erlariga itoat qilishlik erlariga qalblariga surur xursandchilik uni koʻnglini koʻtarishlik ibodatida yordamchi boʻlishlikni alloh taolo farz qilgan shunday ekan bugungi ana shu savollarni juda ham koʻplari oilaviy shariat ahkomi alohida bu toʻgʻrisida fursat kelganda erxotinlarning oʻrtasidagi munosabatda yana toʻxtalamiz"
+  },
+  {
+   "mode": "reference",
+   "in": "bu kimniki umumiy hisoblaganda xalqniki bu",
+   "out": "bu kimniki umumiy hisoblaganda xalqniki bu"
+  },
+  {
+   "mode": "reference",
+   "in": "o'zining oldidan o'tib qo'ying menda shunaqa holat bo'lyapti sen qilganmisan kim qilgan bu joyda",
+   "out": "oʻzining oldidan oʻtib qoʻying menda shunaqa holat boʻlyapti sen qilganmisan kim qilgan bu joyda"
+  },
+  {
+   "mode": "reference",
+   "in": "bittasi bilan urushib qoluvdim",
+   "out": "bittasi bilan urushib qoluvdim"
+  },
+  {
+   "mode": "reference",
+   "in": "nima nima gap",
+   "out": "nima nima gap"
+  },
+  {
+   "mode": "reference",
+   "in": "aka savol javobga qaramaydi shunday basharangizga qarab yoqasizmi yoqmasizmi o'shanga qarab beradi savoljavobdan lyuboy odam o'taveradi aka bir kunga vizaning soni chegaralangan bo'ladi har kuniga",
+   "out": "aka savol javobga qaramaydi shunday basharangizga qarab yoqasizmi yoqmasizmi oʻshanga qarab beradi savoljavobdan lyuboy odam oʻtaveradi aka bir kunga vizaning soni chegaralangan boʻladi har kuniga"
+  },
+  {
+   "mode": "reference",
+   "in": "tashkilot yoki bo'limga yuborish besh ish kunida bo'ladi besh ish kunigacha bo'ladi",
+   "out": "tashkilot yoki boʻlimga yuborish besh ish kunida boʻladi besh ish kunigacha boʻladi"
+  },
+  {
+   "mode": "reference",
+   "in": "yomg'irda issiqda qolgan chog'im soyabonim qattiqqattiq gapirgan paytim ko'zimga miltiragan halolim arzimas mayda tashvishlarga ham dodfaryod ko'tarsam sabr bilan yo'l ko'rsatgan ustozim",
+   "out": "yomgʻirda issiqda qolgan chogʻim soyabonim qattiqqattiq gapirgan paytim koʻzimga miltiragan halolim arzimas mayda tashvishlarga ham dodfaryod koʻtarsam sabr bilan yoʻl koʻrsatgan ustozim"
+  },
+  {
+   "mode": "reference",
+   "in": "meni xursand qilib turib keyin xafa qilyapsizmi o'shanda",
+   "out": "meni xursand qilib turib keyin xafa qilyapsizmi oʻshanda"
+  },
+  {
+   "mode": "reference",
+   "in": "hamma kelib mana shu buloqdan icharkan sug'orilarkan",
+   "out": "hamma kelib mana shu buloqdan icharkan sugʻorilarkan"
+  },
+  {
+   "mode": "reference",
+   "in": "kiritilgan bo'ladi to'lanishi kerak bo'lgan summa bo'ladi o'sha narsani olasizda ijrochidan prokuraturaga shuni ilova qilib turib ariza qilasiz",
+   "out": "kiritilgan boʻladi toʻlanishi kerak boʻlgan summa boʻladi oʻsha narsani olasizda ijrochidan prokuraturaga shuni ilova qilib turib ariza qilasiz"
+  },
+  {
+   "mode": "reference",
+   "in": "u ham mumkin bo'ladi degani emas bu tushundingizmi",
+   "out": "u ham mumkin boʻladi degani emas bu tushundingizmi"
+  },
+  {
+   "mode": "reference",
+   "in": "o'sha oyda 1000 so'm to'laganmi masalan 2021-yil yanvar oyi uchun misol uchun bu ya'ni men 2019 da bergandimmi yo",
+   "out": "oʻsha oyda bir ming soʻm toʻlaganmi masalan ikki ming yigirma birinchi yil yanvar oyi uchun misol uchun bu yaʻni men ikki ming oʻn toʻqqiz da bergandimmi yo"
+  },
+  {
+   "mode": "reference",
+   "in": "o'zi sal menda yo'qroq deb turib sepimizga sandig'imizga tashlaylik deyotgan ayol bo'ladigan bo'lsa bu ayolni xayri yo'q birodarlar kimki akasi bilan ya'ni kuyovning akasi bilan aka sizga ko'p zulm qiladi ishlatadi ishlatadi lekin o'zi katta pulni olib ketadi sizga hech narsa bermaydi bu adolatsizlik bu boshqa ishingizni ajrating o'zingiz",
+   "out": "oʻzi sal menda yoʻqroq deb turib sepimizga sandigʻimizga tashlaylik deyotgan ayol boʻladigan boʻlsa bu ayolni xayri yoʻq birodarlar kimki akasi bilan yaʻni kuyovning akasi bilan aka sizga koʻp zulm qiladi ishlatadi ishlatadi lekin oʻzi katta pulni olib ketadi sizga hech narsa bermaydi bu adolatsizlik bu boshqa ishingizni ajrating oʻzingiz"
+  },
+  {
+   "mode": "reference",
+   "in": "ishsizlik hisobi yoki ish haqi xuddi shu tartibda hisoblanishi kerak ijroni bazasida",
+   "out": "ishsizlik hisobi yoki ish haqi xuddi shu tartibda hisoblanishi kerak ijroni bazasida"
+  },
+  {
+   "mode": "reference",
+   "in": "shu dunyoda yashashga o'zingni ko'ndirissiq sovuqqa chidashga o'rgan bu dunyoda doim vafodor do'st topilavermaydi doim ko'ngliga yoqadigan ish topilavermaydi chunki bekamu ko'st mukammal bo'lish bu dunyoning sifati emas birodarlar bir kam dunyo u mukammallik naryoqda bo'ladi ideallik naryoqda bo'ladi jannatda bo'ladi shuning uchun dunyoni boricha qabul qil",
+   "out": "shu dunyoda yashashga oʻzingni koʻndirissiq sovuqqa chidashga oʻrgan bu dunyoda doim vafodor doʻst topilavermaydi doim koʻngliga yoqadigan ish topilavermaydi chunki bekamu koʻst mukammal boʻlish bu dunyoning sifati emas birodarlar bir kam dunyo u mukammallik naryoqda boʻladi ideallik naryoqda boʻladi jannatda boʻladi shuning uchun dunyoni boricha qabul qil"
+  },
+  {
+   "mode": "reference",
+   "in": "akamning uyiga borsam akamning bolasi mening bolamga qattiq tegib qo'ydi",
+   "out": "akamning uyiga borsam akamning bolasi mening bolamga qattiq tegib qoʻydi"
+  },
+  {
+   "mode": "reference",
+   "in": "ehtimoliy jihatdan endi bu ham bir ertakka oʻxshagan gap",
+   "out": "ehtimoliy jihatdan endi bu ham bir ertakka oʻxshagan gap"
+  },
+  {
+   "mode": "reference",
+   "in": "ey bilol bizga bir azon aytib bermaysizmi dedi sizni sog'indik dedi sizning azoningizni azoningizni eshitsak rasululloh sollallohu alayhi vasallam esimizga tushadi yodimizga tushadi dedi bilol roziyallohu anhu unamadi",
+   "out": "ey bilol bizga bir azon aytib bermaysizmi dedi sizni sogʻindik dedi sizning azoningizni azoningizni eshitsak rasululloh sollallohu alayhi vasallam esimizga tushadi yodimizga tushadi dedi bilol roziyallohu anhu unamadi"
+  },
+  {
+   "mode": "reference",
+   "in": "hop birinchi oktabrgacha siz o'sha eski narxda",
+   "out": "hop birinchi oktabrgacha siz oʻsha eski narxda"
+  },
+  {
+   "mode": "reference",
+   "in": "qara qara qara qara saharlikka hamma turdimi",
+   "out": "qara qara qara qara saharlikka hamma turdimi"
+  },
+  {
+   "mode": "reference",
+   "in": "nimaga chaqirgani ham esida turmasdan o'rnidan turdida oldiga borib chiroyli kutib olib yetalab kelibo'zining majlisiga olib kelib o'tkazib holahvol so'rab hojatlarni so'radi",
+   "out": "nimaga chaqirgani ham esida turmasdan oʻrnidan turdida oldiga borib chiroyli kutib olib yetalab keliboʻzining majlisiga olib kelib oʻtkazib holahvol soʻrab hojatlarni soʻradi"
+  },
+  {
+   "mode": "reference",
+   "in": "ayam dadam qaridi bugun bulardiga yaxshilik qilib oling ertaga bu fursat ko'tarilgan allah taoloni oldida rasulullohning duoibatlariga yuzi yerga sudralgan holatda jahannamga tashlansin xor bo'lsin deb otaonasi qarigan holatda ularning roziligini topib jannatga kira olmagan odam xor bo'lsin degan duoibatni ichida qolmang dadasi",
+   "out": "ayam dadam qaridi bugun bulardiga yaxshilik qilib oling ertaga bu fursat koʻtarilgan allah taoloni oldida rasulullohning duoibatlariga yuzi yerga sudralgan holatda jahannamga tashlansin xor boʻlsin deb otaonasi qarigan holatda ularning roziligini topib jannatga kira olmagan odam xor boʻlsin degan duoibatni ichida qolmang dadasi"
+  },
+  {
+   "mode": "reference",
+   "in": "foizi tashkil qilyapti olmaliqda 6 plyus tushgan o'zimizda olmaliqda bor farzandingiz ishga boradi iltimos dilnoza opa 1015 qavat nafas ololmay qolganda ham dokadan qilib bering aptekanikini olib bermang qaynatilgan suv bering hamma onalarga yetkazing qaynatilgan suvlar bersin bolachalarga istimasini o'lchatib turinglar har ikki kunda bilib",
+   "out": "foizi tashkil qilyapti olmaliqda olti plyus tushgan oʻzimizda olmaliqda bor farzandingiz ishga boradi iltimos dilnoza opa bir ming oʻn besh qavat nafas ololmay qolganda ham dokadan qilib bering aptekanikini olib bermang qaynatilgan suv bering hamma onalarga yetkazing qaynatilgan suvlar bersin bolachalarga istimasini oʻlchatib turinglar har ikki kunda bilib"
+  },
+  {
+   "mode": "reference",
+   "in": "siz ham majburiy talab qilib nima qiladigan bo'lsangiz siz u bitta bolaga to'laydi tartibi shunaqa yoki ikkalani kelishib birbiringlarga umuman to'lamaydigan qilib yo'q qilib nima qilib olishinglar ham mumkin bu o'zaro kelishuv asosida bo'ladi agar qonundan oxirigacha borib nima qilaman desangiz ham turmush o'rtog'ingiz talab qilsa siz ikkita bolaga to'laysiz",
+   "out": "siz ham majburiy talab qilib nima qiladigan boʻlsangiz siz u bitta bolaga toʻlaydi tartibi shunaqa yoki ikkalani kelishib birbiringlarga umuman toʻlamaydigan qilib yoʻq qilib nima qilib olishinglar ham mumkin bu oʻzaro kelishuv asosida boʻladi agar qonundan oxirigacha borib nima qilaman desangiz ham turmush oʻrtogʻingiz talab qilsa siz ikkita bolaga toʻlaysiz"
+  },
+  {
+   "mode": "reference",
+   "in": "qaror chiqarilgan sudga topshiriladi masalan birinchi insansiya birinchi insansiya u qarorni chiqarib qo'ydimi bo'ldi o'zgartirolmaydi uni o'zicha yana bir narsalar qo'shib qo'yish",
+   "out": "qaror chiqarilgan sudga topshiriladi masalan birinchi insansiya birinchi insansiya u qarorni chiqarib qoʻydimi boʻldi oʻzgartirolmaydi uni oʻzicha yana bir narsalar qoʻshib qoʻyish"
+  },
+  {
+   "mode": "reference",
+   "in": "kuch bering men shu kuch bilan dunyoga bir gap aytaman ey tashvishlar cho'chitmang har mushkulga choram bor hazon bilan qo'rqitmang qor ostida lolam bor do'st kechsa kechsin mayli yor kelsa ketsin",
+   "out": "kuch bering men shu kuch bilan dunyoga bir gap aytaman ey tashvishlar choʻchitmang har mushkulga choram bor hazon bilan qoʻrqitmang qor ostida lolam bor doʻst kechsa kechsin mayli yor kelsa ketsin"
+  },
+  {
+   "mode": "reference",
+   "in": "hozir mana yopiq yig'ilishdan chiqdim men eshitib qo'rqib ketdim bizlarda kapsulaning hech bittasi yo'q daje oldini olishga iltimos sizlardan tarqatinglar yosh bolalarda ikki sutkada o'tib to'rtinchibeshinchi sutkada o'zi olamni o'tayotgan chaqaloqlar ham bo'lgan boshqa davlatda hozir o'zbekistonda 17 ta odam o'lgan yashiryapti bizlardan rastalar yopildi deyapti bular navro'z ayyomi",
+   "out": "hozir mana yopiq yigʻilishdan chiqdim men eshitib qoʻrqib ketdim bizlarda kapsulaning hech bittasi yoʻq daje oldini olishga iltimos sizlardan tarqatinglar yosh bolalarda ikki sutkada oʻtib toʻrtinchibeshinchi sutkada oʻzi olamni oʻtayotgan chaqaloqlar ham boʻlgan boshqa davlatda hozir oʻzbekistonda oʻn yetti ta odam oʻlgan yashiryapti bizlardan rastalar yopildi deyapti bular navroʻz ayyomi"
+  },
+  {
+   "mode": "reference",
+   "in": "lekin menda bunaqa odat yo'q quruq tuxmat",
+   "out": "lekin menda bunaqa odat yoʻq quruq tuxmat"
+  },
+  {
+   "mode": "reference",
+   "in": "hujjat bilan ko'rsatiladi og'zaki gap bilan oldingi sud ham ko'rgandi xudo qaraydida sud dalillarga baho beradi u dalillar yozma tartibda bo'ladi tushundingizmi o'sha narsa deolani ichida bo'lsa nisbatan sizga foyda beradi tushunarlimi",
+   "out": "hujjat bilan koʻrsatiladi ogʻzaki gap bilan oldingi sud ham koʻrgandi xudo qaraydida sud dalillarga baho beradi u dalillar yozma tartibda boʻladi tushundingizmi oʻsha narsa deolani ichida boʻlsa nisbatan sizga foyda beradi tushunarlimi"
+  },
+  {
+   "mode": "reference",
+   "in": "omonatga xiyonat qildi yolg'on gapirdio'zi ikkala tabib ham rizq deb yuruvdimi",
+   "out": "omonatga xiyonat qildi yolgʻon gapirdioʻzi ikkala tabib ham rizq deb yuruvdimi"
+  },
+  {
+   "mode": "reference",
+   "in": "xolisona mana hamma ko'rib turadi berilayotgan javobni agar men noto'g'ri javob bersam qaysidir hamkasbim men bilmagan narsamni to'g'irlab ketadi",
+   "out": "xolisona mana hamma koʻrib turadi berilayotgan javobni agar men notoʻgʻri javob bersam qaysidir hamkasbim men bilmagan narsamni toʻgʻirlab ketadi"
+  },
+  {
+   "mode": "reference",
+   "in": "alloh taolo olib qo'yganligiga men norozi bo'lib yig'layapti deb o'ylamang",
+   "out": "alloh taolo olib qoʻyganligiga men norozi boʻlib yigʻlayapti deb oʻylamang"
+  },
+  {
+   "mode": "reference",
+   "in": "ko'ryapsizmi qanday muddati bor",
+   "out": "koʻryapsizmi qanday muddati bor"
+  },
+  {
+   "mode": "reference",
+   "in": "otam onam sizning ayanggizga sizning dadangizga qilaveramizmi mening ham dadam bor mening ham onam bordeb muammo qilib unga beryapsizmi mening akamga ham bering deyishligi bu soliha ayolning sifati emas bu narsa",
+   "out": "otam onam sizning ayanggizga sizning dadangizga qilaveramizmi mening ham dadam bor mening ham onam bordeb muammo qilib unga beryapsizmi mening akamga ham bering deyishligi bu soliha ayolning sifati emas bu narsa"
+  },
+  {
+   "mode": "reference",
+   "in": "oʻzi ish yurituvga olganda oʻsha nima boʻyicha oʻtadi",
+   "out": "oʻzi ish yurituvga olganda oʻsha nima boʻyicha oʻtadi"
+  },
+  {
+   "mode": "reference",
+   "in": "sekin itoat qilish",
+   "out": "sekin itoat qilish"
+  },
+  {
+   "mode": "reference",
+   "in": "sizga tushuntiradigan bo'lsam javobini beribdi degani bu bo'ldi ajrashdi degani emas qonunda qonuniy erxotinni bu sudda qaror bilan bo'ladida xo'p",
+   "out": "sizga tushuntiradigan boʻlsam javobini beribdi degani bu boʻldi ajrashdi degani emas qonunda qonuniy erxotinni bu sudda qaror bilan boʻladida xoʻp"
+  },
+  {
+   "mode": "reference",
+   "in": "yecha olmaydilar ular muammoni",
+   "out": "yecha olmaydilar ular muammoni"
+  },
+  {
+   "mode": "reference",
+   "in": "alayhi vassallamni bitta ishorasi bilan azon aytar ediva bitta ishorasi bilan takbir aytar edi payg'ambarimiz sollallohu alayhi vasallamni muazzini bo'lib tanilgan edi madinada bilol yursa madinai munavvarada xabar tarqadi rasululloh vafot topibdi",
+   "out": "alayhi vassallamni bitta ishorasi bilan azon aytar ediva bitta ishorasi bilan takbir aytar edi paygʻambarimiz sollallohu alayhi vasallamni muazzini boʻlib tanilgan edi madinada bilol yursa madinai munavvarada xabar tarqadi rasululloh vafot topibdi"
+  },
+  {
+   "mode": "reference",
+   "in": "opamizni singlimizni tilini tushuna olmas ekanmiz ularning tilini otaona bizlarga tushuntiribtarjima qilib berar ekan",
+   "out": "opamizni singlimizni tilini tushuna olmas ekanmiz ularning tilini otaona bizlarga tushuntiribtarjima qilib berar ekan"
+  },
+  {
+   "mode": "reference",
+   "in": "boshqalarni alloh taolo bundan qo'rqadigan qilib qo'yadi",
+   "out": "boshqalarni alloh taolo bundan qoʻrqadigan qilib qoʻyadi"
+  },
+  {
+   "mode": "reference",
+   "in": "agar men vafot etsam o'g'lim",
+   "out": "agar men vafot etsam oʻgʻlim"
+  },
+  {
+   "mode": "reference",
+   "in": "maskalar chiqadi hozir bittasi 25ming turadi majburiy ves ko'chadagilar taqsin deyapti hamma endi o'shani qarorini chiqarsa keyin menimcha hamma joyda kiritilsa kerakyozgacha shunday bo'ladi deyapti issiqda o'lar ekanda 30 gradusda 30 gradus issiq bo'lmaguncha anaqa qilar ekan virus o'lmas ekan",
+   "out": "maskalar chiqadi hozir bittasi yigirma beshming turadi majburiy ves koʻchadagilar taqsin deyapti hamma endi oʻshani qarorini chiqarsa keyin menimcha hamma joyda kiritilsa kerakyozgacha shunday boʻladi deyapti issiqda oʻlar ekanda oʻttiz gradusda oʻttiz gradus issiq boʻlmaguncha anaqa qilar ekan virus oʻlmas ekan"
+  },
+  {
+   "mode": "reference",
+   "in": "lug'atlarimizdan onamiz tarjima qilib bermaydimi",
+   "out": "lugʻatlarimizdan onamiz tarjima qilib bermaydimi"
+  },
+  {
+   "mode": "reference",
+   "in": "yoʻli qolmabdi deydi",
+   "out": "yoʻli qolmabdi deydi"
+  },
+  {
+   "mode": "reference",
+   "in": "yuzi yuziga tushgan paytda o'rnida qotib qoldi",
+   "out": "yuzi yuziga tushgan paytda oʻrnida qotib qoldi"
+  },
+  {
+   "mode": "reference",
+   "in": "60 milliondan 12 foizga soliq chiqadi",
+   "out": "oltmish milliondan oʻn ikki foizga soliq chiqadi"
+  },
+  {
+   "mode": "reference",
+   "in": "agar talab qilsa ikkita bolaga sut to'laysiz",
+   "out": "agar talab qilsa ikkita bolaga sut toʻlaysiz"
+  },
+  {
+   "mode": "reference",
+   "in": "olti sotdi shartnomasi",
+   "out": "olti sotdi shartnomasi"
+  },
+  {
+   "mode": "reference",
+   "in": "biz unga sharh bera olmaymiz sharhlab oʻtira olmaymiz uni qanaqa boʻlar ekan bunaqa boʻlar ekan deb u ijtimoiy tarmoqqa chiqayotgan blogerni bir narsasi",
+   "out": "biz unga sharh bera olmaymiz sharhlab oʻtira olmaymiz uni qanaqa boʻlar ekan bunaqa boʻlar ekan deb u ijtimoiy tarmoqqa chiqayotgan blogerni bir narsasi"
+  },
+  {
+   "mode": "reference",
+   "in": "desa tushkunlikka tushib qolgan yo'q rasululloh alayhissalom nima dedilar alloh tavbalarni qabul qiladi modomiki bandani g'arg'ara payti kelmaguncha deganlar g'arg'ara nima desao'layotganda joni chiqaganda xirillab qoladi shuni g'arg'ara payti deydi g'arg'ara paytimiz balkim hozir kelib qoladi bilmaymiz biz internetga kirsangiz o'limlarni turi bor youtubeda velosipedda ketayotib o'lib qolgan avariya bo'lib o'layotgan gapira o'layotgan qur'on o'qiyotib o'lib qolgan ha g'arg'ara kelgungacha tavba qabul qilar ekan deb xotirjam bo'lmasligimiz kerak",
+   "out": "desa tushkunlikka tushib qolgan yoʻq rasululloh alayhissalom nima dedilar alloh tavbalarni qabul qiladi modomiki bandani gʻargʻara payti kelmaguncha deganlar gʻargʻara nima desaoʻlayotganda joni chiqaganda xirillab qoladi shuni gʻargʻara payti deydi gʻargʻara paytimiz balkim hozir kelib qoladi bilmaymiz biz internetga kirsangiz oʻlimlarni turi bor youtubeda velosipedda ketayotib oʻlib qolgan avariya boʻlib oʻlayotgan gapira oʻlayotgan qurʻon oʻqiyotib oʻlib qolgan ha gʻargʻara kelgungacha tavba qabul qilar ekan deb xotirjam boʻlmasligimiz kerak"
+  },
+  {
+   "mode": "reference",
+   "in": "hajjoj ibn yusuf assaqofiy",
+   "out": "hajjoj ibn yusuf assaqofiy"
+  },
+  {
+   "mode": "reference",
+   "in": "miz bor edi bir koʻz oldimizga keltiraylik hayotda lavozimda yurganimizda pullarimiz koʻp paytda qancha do'stlar bor edi qani endi u do'stlar haqiqiy do'st bu ota ona boshingizga davlat kelsa haqiqiy suyunadigan haqiqiy boshingizga g'am kelsa g'am chekadigan do'st bu ota ona ota onang yo'ling yorituvchi sham qo'lingda shaming bo'lsa sen uchun ne g'am deydilar",
+   "out": "miz bor edi bir koʻz oldimizga keltiraylik hayotda lavozimda yurganimizda pullarimiz koʻp paytda qancha doʻstlar bor edi qani endi u doʻstlar haqiqiy doʻst bu ota ona boshingizga davlat kelsa haqiqiy suyunadigan haqiqiy boshingizga gʻam kelsa gʻam chekadigan doʻst bu ota ona ota onang yoʻling yorituvchi sham qoʻlingda shaming boʻlsa sen uchun ne gʻam deydilar"
+  },
+  {
+   "mode": "reference",
+   "in": "aytmang dardingizni",
+   "out": "aytmang dardingizni"
+  },
+  {
+   "mode": "reference",
+   "in": "xudoga shukur",
+   "out": "xudoga shukur"
+  },
+  {
+   "mode": "reference",
+   "in": "yaxshi ko'rardingku",
+   "out": "yaxshi koʻrardingku"
+  },
+  {
+   "mode": "reference",
+   "in": "ovoz oladiganlar bormi ovoz oladiganlar arzonroqmas qimmatroqdanmi bilet",
+   "out": "ovoz oladiganlar bormi ovoz oladiganlar arzonroqmas qimmatroqdanmi bilet"
+  },
+  {
+   "mode": "reference",
+   "in": "yaxshi necha yillik tanishing bo'lsa",
+   "out": "yaxshi necha yillik tanishing boʻlsa"
+  },
+  {
+   "mode": "reference",
+   "in": "yashavor xo'roz",
+   "out": "yashavor xoʻroz"
+  },
+  {
+   "mode": "reference",
+   "in": "ayyomini o'tkazamiz xalqqa bildirmaydi deyapti iltimos navro'z bayramiga hamodam gavjum joylarga ham bormanglar farzandinglarni qon guruhlarini tekshirib istimalarini ko'ringlar iloji boricha issiq issiq bolani terlatib terlatib turinglar o'zinglar ham terlanglar bo'lmaydi bunaqa qilish dilnoza opa juda xavotirdaman iltimos hammaga yetkazinglar",
+   "out": "ayyomini oʻtkazamiz xalqqa bildirmaydi deyapti iltimos navroʻz bayramiga hamodam gavjum joylarga ham bormanglar farzandinglarni qon guruhlarini tekshirib istimalarini koʻringlar iloji boricha issiq issiq bolani terlatib terlatib turinglar oʻzinglar ham terlanglar boʻlmaydi bunaqa qilish dilnoza opa juda xavotirdaman iltimos hammaga yetkazinglar"
+  },
+  {
+   "mode": "reference",
+   "in": "topa olasizmi ona turadimi siz bilan doim g'animat biling izlarini topa olmaysiz ko'zingizga surtay desangiz topa olmaysiz uni hech kimdan ola olmaysiz va hech qaysi ishga men kafilman jannatlikka deb aytganlari yo muhammad rasululloh sallallohu alayhi vasallam",
+   "out": "topa olasizmi ona turadimi siz bilan doim gʻanimat biling izlarini topa olmaysiz koʻzingizga surtay desangiz topa olmaysiz uni hech kimdan ola olmaysiz va hech qaysi ishga men kafilman jannatlikka deb aytganlari yo muhammad rasululloh sallallohu alayhi vasallam"
+  },
+  {
+   "mode": "reference",
+   "in": "sahifa va o'shani kiritasiz",
+   "out": "sahifa va oʻshani kiritasiz"
+  },
+  {
+   "mode": "reference",
+   "in": "siz hozir ham qonuniy er xotinsiz tushundingizmi ikkalang er xotinsizlar shuni hisobiga ham boshqa oila qurgan u inobatga o'tmaydi qonun talabi bo'yicha",
+   "out": "siz hozir ham qonuniy er xotinsiz tushundingizmi ikkalang er xotinsizlar shuni hisobiga ham boshqa oila qurgan u inobatga oʻtmaydi qonun talabi boʻyicha"
+  },
+  {
+   "mode": "reference",
+   "in": "bu odam allohni tanimabdi",
+   "out": "bu odam allohni tanimabdi"
+  },
+  {
+   "mode": "reference",
+   "in": "chada tushunib olinglar bu masalani shu tartibi o'sha vaqtincha ijroni to'xtatish bo'yicha ariza kiritiladi mib ni o'ziga ijrochiga bitta yozib beriladi shu ijro ishini to'xtatib turishingni so'rayman deb turib arizachining o'zi ariza qiladi tushundingizmi sudda da'vogar bo'lib chiqqan sizmi",
+   "out": "chada tushunib olinglar bu masalani shu tartibi oʻsha vaqtincha ijroni toʻxtatish boʻyicha ariza kiritiladi mib ni oʻziga ijrochiga bitta yozib beriladi shu ijro ishini toʻxtatib turishingni soʻrayman deb turib arizachining oʻzi ariza qiladi tushundingizmi sudda daʻvogar boʻlib chiqqan sizmi"
+  },
+  {
+   "mode": "reference",
+   "in": "opamdan ham shikoyat qilaman pochchamdan ham shikoyat qilaman kelinoyimdan ham shikoyat qilaman",
+   "out": "opamdan ham shikoyat qilaman pochchamdan ham shikoyat qilaman kelinoyimdan ham shikoyat qilaman"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "agar meni vafot etsam, o'lim",
+   "out": "agar meni vafot etsam oʻlim"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qarang, yuklaganman hammasini. xm ham bor, e, metatrader besh ham bor.",
+   "out": "qarang yuklaganman hammasini xm ham bor e metatrader besh ham bor"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "aka savol javobga qarab nima shuni bashayozga qarab yoqasizmi yoqmaymizmi o'shanga qarab beradi savol javob bu yoqdan bo'laveradi aka bir kunda vizaning soni chegaralangan bular har kuniga",
+   "out": "aka savol javobga qarab nima shuni bashayozga qarab yoqasizmi yoqmaymizmi oʻshanga qarab beradi savol javob bu yoqdan boʻlaveradi aka bir kunda vizaning soni chegaralangan bular har kuniga"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "imkoniyat qilib javob berilyapti, shuni hurmatini qilib qo'ygan edi. mana bu hamma chiqib gapirayapti, unaqa qilsangiz bunaqa bo'ladi deb, bunaqa qilsangiz unaqa bo'ladi. qonundagi bori to'g'ri bo'ladi.",
+   "out": "imkoniyat qilib javob berilyapti shuni hurmatini qilib qoʻygan edi mana bu hamma chiqib gapirayapti unaqa qilsangiz bunaqa boʻladi deb bunaqa qilsangiz unaqa boʻladi qonundagi bori toʻgʻri boʻladi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "karochi kam tagiga sahnat qilib qo'ydim",
+   "out": "karochi kam tagiga sahnat qilib qoʻydim"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ushb tashagan uyini qara.",
+   "out": "ushb tashagan uyini qara"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "uyalish kerakmi?",
+   "out": "uyalish kerakmi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ustalar shu o'zini eskisini eplab qo'ysa ham bo'ladigan holatda",
+   "out": "ustalar shu oʻzini eskisini eplab qoʻysa ham boʻladigan holatda"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "xizmat qildik.",
+   "out": "xizmat qildik"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "assalomu alaykum hurmatli obunachilar. bugun ijtimoiy tarmoqlarda chimboy tumanida",
+   "out": "assalomu alaykum hurmatli obunachilar bugun ijtimoiy tarmoqlarda chimboy tumanida"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "shuning uchun madinang muromvara deb nomlanadi. va payg'ambar sallallohu alayhi vasallam vafot topganlaridan keyin madina xuddi bir qorong'u joyga o'xshab qoldi deb. va hamma sahobalarga shu musibat keldi.",
+   "out": "shuning uchun madinang muromvara deb nomlanadi va paygʻambar sallallohu alayhi vasallam vafot topganlaridan keyin madina xuddi bir qorongʻu joyga oʻxshab qoldi deb va hamma sahobalarga shu musibat keldi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "shu soat ham o'n ikki o'tdi, juman payti o'q qoqdi yu, pochti.",
+   "out": "shu soat ham oʻn ikki oʻtdi juman payti oʻq qoqdi yu pochti"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "yana salvalo olam aytibdilarki, kimki ramazon oyida ota onasining xizmatini qilib",
+   "out": "yana salvalo olam aytibdilarki kimki ramazon oyida ota onasining xizmatini qilib"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "norasmiy",
+   "out": "norasmiy"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "endi har xil holat bo'ladi da odamni. kimnidir eshitiladigan vaqt bo'ladi. bu maslahat shunchaki, xudo berib ketadigan narsa emas bu.",
+   "out": "endi har xil holat boʻladi da odamni kimnidir eshitiladigan vaqt boʻladi bu maslahat shunchaki xudo berib ketadigan narsa emas bu"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "bu akkauntda babji kira olasanmi",
+   "out": "bu akkauntda babji kira olasanmi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "hamma yig'ilib atrofida jamlanib ketdi. kim ekan, kim ekan. men ham hech narsani bilmagandek bordim. nima ekan bu deb so'rasam, qara, birov bolani tashlab ketib shu yerga dedi. men, menga beringlar shuni dedi. menga beringlar, men baho olamiz buni dedi.",
+   "out": "hamma yigʻilib atrofida jamlanib ketdi kim ekan kim ekan men ham hech narsani bilmagandek bordim nima ekan bu deb soʻrasam qara birov bolani tashlab ketib shu yerga dedi men menga beringlar shuni dedi menga beringlar men baho olamiz buni dedi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "keyin elektron pochtangizda emailingizda shuni",
+   "out": "keyin elektron pochtangizda emailingizda shuni"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "unda qarang da, sizlardan iltimos bu narsa.",
+   "out": "unda qarang da sizlardan iltimos bu narsa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "tashkilot yoki bo'limga yuborish besh ish kunida bo'ladi, besh ish kunigacha bo'ladi.",
+   "out": "tashkilot yoki boʻlimga yuborish besh ish kunida boʻladi besh ish kunigacha boʻladi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "kiyim oddiy bo'lsa",
+   "out": "kiyim oddiy boʻlsa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "to'pladi maktab, bog'cha, hammasi yopilishi kerak da bugun minzdrav qaror chiqargan. menimcha uje yo keyingi kunda yo ertagami bilmayman da qaysi kunga bo'lgan. bugun sovesheniyada mana shuni aytishdi da hammaga. endi ko'rishadi, shunga qarab turib ish tutadi bugun ertalab ertaga pichimen tugadi hammani yig'ib, anavi soatlik",
+   "out": "toʻpladi maktab bogʻcha hammasi yopilishi kerak da bugun minzdrav qaror chiqargan menimcha uje yo keyingi kunda yo ertagami bilmayman da qaysi kunga boʻlgan bugun sovesheniyada mana shuni aytishdi da hammaga endi koʻrishadi shunga qarab turib ish tutadi bugun ertalab ertaga pichimen tugadi hammani yigʻib anavi soatlik"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "karochi, to'qson ikkinchi yilsan, qaysi oyda tug'ilgansan? qani, oyiga kattamisan yo kichkinamisan? bir",
+   "out": "karochi toʻqson ikkinchi yilsan qaysi oyda tugʻilgansan qani oyiga kattamisan yo kichkinamisan bir"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "aytmanglar dengizni.",
+   "out": "aytmanglar dengizni"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "shunday ayollar bor, eriga shunday ozor beradiki, senga tegib nima ko'rdim? nima qilib berding menga deydi. hali bu ayollar halok, xor bo'ladi, xalok bo'ladi. shunday xor bo'ladiki, qiyomat kuni, ana o'sha tiliga, tili bilan eriga ozor bergan, ana shu eriga ozor bergan tillarini do'zaxda olovli qaychilar bilan qiyam.",
+   "out": "shunday ayollar bor eriga shunday ozor beradiki senga tegib nima koʻrdim nima qilib berding menga deydi hali bu ayollar halok xor boʻladi xalok boʻladi shunday xor boʻladiki qiyomat kuni ana oʻsha tiliga tili bilan eriga ozor bergan ana shu eriga ozor bergan tillarini doʻzaxda olovli qaychilar bilan qiyam"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "akamni uyiga borsam, akamni bolasi meni bolamga qattiq tegib qo'ydi.",
+   "out": "akamni uyiga borsam akamni bolasi meni bolamga qattiq tegib qoʻydi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "kalining ko'chadagi sardorbek domlaning maqsadida",
+   "out": "kalining koʻchadagi sardorbek domlaning maqsadida"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "balki windowsni o'rnatib turib, driver qo'shmasdan, balki topshirib yuborishganini. katta ehtimol bilan menimcha shunaqa. chunki windows sakkiz, gde to bir",
+   "out": "balki windowsni oʻrnatib turib driver qoʻshmasdan balki topshirib yuborishganini katta ehtimol bilan menimcha shunaqa chunki windows sakkiz gde to bir"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qor bo'lmaydi. siz yomon ko'rsangiz ham uni xudo yaxshi ko'radi, aziz qilaveradi. otgan toshlaringiz o'zingizga qaytib keladi. qo'ying, onani duosini oling ulug' kunda, otani duosini oling. buyog'dagi hayotni keyin ko'rasiz nima bo'lishini. ya'ni ramazon naqd kelyapti. ya'ni ramazon ota bormi? otani top",
+   "out": "qor boʻlmaydi siz yomon koʻrsangiz ham uni xudo yaxshi koʻradi aziz qilaveradi otgan toshlaringiz oʻzingizga qaytib keladi qoʻying onani duosini oling ulugʻ kunda otani duosini oling buyogʻdagi hayotni keyin koʻrasiz nima boʻlishini yaʻni ramazon naqd kelyapti yaʻni ramazon ota bormi otani top"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "juda ham hayratlandim.",
+   "out": "juda ham hayratlandim"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "chiqarib qo'yadi deganday qilib gapirishadi ku.",
+   "out": "chiqarib qoʻyadi deganday qilib gapirishadi ku"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o'sha tumandagi mas'ullarimiz nima qilishgan, o'sha g'oliblarga",
+   "out": "oʻsha tumandagi masʻullarimiz nima qilishgan oʻsha gʻoliblarga"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ikki ming yigirma to'rtinchi yil birinchi oktyabr hisobidan oshadi deb hisoblansa deylik.",
+   "out": "ikki ming yigirma toʻrtinchi yil birinchi oktyabr hisobidan oshadi deb hisoblansa deylik"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "yashamayman dedi. men qanday qilib rasululloh yo'q bo'lgan madinada yashayman? ko'chalarida yursam rasulullohni eslayman, yashamayman bu yerda. bu yerga o'tsam, bu joyga kirsam, masjidga kirsam, ustunlar, u minbarlar har bir joy rasululloh sallallohu alayhi vasallamni eslatadi.",
+   "out": "yashamayman dedi men qanday qilib rasululloh yoʻq boʻlgan madinada yashayman koʻchalarida yursam rasulullohni eslayman yashamayman bu yerda bu yerga oʻtsam bu joyga kirsam masjidga kirsam ustunlar u minbarlar har bir joy rasululloh sallallohu alayhi vasallamni eslatadi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "jami besh oy surishtiruv muddati qo'shing, salkam ariza kelib tushib, uni tegishli xodimga o'tkazib, o'sha ichki ishlari o'ziga qilgan bo'lsangiz uni boshqa bir xodimga, ya'ni o'sha surishtiruvchiga o'tkazadi da. u surishtiruvchi qabul qilgan kundan boshlab",
+   "out": "jami besh oy surishtiruv muddati qoʻshing salkam ariza kelib tushib uni tegishli xodimga oʻtkazib oʻsha ichki ishlari oʻziga qilgan boʻlsangiz uni boshqa bir xodimga yaʻni oʻsha surishtiruvchiga oʻtkazadi da u surishtiruvchi qabul qilgan kundan boshlab"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "san nima deysan",
+   "out": "san nima deysan"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "hasan basriy rahmatullo alayhini qatl qilmoqchi bo'lib chaqirtiradi.",
+   "out": "hasan basriy rahmatullo alayhini qatl qilmoqchi boʻlib chaqirtiradi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ishsizlik hisobi yoki ish haqqi xuddi shu tartibda hisoblanishi kerak ijroni bazasida.",
+   "out": "ishsizlik hisobi yoki ish haqqi xuddi shu tartibda hisoblanishi kerak ijroni bazasida"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "bu keyin boshqa fermer xo'jalikka o'tkaziladi. tushundingizmi? u shunchaki bo'lib qolmaydi da, u fermerdan o'zi to'g'ridan to'g'riroq bo'lmaydi. kimdir yerini topshirishi mumkin, o'shanda qo'sh fermer xo'jaligilar qo'shib yuborilishi mumkin.",
+   "out": "bu keyin boshqa fermer xoʻjalikka oʻtkaziladi tushundingizmi u shunchaki boʻlib qolmaydi da u fermerdan oʻzi toʻgʻridan toʻgʻriroq boʻlmaydi kimdir yerini topshirishi mumkin oʻshanda qoʻsh fermer xoʻjaligilar qoʻshib yuborilishi mumkin"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qalbingiz yumshamaydimi?",
+   "out": "qalbingiz yumshamaydimi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "nima bo'lsa ham sendan katta",
+   "out": "nima boʻlsa ham sendan katta"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "unaqa qilib tashlab beribdi video chiqibdi unaqa qilsa bo'larkan ku",
+   "out": "unaqa qilib tashlab beribdi video chiqibdi unaqa qilsa boʻlarkan ku"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o'shanda sal ishligi pul ish bo'ladi",
+   "out": "oʻshanda sal ishligi pul ish boʻladi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "aytmang dardingiz. muammolaringizni aytmang.",
+   "out": "aytmang dardingiz muammolaringizni aytmang"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ana onani nasihatdan",
+   "out": "ana onani nasihatdan"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "yonginamda onam bor",
+   "out": "yonginamda onam bor"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "eriga ozor beradigan ayollar haqida. erini uydan bezit o'radigan ayollar bor. eri uyga kirsa, mazza qilib yubormaydi. uyga kirsa rohatlanmaydi, ayolini ko'rib turib, ko'chadan kelib turib. uyga kirsa mazza qilmaydi da. qaytaga uyga kirsa, ikki yuz lik miqdab bosib yurgandek bo'ladi. shu ayolni darsidan. eriga shunaqa ozor berarki, bezit yuborgan bo'ladi.",
+   "out": "eriga ozor beradigan ayollar haqida erini uydan bezit oʻradigan ayollar bor eri uyga kirsa mazza qilib yubormaydi uyga kirsa rohatlanmaydi ayolini koʻrib turib koʻchadan kelib turib uyga kirsa mazza qilmaydi da qaytaga uyga kirsa ikki yuz lik miqdab bosib yurgandek boʻladi shu ayolni darsidan eriga shunaqa ozor berarki bezit yuborgan boʻladi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qarzdorlik qaysi oilaga hisoblangan? avvalo bilib oling. ikki ming yigirma to'rtinchi yil yanvar, fevral, mart deb hisoblasak, yil boshidan. bular eski hisobda hisoblangan. qanaqa qilib yangi oy, yangi oshgan narxda qarzdorlik ko'tarilib qolishi mumkin?",
+   "out": "qarzdorlik qaysi oilaga hisoblangan avvalo bilib oling ikki ming yigirma toʻrtinchi yil yanvar fevral mart deb hisoblasak yil boshidan bular eski hisobda hisoblangan qanaqa qilib yangi oy yangi oshgan narxda qarzdorlik koʻtarilib qolishi mumkin"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "biz oilada o'ntamiz.",
+   "out": "biz oilada oʻntamiz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "oyajon bitta bering u kabi ko'taray derding u",
+   "out": "oyajon bitta bering u kabi koʻtaray derding u"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ota ona",
+   "out": "ota ona"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "onamizni oldida jamlanamiz deb hamma onani oldida jamlanadi. bu ilohiy quvvat ota onadan qanday ta'sir qilar ekan deb ko'p o'ylar edim. shuni javobini men sarvar domlani masjidida, domlani xudbasi deb topdim.",
+   "out": "onamizni oldida jamlanamiz deb hamma onani oldida jamlanadi bu ilohiy quvvat ota onadan qanday taʻsir qilar ekan deb koʻp oʻylar edim shuni javobini men sarvar domlani masjidida domlani xudbasi deb topdim"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "deylik to'ris bilan sotib olgansiz",
+   "out": "deylik toʻris bilan sotib olgansiz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qaytarish imkoni yo'q",
+   "out": "qaytarish imkoni yoʻq"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "biz unga sharh bera olmaymiz. sharhlar o'ldira olmaymiz uni. qanaqa bo'larkan, manaqa bo'larkan deb. ijtimoiy tarmoqqa chiqayotgan blogerimni bir narsasi",
+   "out": "biz unga sharh bera olmaymiz sharhlar oʻldira olmaymiz uni qanaqa boʻlarkan manaqa boʻlarkan deb ijtimoiy tarmoqqa chiqayotgan blogerimni bir narsasi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "shundanlik bo'ldimi?",
+   "out": "shundanlik boʻldimi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ingliz tilini bilsangiz",
+   "out": "ingliz tilini bilsangiz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "endi o'sha uyni siz to'g'risi oltmish millionga sotmoqchisiz",
+   "out": "endi oʻsha uyni siz toʻgʻrisi oltmish millionga sotmoqchisiz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "unda ham o'n dollarda ham chi foydangiz normalniy, haligi bilimingizga bilim qo'shilishi mumkin da.",
+   "out": "unda ham oʻn dollarda ham chi foydangiz normalniy haligi bilimingizga bilim qoʻshilishi mumkin da"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ham yo'qligingizni ham odamlar ehtimol sezmas, ammo alloh va payg'ambar yaxshi ko'rgan bo'lsa, birodar, ikki dunyoda saodatga erishishingiz aniq. qo'ng'ir qo'lbingdan habibi taniy.",
+   "out": "ham yoʻqligingizni ham odamlar ehtimol sezmas ammo alloh va paygʻambar yaxshi koʻrgan boʻlsa birodar ikki dunyoda saodatga erishishingiz aniq qoʻngʻir qoʻlbingdan habibi taniy"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "kimning beshinchi yili",
+   "out": "kimning beshinchi yili"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "toʻlab emas endi aushlaydi yoki ishlamaydi qancha dur farqi boʻlishi mumkin toʻlovladi ikkita bolaga mana shuncha summada chiqib bitta bolaga ishsili hisobdi bir million ikki yuz ellik toʻqson bir ming uch taqish qachonidan chiqarveradi",
+   "out": "toʻlab emas endi aushlaydi yoki ishlamaydi qancha dur farqi boʻlishi mumkin toʻlovladi ikkita bolaga mana shuncha summada chiqib bitta bolaga ishsili hisobdi bir million ikki yuz ellik toʻqson bir ming uch taqish qachonidan chiqarveradi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "birdan boʻlib qolmaydimi sizga",
+   "out": "birdan boʻlib qolmaydimi sizga"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "a ayasi yoʻq yetim da buni eshganmisiz aysi yoʻq jalb aysi yoʻq yetim birod ayasi soʻkadi ku shunaqa",
+   "out": "a ayasi yoʻq yetim da buni eshganmisiz aysi yoʻq jalb aysi yoʻq yetim birod ayasi soʻkadi ku shunaqa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "agar aniq aqli zetsa besh toʻgʻri pul sop turib",
+   "out": "agar aniq aqli zetsa besh toʻgʻri pul sop turib"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "yangisi tushsa tushadi shundaymi",
+   "out": "yangisi tushsa tushadi shundaymi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "akami uyga borsam akami bolasi meni bolamga qattiq tegib qoʻydi",
+   "out": "akami uyga borsam akami bolasi meni bolamga qattiq tegib qoʻydi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "sahobalarni havas yigʻlaganiga qoʻshilib ilol roziyallohu anhum yigʻlab paygʻambar va saloh alloh alloh alloh assalam dafn qilindi abu bakr suddagi roziyallohu anhumga barcha moʻmin musulmonlar birinchi imom bizni boshchimiz hayotlamiz deb bayon etishganligidan iltigʻan bir paytaga becham yashilgan ekanman",
+   "out": "sahobalarni havas yigʻlaganiga qoʻshilib ilol roziyallohu anhum yigʻlab paygʻambar va saloh alloh alloh alloh assalam dafn qilindi abu bakr suddagi roziyallohu anhumga barcha moʻmin musulmonlar birinchi imom bizni boshchimiz hayotlamiz deb bayon etishganligidan iltigʻan bir paytaga becham yashilgan ekanman"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "mana ikkala tabib",
+   "out": "mana ikkala tabib"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "suv xursand boʻldi",
+   "out": "suv xursand boʻldi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ayollarga erlariga imkoniyat qilishdi elliklarga surur xursandchilik uni koʻnglimga koʻtarishlik ibodatida yordamchi boʻlishligini olovdan farq qilgan shunday ekan bugungi ana shu savollarda juda ham koʻplari oilaviy shariat axshogʻi alohida boʻgʻrisida xursand kelganda erxotinlarda oʻzbekistligi munosirlik va yana boshqa biz bu yerimiz",
+   "out": "ayollarga erlariga imkoniyat qilishdi elliklarga surur xursandchilik uni koʻnglimga koʻtarishlik ibodatida yordamchi boʻlishligini olovdan farq qilgan shunday ekan bugungi ana shu savollarda juda ham koʻplari oilaviy shariat axshogʻi alohida boʻgʻrisida xursand kelganda erxotinlarda oʻzbekistligi munosirlik va yana boshqa biz bu yerimiz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "faqat dunyoda uchta chaqasi deb",
+   "out": "faqat dunyoda uchta chaqasi deb"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qazorib ketardi da",
+   "out": "qazorib ketardi da"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "agrippdan maskani ikki qavat taqiyli ehtiyotiylarning qiligiga iltimos shunaqa bizda toshkentda koʻpayib ketibdi shunaqa bekit shuvotda odamlarni",
+   "out": "agrippdan maskani ikki qavat taqiyli ehtiyotiylarning qiligiga iltimos shunaqa bizda toshkentda koʻpayib ketibdi shunaqa bekit shuvotda odamlarni"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "bu yanvoyaga kishini uyini topib bordim eshigini xohdi hali yordam chiqdi birodar dedi menda sizga rasulullohdan bir bashorat bordi shu asrimizda boʻlayotgan narsa faqat robbiz bilan siz oʻrtezda qanaqa sir boradi shu sirda aytsiz men sizga bashoratda aytaman",
+   "out": "bu yanvoyaga kishini uyini topib bordim eshigini xohdi hali yordam chiqdi birodar dedi menda sizga rasulullohdan bir bashorat bordi shu asrimizda boʻlayotgan narsa faqat robbiz bilan siz oʻrtezda qanaqa sir boradi shu sirda aytsiz men sizga bashoratda aytaman"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "shu soatdan oʻn ikki oʻtdi jumal payti oʻqqopdi yu bashtiy",
+   "out": "shu soatdan oʻn ikki oʻtdi jumal payti oʻqqopdi yu bashtiy"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "kompyuterlar yetib boradi yangi kompyuterlar boradi",
+   "out": "kompyuterlar yetib boradi yangi kompyuterlar boradi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "u kichkinami kattami barib yoshlarni koʻnglidan oʻtadi",
+   "out": "u kichkinami kattami barib yoshlarni koʻnglidan oʻtadi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "borib uygʻotib qoʻyini agar aliyam uxlayotgan boʻlsa kim ishlayotganda shu masala boʻyicha uygʻotib mashna qilam biz ishimiz bor edi deb",
+   "out": "borib uygʻotib qoʻyini agar aliyam uxlayotgan boʻlsa kim ishlayotganda shu masala boʻyicha uygʻotib mashna qilam biz ishimiz bor edi deb"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "bu ojiza bu",
+   "out": "bu ojiza bu"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "assalomu alaykum",
+   "out": "assalomu alaykum"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "agarda haqiqiy solihayol boʻlsa dadasi alloh bizga beradi farzandimizni nisbatan ham alloh taqdiradi bugun sizga fursat seni mana bunday holatda ogʻir imtihon bilan ajralib keltiribdi bugun fursat sizga buni xizmatini qilib bunga yordam qilib robiya roziligi topqali sizga boʻyin olingan",
+   "out": "agarda haqiqiy solihayol boʻlsa dadasi alloh bizga beradi farzandimizni nisbatan ham alloh taqdiradi bugun sizga fursat seni mana bunday holatda ogʻir imtihon bilan ajralib keltiribdi bugun fursat sizga buni xizmatini qilib bunga yordam qilib robiya roziligi topqali sizga boʻyin olingan"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "aytadilar ki",
+   "out": "aytadilar ki"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "hamma mana shu joyga jamlalarkan",
+   "out": "hamma mana shu joyga jamlalarkan"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "aka ukani",
+   "out": "aka ukani"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "katta bir neʻmat",
+   "out": "katta bir neʻmat"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "xatosi boʻlsa keyingi sudda tovlanadi u nima qilinmadi u shikoyatingizga kirib uyi mantiq ekanini oʻzgartirib qoʻymaydi chiqarvoradi oʻshanda shundayzu",
+   "out": "xatosi boʻlsa keyingi sudda tovlanadi u nima qilinmadi u shikoyatingizga kirib uyi mantiq ekanini oʻzgartirib qoʻymaydi chiqarvoradi oʻshanda shundayzu"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "otamizni sahir qilgan kim",
+   "out": "otamizni sahir qilgan kim"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "qoʻyinki xotbittasini ichgan yotgani uchun bu qigandim",
+   "out": "qoʻyinki xotbittasini ichgan yotgani uchun bu qigandim"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "opa ukani opa singilni jamlab turgan ota ona",
+   "out": "opa ukani opa singilni jamlab turgan ota ona"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "tashkilot yoki boʻlimga yuborish besh ish kunida boʻladi besh ish kunigacha boʻladi",
+   "out": "tashkilot yoki boʻlimga yuborish besh ish kunida boʻladi besh ish kunigacha boʻladi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ha oldingi ism familiyasini koʻrsatib qoʻyadi ku ism familiyasi oʻzgarsa yangi odam boʻlib tugʻilmaydi ku",
+   "out": "ha oldingi ism familiyasini koʻrsatib qoʻyadi ku ism familiyasi oʻzgarsa yangi odam boʻlib tugʻilmaydi ku"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ijtimoiy tarmogʻida chiqayotgan har qanaqa video tugʻilib chiqarmaydi da",
+   "out": "ijtimoiy tarmogʻida chiqayotgan har qanaqa video tugʻilib chiqarmaydi da"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "sud jarayonida hal boʻladi uchun dinamo qonunda yozib qoʻymagan",
+   "out": "sud jarayonida hal boʻladi uchun dinamo qonunda yozib qoʻymagan"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "sen u uchun akasin",
+   "out": "sen u uchun akasin"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "nima dedi mumkin mazkur bitta nigohi qayda tiladi bu haqiqiy boʻladi uchundizmi",
+   "out": "nima dedi mumkin mazkur bitta nigohi qayda tiladi bu haqiqiy boʻladi uchundizmi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "boshqalanyan oʻziziyam qiynamang shundaymi",
+   "out": "boshqalanyan oʻziziyam qiynamang shundaymi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "uyal ekan bosar",
+   "out": "uyal ekan bosar"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "kim agar mashq qoʻshigʻimga oyna bersa",
+   "out": "kim agar mashq qoʻshigʻimga oyna bersa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "xabar olin",
+   "out": "xabar olin"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Boshqa bir saksa nama deyiddi? Udvikshanqoistu 3dokokimiyyad bar, qonunshkarurcishijijaydu suud, bule ouchalasib birbiran sakaar. Unaqa birbiran shigarilajmadi bu.",
+   "out": "boshqa bir saksa nama deyiddi udvikshanqoistu uchdokokimiyyad bar qonunshkarurcishijijaydu suud bule ouchalasib birbiran sakaar unaqa birbiran shigarilajmadi bu"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Put minuse uzgeçavolat.",
+   "out": "put minuse uzgeçavolat"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Zirki piyiton, yukularen piyitot tavaro, bozor da oturap.",
+   "out": "zirki piyiton yukularen piyitot tavaro bozor da oturap"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "kaj tari simpion yuk",
+   "out": "kaj tari simpion yuk"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Barma bari yuk lama kelama itu pohing",
+   "out": "barma bari yuk lama kelama itu pohing"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o du shunarsa",
+   "out": "o du shunarsa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "برزلال سور شرم بربلاغبول اركان",
+   "out": "برزلال سور شرم بربلاغبول اركان"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "I was able to give a picture of the people",
+   "out": "i was able to give a picture of the people"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Anki doimi işleta diyon odaman busu, Windows 10 busu şöyle, otmiş min busu neyzashlar rastuot taki, baz bazda ali ge, ayda bir maddaki krippur diyon odaman uçun bu zararlı məhzda, değerli həməzda, barca olabaz ispana bacararadın, düşün şun",
+   "out": "anki doimi işleta diyon odaman busu windows oʻn busu şöyle otmiş min busu neyzashlar rastuot taki baz bazda ali ge ayda bir maddaki krippur diyon odaman uçun bu zararlı məhzda değerli həməzda barca olabaz ispana bacararadın düşün şun"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ዱсərхал в vä Maklwaat 해내и наулмагіюхни дзорадутов укрàасарханагогалнэ",
+   "out": "ዱsərxal v vä maklwaat 해내i naulmagіyuxni dzoradutov ukràasarxanagogalne"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Nisbətdən yaxşıraq, siləgi ki ingil cani anladi, siləni prissiyinigi ucuşi munkun. Nemaq edisəniz, mənə şunca muxulat bir ildir, məxallada bən necə maradabə, mənə 6 ay davamda, 2 məddə yarışdırub qəmi isəs, uc qəzirli. Deyilir ki, ucumadda. Necə məddə yarışdırış buigən busa məxallada? Uşelistə xər bir dəsəsə müxakimi qəlindirikin, əcədçimkanı bu mədədib durmaq, xulasası abdəyib, ucuşelisə bu bu, bu bu munkun.",
+   "out": "nisbətdən yaxşıraq siləgi ki ingil cani anladi siləni prissiyinigi ucuşi munkun nemaq edisəniz mənə şunca muxulat bir ildir məxallada bən necə maradabə mənə olti ay davamda ikki məddə yarışdırub qəmi isəs uc qəzirli deyilir ki ucumadda necə məddə yarışdırış buigən busa məxallada uşelistə xər bir dəsəsə müxakimi qəlindirikin əcədçimkanı bu mədədib durmaq xulasası abdəyib ucuşelisə bu bu bu bu munkun"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "On bertogushkan busa, hammasana berjaga jamlab turgan qanaka ilahi berkugatibarakin.",
+   "out": "on bertogushkan busa hammasana berjaga jamlab turgan qanaka ilahi berkugatibarakin"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Aleykum asalam asalamu aleykum. Vazgeçib durub, bersab oladamu aneganda qaismanaudu? Toğru cumanliyindadı. 18 yaş keçeli elementi, şuncöpürlü aldum dibdurub nətariyall təsqlata digan bu səni, bu narsanı",
+   "out": "aleykum asalam asalamu aleykum vazgeçib durub bersab oladamu aneganda qaismanaudu toğru cumanliyindadı oʻn sakkiz yaş keçeli elementi şuncöpürlü aldum dibdurub nətariyall təsqlata digan bu səni bu narsanı"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Xamma gaya, uži bu oshqar qilinwaaddi. Wazirli prosti yu, talqamagani, talqamagani, ikita ushita duaddi. Yu, asada u nii, sista uonsa kista bub gita duaddi. Yana dajik bu, kista minnusta turganlarimiz bar, bani ithsariuaddi. Anaklanma gaya, halo, hirti gaya, anaklasa u nii am oshqar qimiddi.",
+   "out": "xamma gaya uži bu oshqar qilinwaaddi wazirli prosti yu talqamagani talqamagani ikita ushita duaddi yu asada u nii sista uonsa kista bub gita duaddi yana dajik bu kista minnusta turganlarimiz bar bani ithsariuaddi anaklanma gaya halo hirti gaya anaklasa u nii am oshqar qimiddi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Uşendi nanki vır çoğabgar kılım nafirin huca yitavuzot kılım",
+   "out": "uşendi nanki vır çoğabgar kılım nafirin huca yitavuzot kılım"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Qəlilin köçədəgi sərdarvəgi damlənin mənsətədə",
+   "out": "qəlilin köçədəgi sərdarvəgi damlənin mənsətədə"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Computerlar 7 boradı, yangi computerlar boradı.",
+   "out": "computerlar yetti boradı yangi computerlar boradı"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Kimeyken, kimeyken, minam hiç nesan bulma gendik, bordim. Nemeyken budap sorasam, kara, bura bolan taş ap ketip, şu erge dedi. Min, min geberiler şunu dedi. Min geberiler, min bak valamiz bunu dedi.",
+   "out": "kimeyken kimeyken minam hiç nesan bulma gendik bordim nemeyken budap sorasam kara bura bolan taş ap ketip şu erge dedi min min geberiler şunu dedi min geberiler min bak valamiz bunu dedi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Oladhissiz nandha? Birinci octoberdan kiingi xoolatdao ishè? Bara milyon sao hakiingiz?",
+   "out": "oladhissiz nandha birinci octoberdan kiingi xoolatdao ishè bara milyon sao hakiingiz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "2002-2011-1-2-Oktyabr xisabudan \"Oshadu\" deyib xisablantsa deyilik",
+   "out": "ikki ming ikki ikki ming oʻn bir bir ikkinchi oktyabr xisabudan oshadu deyib xisablantsa deyilik"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "KURMA PAYASI, UMUS LAYIN BU YATKA YENGE MINBER YASAKTIRIPKI YENDEN KAYIN KURMA PAYASI YILA 4-5 METR FARKI BAR USTUN SAHHABALARIN HEMES EŞİDDI KURMA PAYASI YILA GANY YARASULO MENGE SUYA'NIN HUTUBAKALARLINIZ KAVLIKETTİNIZ DIR SIZ MENGE SUYA'NIN",
+   "out": "kurma payasi umus layin bu yatka yenge minber yasaktiripki yenden kayin kurma payasi yila toʻrt besh metr farki bar ustun sahhabalarin hemes eşi̇ddi kurma payasi yila gany yarasulo menge suyaʻnin hutubakalarliniz kavliketti̇niz dir siz menge suyaʻnin"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Iman, Rasulullah,",
+   "out": "iman rasulullah"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Ata Ane diydi bune. Deme yin yakindus kime ke bizge Ata Ane yeken baradar. Ata Ane bizar suresagem suremesegem suresagem suresagem dua kulu urad. Dirsegem vermesagem dua kulu urad.",
+   "out": "ata ane diydi bune deme yin yakindus kime ke bizge ata ane yeken baradar ata ane bizar suresagem suremesegem suresagem suresagem dua kulu urad dirsegem vermesagem dua kulu urad"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Ida hewa yaman gorsu nsisi. Eger Allah yaş gorsu nsisi. Buna yaman gorsu nsisi. Camiyette iqtimal bu nisketlemazdir. Fakirdirsuz, kuvatiz yoldur, usul dolmazdursuz, iqtimal iskin tanemez. Bucu oda barili giziyem yoldur.",
+   "out": "ida hewa yaman gorsu nsisi eger allah yaş gorsu nsisi buna yaman gorsu nsisi camiyette iqtimal bu nisketlemazdir fakirdirsuz kuvatiz yoldur usul dolmazdursuz iqtimal iskin tanemez bucu oda barili giziyem yoldur"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Ishi Shodhi Boçana.",
+   "out": "ishi shodhi boçana"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Nuri's, nul aldı, malumatını korus gerek.",
+   "out": "nuriʻs nul aldı malumatını korus gerek"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Ushanda chushumumgundi, chushayam, iski karzolay vasana uz barbunakizmi xisabla etki aliminti iski xisabta turayda",
+   "out": "ushanda chushumumgundi chushayam iski karzolay vasana uz barbunakizmi xisabla etki aliminti iski xisabta turayda"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Bita seipla poyada eskisini ikinsini madiydi.",
+   "out": "bita seipla poyada eskisini ikinsini madiydi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Oda nam hokemeh akib olmaidi, masinda bolati, sud uzu yakunda uzu hukum okidi, chundizmi? Ixtimalinci khatdan təxmini qilishmukun, manajşu atrafda bolishmukun dibdur, lakin alak masinda bolati, bolati, illi itini qollasi ingilili bolati, yaxsharaq, chundizmi?",
+   "out": "oda nam hokemeh akib olmaidi masinda bolati sud uzu yakunda uzu hukum okidi chundizmi ixtimalinci khatdan təxmini qilishmukun manajşu atrafda bolishmukun dibdur lakin alak masinda bolati bolati illi itini qollasi ingilili bolati yaxsharaq chundizmi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Mana kalayinda aval shkurgen bosa",
+   "out": "mana kalayinda aval shkurgen bosa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "-",
+   "out": ""
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Bálki Windows orna tıstırı driveri qoşmasına bálki topshir watch gandı. Cat tehtim olubun, menim vusunaga. Çünkü Windows 8 gdita bir.",
+   "out": "bálki windows orna tıstırı driveri qoşmasına bálki topshir watch gandı cat tehtim olubun menim vusunaga çünkü windows sakkiz gdita bir"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Atshqaladda bolida soud.",
+   "out": "atshqaladda bolida soud"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Ozil trişiliqinin de, aqasib olan alaqan huziclikke, yukasib olan alaqan huziclikke, otoonazige yakşili kilişlikke, harhın min hirqire nairangine bilen yiglab olsun, rahimdirli kılık olsun, sizge yordam kılıyken balsan, qanakılık, qaysi şekilde, qaysi suratte balsan, qarandaşlar bilen alaqan huziclikke, tariqi kılıyken, çakiriyken ayol balsan bu ayol fasıqa ayol.",
+   "out": "ozil trişiliqinin de aqasib olan alaqan huziclikke yukasib olan alaqan huziclikke otoonazige yakşili kilişlikke harhın min hirqire nairangine bilen yiglab olsun rahimdirli kılık olsun sizge yordam kılıyken balsan qanakılık qaysi şekilde qaysi suratte balsan qarandaşlar bilen alaqan huziclikke tariqi kılıyken çakiriyken ayol balsan bu ayol fasıqa ayol"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Kattabar umman.",
+   "out": "kattabar umman"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Qüsablar bulin gəunu. Uşaqda işləgən ya ki işləməgən. Uşaq xüsabda getədir.",
+   "out": "qüsablar bulin gəunu uşaqda işləgən ya ki işləməgən uşaq xüsabda getədir"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "Сыз мен учан, хайот, ваззавқ дарақты саз. Мен чан, мен сізгені мақылдам, елкемді кудардым ма? Хызмат еңгізні тұртаман, соғындым десангез, ишім көп дедам. Бір гепна білмай, икі марты қайтар сангез сылдар.",
+   "out": "sыz men uchan xayot vazzavq daraqtы saz men chan men sіzgenі maqыldam yelkemdі kudardыm ma xыzmat yeңgіznі tұrtaman sogʻыndыm desangez ishіm kөp dedam bіr gepna bіlmay ikі martы qaytar sangez sыldar"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "50 ili ömrda.",
+   "out": "ellik ili ömrda"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "I have to get the virus to get the radio. The radio is a good news. The TV is a good news. The TV is a good news.",
+   "out": "i have to get the virus to get the radio the radio is a good news the tv is a good news the tv is a good news"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "hali kainse joidu",
+   "out": "hali kainse joidu"
+  },
+  {
+   "mode": "reference",
+   "in": "2024-yil",
+   "out": "ikki ming yigirma toʻrtinchi yil"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "2024-yil",
+   "out": "ikki ming yigirma toʻrtinchi yil"
+  },
+  {
+   "mode": "reference",
+   "in": "5-sinf",
+   "out": "beshinchi sinf"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "5-sinf",
+   "out": "beshinchi sinf"
+  },
+  {
+   "mode": "reference",
+   "in": "21-asr",
+   "out": "yigirma birinchi asr"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "21-asr",
+   "out": "yigirma birinchi asr"
+  },
+  {
+   "mode": "reference",
+   "in": "100-yillik",
+   "out": "yuzinchi yillik"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "100-yillik",
+   "out": "yuzinchi yillik"
+  },
+  {
+   "mode": "reference",
+   "in": "1000-chi",
+   "out": "minginchi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "1000-chi",
+   "out": "minginchi"
+  },
+  {
+   "mode": "reference",
+   "in": "narxi 25 000 so'm",
+   "out": "narxi yigirma besh ming soʻm"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "narxi 25 000 so'm",
+   "out": "narxi yigirma besh ming soʻm"
+  },
+  {
+   "mode": "reference",
+   "in": "1,000,000 dollar",
+   "out": "bir million dollar"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "1,000,000 dollar",
+   "out": "bir million dollar"
+  },
+  {
+   "mode": "reference",
+   "in": "0 dan 9 gacha",
+   "out": "nol dan toʻqqiz gacha"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "0 dan 9 gacha",
+   "out": "nol dan toʻqqiz gacha"
+  },
+  {
+   "mode": "reference",
+   "in": "137",
+   "out": "bir yuz oʻttiz yetti"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "137",
+   "out": "bir yuz oʻttiz yetti"
+  },
+  {
+   "mode": "reference",
+   "in": "100",
+   "out": "bir yuz"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "100",
+   "out": "bir yuz"
+  },
+  {
+   "mode": "reference",
+   "in": "1000",
+   "out": "bir ming"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "1000",
+   "out": "bir ming"
+  },
+  {
+   "mode": "reference",
+   "in": "1000000",
+   "out": "bir million"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "1000000",
+   "out": "bir million"
+  },
+  {
+   "mode": "reference",
+   "in": "1000000000",
+   "out": "bir milliard"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "1000000000",
+   "out": "bir milliard"
+  },
+  {
+   "mode": "reference",
+   "in": "1000000000000",
+   "out": "bir nol nol nol nol nol nol nol nol nol nol nol nol"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "1000000000000",
+   "out": "bir nol nol nol nol nol nol nol nol nol nol nol nol"
+  },
+  {
+   "mode": "reference",
+   "in": "o'n to'rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o'n to'rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "reference",
+   "in": "oʻn toʻrt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "oʻn toʻrt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "reference",
+   "in": "o‘n to‘rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o‘n to‘rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "reference",
+   "in": "o’n to’rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o’n to’rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "reference",
+   "in": "o`n to`rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "o`n to`rt",
+   "out": "oʻn toʻrt"
+  },
+  {
+   "mode": "reference",
+   "in": "sa'y-harakat",
+   "out": "saʻy harakat"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "sa'y-harakat",
+   "out": "saʻy harakat"
+  },
+  {
+   "mode": "reference",
+   "in": "oq-qora",
+   "out": "oq qora"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "oq-qora",
+   "out": "oq qora"
+  },
+  {
+   "mode": "reference",
+   "in": "нима гап",
+   "out": "нимa гaп"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "нима гап",
+   "out": "nima gap"
+  },
+  {
+   "mode": "reference",
+   "in": "ЎЗБЕКИСТОН",
+   "out": "ўзбекистон"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ЎЗБЕКИСТОН",
+   "out": "oʻzbekiston"
+  },
+  {
+   "mode": "reference",
+   "in": "ўзбекистон",
+   "out": "ўзбекистон"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ўзбекистон",
+   "out": "oʻzbekiston"
+  },
+  {
+   "mode": "reference",
+   "in": "ӯзбек",
+   "out": "oʻзбек"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "ӯзбек",
+   "out": "oʻzbek"
+  },
+  {
+   "mode": "reference",
+   "in": "менга ёқади",
+   "out": "менгa ёқaди"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "менга ёқади",
+   "out": "menga yoqadi"
+  },
+  {
+   "mode": "reference",
+   "in": "елка",
+   "out": "елкa"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "елка",
+   "out": "yelka"
+  },
+  {
+   "mode": "reference",
+   "in": "аeроport",
+   "out": "aeроport"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "аeроport",
+   "out": "aeroport"
+  },
+  {
+   "mode": "reference",
+   "in": "noise salom hesitation dunyo",
+   "out": "salom dunyo"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "noise salom hesitation dunyo",
+   "out": "salom dunyo"
+  },
+  {
+   "mode": "reference",
+   "in": "  ko'p   bo'sh   joy  ",
+   "out": "koʻp boʻsh joy"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "  ko'p   bo'sh   joy  ",
+   "out": "koʻp boʻsh joy"
+  },
+  {
+   "mode": "reference",
+   "in": "﻿BOM boshida",
+   "out": "bom boshida"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "﻿BOM boshida",
+   "out": "bom boshida"
+  },
+  {
+   "mode": "reference",
+   "in": "yarim½ va ¼",
+   "out": "yarim va"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "yarim½ va ¼",
+   "out": "yarim va"
+  },
+  {
+   "mode": "reference",
+   "in": "tire‐bilan",
+   "out": "tire bilan"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "tire‐bilan",
+   "out": "tire bilan"
+  },
+  {
+   "mode": "reference",
+   "in": "minus−belgi",
+   "out": "minus belgi"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "minus−belgi",
+   "out": "minus belgi"
+  },
+  {
+   "mode": "reference",
+   "in": "«qo'shtirnoq»",
+   "out": "qoʻshtirnoq"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "«qo'shtirnoq»",
+   "out": "qoʻshtirnoq"
+  },
+  {
+   "mode": "reference",
+   "in": "…uch nuqta",
+   "out": "uch nuqta"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "…uch nuqta",
+   "out": "uch nuqta"
+  },
+  {
+   "mode": "reference",
+   "in": "email@example.com",
+   "out": "email@example com"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "email@example.com",
+   "out": "email@example com"
+  },
+  {
+   "mode": "reference",
+   "in": "50%",
+   "out": "ellik"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "50%",
+   "out": "ellik"
+  },
+  {
+   "mode": "reference",
+   "in": "3+4=7",
+   "out": "uch toʻrt yetti"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "3+4=7",
+   "out": "uch toʻrt yetti"
+  },
+  {
+   "mode": "reference",
+   "in": "",
+   "out": ""
+  },
+  {
+   "mode": "hypothesis",
+   "in": "",
+   "out": ""
+  },
+  {
+   "mode": "reference",
+   "in": "   ",
+   "out": ""
+  },
+  {
+   "mode": "hypothesis",
+   "in": "   ",
+   "out": ""
+  },
+  {
+   "mode": "reference",
+   "in": ".",
+   "out": ""
+  },
+  {
+   "mode": "hypothesis",
+   "in": ".",
+   "out": ""
+  },
+  {
+   "mode": "reference",
+   "in": "-",
+   "out": ""
+  },
+  {
+   "mode": "hypothesis",
+   "in": "-",
+   "out": ""
+  },
+  {
+   "mode": "reference",
+   "in": "'",
+   "out": "ʻ"
+  },
+  {
+   "mode": "hypothesis",
+   "in": "'",
+   "out": "ʻ"
+  }
+ ]
+}

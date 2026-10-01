@@ -1,0 +1,34 @@
+{
+  "name": "kotiba-win",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Kotiba for Windows — a 1:1 functional port of the macOS dictation app",
+  "type": "module",
+  "main": "dist/src/main/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "gate": "bash scripts/gate.sh"
+  },
+  "dependencies": {
+    "node-llama-cpp": "3.22.1",
+    "onnxruntime-node": "1.30.0",
+    "transcribe-cpp": "0.2.4",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "8.46.2",
+    "@typescript-eslint/parser": "8.46.2",
+    "electron": "43.4.0",
+    "electron-builder": "26.15.3",
+    "eslint": "9.39.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

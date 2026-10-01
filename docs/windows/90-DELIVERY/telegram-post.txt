@@ -1,0 +1,60 @@
+TELEGRAM ANNOUNCEMENT — Kotiba for Windows
+==========================================
+Ready to paste as-is. Uzbek version first, English below it.
+
+
+=== OʻZBEKCHA ===
+
+🖥 Kotiba endi Windowsʼda ham ishlaydi!
+
+Kotiba — bir tugmani bosib turib gapirasiz, u yozadi. Oʻzbek, rus va ingliz
+tillarida, va eng muhimi: OVOZINGIZ KOMPYUTERDAN CHIQMAYDI. Hammasi
+kompyuteringizning oʻzida ishlaydi — internetga ehtiyoj yoʻq, hech narsa
+serverga yuborilmaydi.
+
+📦 Fayl katta — taxminan 1.2 GB. Sababi: barcha uchta til modeli oʻrnatuvchi
+faylning ichida, shuning uchun oʻrnatgandan keyin hech narsa yuklab
+olinmaydi.
+
+⚠️ Oʻrnatishda Windows "Windows protected your PC" degan koʻk oyna
+chiqaradi. Bu normal holat — dastur pullik sertifikatga ega emas, xolos.
+Qoʻrqmang: "More info" tugmasini bosing, keyin "Run anyway" ni bosing.
+
+⌨️ Tugma: RIGHT CTRL (oʻng Ctrl). Ushlab turib gapiring, qoʻyib yuboring —
+matn kursor turgan joyga yoziladi, istalgan dasturda. (Mac versiyasidan
+farqli, chunki Windowsʼda Command tugmasi yoʻq. Sozlamalardan
+oʻzgartirish mumkin.)
+
+⏱ Har bir tilda birinchi gapirish biroz sekin boʻladi — model xotiraga
+yuklanadi. Keyingisidan tezlashadi. Grafik karta boʻlmagan noutbuklarda
+har bir gapirish bir necha soniya davom etadi — bu halol raqam, hech
+narsa yashirilmagan.
+
+Yuklab olish: [havolani shu yerga qoʻying]
+
+
+=== ENGLISH ===
+
+🖥 Kotiba now runs on Windows too!
+
+Kotiba — hold a key, speak, and it writes what you said. Uzbek, Russian and
+English, and the whole point: YOUR VOICE NEVER LEAVES YOUR LAPTOP.
+Everything runs locally — no internet needed, nothing sent to a server.
+
+📦 The file is large — about 1.2 GB. That's because all three language
+models are bundled inside the installer, so nothing needs to download
+after you install it.
+
+⚠️ During install, Windows will show a blue "Windows protected your PC"
+screen. This is expected — the app doesn't have a paid certificate, that's
+all. Click "More info", then "Run anyway".
+
+⌨️ Hotkey: RIGHT CTRL. Hold it down while you speak, let go, and the text
+appears wherever your cursor is, in any app. (Different from the Mac
+version since Windows has no Command key — changeable in Settings.)
+
+⏱ The first dictation in each language is a bit slow while its model
+loads — after that it's quick. On a laptop with no graphics card, expect
+a few seconds per dictation — that's an honest number, nothing hidden.
+
+Download: [link here]

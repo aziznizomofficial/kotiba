@@ -1,0 +1,119 @@
+KOTIBA FOR WINDOWS — voice to text for Uzbek, Russian and English
+==================================================================
+
+Everything is inside the app. No download after install, no setup, no account,
+no internet. Your voice never leaves this laptop.
+
+Read this before you install. Four things below will look like the app is
+broken. It isn't — this is what installing an app like this on Windows
+normally looks like.
+
+
+BEFORE YOU INSTALL — four things to expect
+-------------------------------------------
+
+1. Windows will show a blue screen that says "Windows protected your PC".
+   This happens to every app that doesn't have a paid certificate from
+   Microsoft (about $300 a year, which this project doesn't spend). It is
+   not a virus warning about this specific file — it just means Windows
+   doesn't yet recognise the publisher. Click:
+
+       More info  ->  Run anyway
+
+2. The hotkey is the RIGHT CTRL key, held down while you speak. Windows has
+   no Command key, so this is different from the Mac version — you can
+   change it in Settings if Right Ctrl doesn't work for you.
+
+3. The first time you dictate in a language, it will feel slow — a few
+   seconds — because Kotiba is loading that language's model into memory.
+   Every dictation after that, in the same language, is much faster.
+
+4. Speed is honest, not impressive: on a laptop with no separate graphics
+   card, expect a few seconds per dictation. English is the SLOWEST
+   language here — the opposite of the Mac version, where English is
+   instant. That's because macOS has a built-in English engine and Windows
+   has nothing equivalent, so English runs through the same kind of model
+   as Russian and Uzbek. Uzbek and Russian are not slower because they're
+   worse — they were never fast to begin with on either platform.
+
+
+INSTALL
+-------
+
+1. Run the installer. It installs just for your Windows account — no admin
+   password needed, and nothing is shared with other accounts on this PC.
+
+2. Windows will show the SmartScreen warning from point 1 above.
+   More info -> Run anyway.
+
+3. Windows will ask for microphone permission the first time you dictate.
+   Say yes — this is the only permission Kotiba needs. (Unlike the Mac
+   version, there's nothing to turn on by hand in Settings afterwards.)
+
+
+USING IT
+--------
+
+Hold RIGHT CTRL, speak, let go. The text appears wherever your cursor is —
+any app, any text field.
+
+Kotiba lives in the system tray (the small icons near the clock, bottom right
+of the screen). Click the icon for:
+
+  Language   Automatic, or pin one. PIN UZBEK IF YOU ARE SPEAKING UZBEK.
+             Automatic guesses from the sound and gets it wrong sometimes,
+             especially on short phrases. Pinning is instant and always
+             right.
+
+  Mode       Super (clean up what I said), Note, Message.
+
+  Settings   Speed vs accuracy, your own vocabulary, history, diagnostics,
+             and the hotkey — change it here if Right Ctrl clashes with
+             something else you use.
+
+
+WHERE FILES LIVE
+-----------------
+
+Kotiba is installed just for you, in your own Windows user account. Your
+settings, dictation history and diagnostics are stored locally on this
+laptop only, inside your user folder — never uploaded, never sent anywhere.
+
+
+IF SOMETHING GOES WRONG
+------------------------
+
+Nothing here fails silently on purpose. Settings -> Diagnostics records what
+happened on every dictation — which engine ran, how long each stage took,
+and what went wrong. It contains no transcript text, so it's safe to send on
+if you're asking for help.
+
+  "It heard nothing"           Check your microphone is selected correctly
+                               in Windows Sound settings. If it keeps
+                               happening, quit and reopen Kotiba.
+
+  Nothing is typed             Try clicking into the text field first, then
+                               hold Right Ctrl again. Some apps intercept
+                               keys in ways Kotiba can't see around.
+
+  It's slow                   Expected on a laptop with no graphics card —
+                               see point 4 above. It gets faster after the
+                               first dictation in each language.
+
+  Uzbek comes out as nonsense  Pin Uzbek in the tray menu instead of
+                               Automatic.
+
+
+UNINSTALL
+---------
+
+Windows Settings -> Apps -> Installed apps -> Kotiba -> Uninstall.
+(On older Windows: Control Panel -> Programs and Features -> Kotiba ->
+Uninstall.)
+
+This removes the app itself. If you also want to delete your saved history
+and settings, delete Kotiba's folder in your user profile afterwards — the
+uninstaller will tell you where it is.
+
+
+Built by Aziz Nizom. Kotiba (котиба) is Uzbek for secretary.

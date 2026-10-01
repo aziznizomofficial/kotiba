@@ -1,0 +1,400 @@
+{
+  "cases": [
+    {
+      "byLanguage": {
+        "ar": "\u0645\u0631\u062d\u0628\u0627\u060c \u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f",
+        "en": "\u0645\u0631\u062d\u0628\u0627 , \u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+        "ru": "\u0645\u0631\u062d\u0628\u0627 , \u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+        "tr": "\u0645\u0631\u062d\u0628\u0627 , \u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+        "uz": "\u0645\u0631\u062d\u0628\u0627 , \u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?"
+      },
+      "changed": true,
+      "exercises": "Latin comma and question mark inside Arabic, spaced before",
+      "idempotent": true,
+      "in": "\u0645\u0631\u062d\u0628\u0627 , \u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+      "out": "\u0645\u0631\u062d\u0628\u0627\u060c \u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0623\u0648\u0644\u0627\u061b \u062b\u0627\u0646\u064a\u0627",
+        "en": "\u0623\u0648\u0644\u0627;\u062b\u0627\u0646\u064a\u0627",
+        "ru": "\u0623\u0648\u0644\u0627;\u062b\u0627\u0646\u064a\u0627",
+        "tr": "\u0623\u0648\u0644\u0627;\u062b\u0627\u0646\u064a\u0627",
+        "uz": "\u0623\u0648\u0644\u0627;\u062b\u0627\u0646\u064a\u0627"
+      },
+      "changed": true,
+      "exercises": "Latin semicolon, no space after",
+      "idempotent": true,
+      "in": "\u0623\u0648\u0644\u0627;\u062b\u0627\u0646\u064a\u0627",
+      "out": "\u0623\u0648\u0644\u0627\u061b \u062b\u0627\u0646\u064a\u0627"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0646\u0639\u0645\u060c \u0644\u0627",
+        "en": "\u0646\u0639\u0645\u060c\u0644\u0627",
+        "ru": "\u0646\u0639\u0645\u060c\u0644\u0627",
+        "tr": "\u0646\u0639\u0645\u060c\u0644\u0627",
+        "uz": "\u0646\u0639\u0645\u060c\u0644\u0627"
+      },
+      "changed": true,
+      "exercises": "Arabic comma glued to the next word",
+      "idempotent": true,
+      "in": "\u0646\u0639\u0645\u060c\u0644\u0627",
+      "out": "\u0646\u0639\u0645\u060c \u0644\u0627"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0647\u0644 \u0648\u0635\u0644\u062a\u061f",
+        "en": "\u0647\u0644 \u0648\u0635\u0644\u062a \u061f",
+        "ru": "\u0647\u0644 \u0648\u0635\u0644\u062a \u061f",
+        "tr": "\u0647\u0644 \u0648\u0635\u0644\u062a \u061f",
+        "uz": "\u0647\u0644 \u0648\u0635\u0644\u062a \u061f"
+      },
+      "changed": true,
+      "exercises": "space before an Arabic question mark",
+      "idempotent": true,
+      "in": "\u0647\u0644 \u0648\u0635\u0644\u062a \u061f",
+      "out": "\u0647\u0644 \u0648\u0635\u0644\u062a\u061f"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone\u061f",
+        "en": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone?",
+        "ru": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone?",
+        "tr": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone?",
+        "uz": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone?"
+      },
+      "changed": true,
+      "exercises": "a Latin word ending an Arabic question: the sentence is Arabic",
+      "idempotent": true,
+      "in": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone?",
+      "out": "\u0647\u0644 \u0639\u0646\u062f\u0643 iPhone\u061f"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645",
+        "en": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645",
+        "ru": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645",
+        "tr": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645",
+        "uz": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645"
+      },
+      "changed": false,
+      "exercises": "an English sentence keeps its own marks",
+      "idempotent": true,
+      "in": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645",
+      "out": "\u0634\u0643\u0631\u0627. Are you there? \u0646\u0639\u0645"
+    },
+    {
+      "byLanguage": {
+        "ar": "Hello, \u0645\u0631\u062d\u0628\u0627\u060c hi, ok?",
+        "en": "Hello, \u0645\u0631\u062d\u0628\u0627, hi, ok?",
+        "ru": "Hello, \u0645\u0631\u062d\u0628\u0627, hi, ok?",
+        "tr": "Hello, \u0645\u0631\u062d\u0628\u0627, hi, ok?",
+        "uz": "Hello, \u0645\u0631\u062d\u0628\u0627, hi, ok?"
+      },
+      "changed": true,
+      "exercises": "Latin letters outnumber Arabic: Latin marks stay",
+      "idempotent": true,
+      "in": "Hello, \u0645\u0631\u062d\u0628\u0627, hi, ok?",
+      "out": "Hello, \u0645\u0631\u062d\u0628\u0627\u060c hi, ok?"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631",
+        "en": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631",
+        "ru": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631",
+        "tr": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631",
+        "uz": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631"
+      },
+      "changed": false,
+      "exercises": "a comma between digits is a number",
+      "idempotent": true,
+      "in": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631",
+      "out": "\u062f\u0641\u0639\u062a 1,500 \u062f\u064a\u0646\u0627\u0631"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0627\u0644\u0633\u0627\u0639\u0629 3.5 \u0648 20%",
+        "en": "\u0627\u0644\u0633\u0627\u0639\u0629 \u0663\u066b\u0665 \u0648 \u0662\u0660\u066a",
+        "ru": "\u0627\u0644\u0633\u0627\u0639\u0629 \u0663\u066b\u0665 \u0648 \u0662\u0660\u066a",
+        "tr": "\u0627\u0644\u0633\u0627\u0639\u0629 \u0663\u066b\u0665 \u0648 \u0662\u0660\u066a",
+        "uz": "\u0627\u0644\u0633\u0627\u0639\u0629 \u0663\u066b\u0665 \u0648 \u0662\u0660\u066a"
+      },
+      "changed": true,
+      "exercises": "Arabic-Indic digits, decimal separator and percent sign",
+      "idempotent": true,
+      "in": "\u0627\u0644\u0633\u0627\u0639\u0629 \u0663\u066b\u0665 \u0648 \u0662\u0660\u066a",
+      "out": "\u0627\u0644\u0633\u0627\u0639\u0629 3.5 \u0648 20%"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0639\u0627\u0645 1990",
+        "en": "\u0639\u0627\u0645 \u06f1\u06f9\u06f9\u06f0",
+        "ru": "\u0639\u0627\u0645 \u06f1\u06f9\u06f9\u06f0",
+        "tr": "\u0639\u0627\u0645 \u06f1\u06f9\u06f9\u06f0",
+        "uz": "\u0639\u0627\u0645 \u06f1\u06f9\u06f9\u06f0"
+      },
+      "changed": true,
+      "exercises": "Persian digits",
+      "idempotent": true,
+      "in": "\u0639\u0627\u0645 \u06f1\u06f9\u06f9\u06f0",
+      "out": "\u0639\u0627\u0645 1990"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0631\u0642\u0645 3,000 \u0641\u0642\u0637",
+        "en": "\u0631\u0642\u0645 \u0663\u066c\u0660\u0660\u0660 \u0641\u0642\u0637",
+        "ru": "\u0631\u0642\u0645 \u0663\u066c\u0660\u0660\u0660 \u0641\u0642\u0637",
+        "tr": "\u0631\u0642\u0645 \u0663\u066c\u0660\u0660\u0660 \u0641\u0642\u0637",
+        "uz": "\u0631\u0642\u0645 \u0663\u066c\u0660\u0660\u0660 \u0641\u0642\u0637"
+      },
+      "changed": true,
+      "exercises": "Arabic thousands separator between digits",
+      "idempotent": true,
+      "in": "\u0631\u0642\u0645 \u0663\u066c\u0660\u0660\u0660 \u0641\u0642\u0637",
+      "out": "\u0631\u0642\u0645 3,000 \u0641\u0642\u0637"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645",
+        "en": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645",
+        "ru": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645",
+        "tr": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645",
+        "uz": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645"
+      },
+      "changed": false,
+      "exercises": "a full stop between digits ends nothing",
+      "idempotent": true,
+      "in": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645",
+      "out": "\u0641\u064a 3.5 \u0633\u0627\u0639\u0627\u062a. \u062b\u0645"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u062c\u0645\u064a\u0644",
+        "en": "\u062c\u0645\u0640\u0640\u0640\u064a\u0644",
+        "ru": "\u062c\u0645\u0640\u0640\u0640\u064a\u0644",
+        "tr": "\u062c\u0645\u0640\u0640\u0640\u064a\u0644",
+        "uz": "\u062c\u0645\u0640\u0640\u0640\u064a\u0644"
+      },
+      "changed": true,
+      "exercises": "tatweel",
+      "idempotent": true,
+      "in": "\u062c\u0645\u0640\u0640\u0640\u064a\u0644",
+      "out": "\u062c\u0645\u064a\u0644"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629 \u0628\u0631\u0644\u064a\u0646",
+        "en": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629\u0650 \u0628\u0631\u0644\u064a\u0646\u064e",
+        "ru": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629\u0650 \u0628\u0631\u0644\u064a\u0646\u064e",
+        "tr": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629\u0650 \u0628\u0631\u0644\u064a\u0646\u064e",
+        "uz": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629\u0650 \u0628\u0631\u0644\u064a\u0646\u064e"
+      },
+      "changed": true,
+      "exercises": "case endings: final kasra and fatha",
+      "idempotent": true,
+      "in": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629\u0650 \u0628\u0631\u0644\u064a\u0646\u064e",
+      "out": "\u0641\u064a \u0645\u062f\u064a\u0646\u0629 \u0628\u0631\u0644\u064a\u0646"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627",
+        "en": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627",
+        "ru": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627",
+        "tr": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627",
+        "uz": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627"
+      },
+      "changed": false,
+      "exercises": "passive damma, shadda and tanwin are kept",
+      "idempotent": true,
+      "in": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627",
+      "out": "\u064a\u064f\u0639\u062f \u0641\u0639\u0651\u0627\u0644 \u0634\u0643\u0631\u064b\u0627"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u062a\u064f\u0645\u064a\u0651\u0632\u060c",
+        "en": "\u062a\u064f\u0645\u064a\u0651\u0632\u064f\u060c",
+        "ru": "\u062a\u064f\u0645\u064a\u0651\u0632\u064f\u060c",
+        "tr": "\u062a\u064f\u0645\u064a\u0651\u0632\u064f\u060c",
+        "uz": "\u062a\u064f\u0645\u064a\u0651\u0632\u064f\u060c"
+      },
+      "changed": true,
+      "exercises": "shadda kept, final damma dropped before a mark",
+      "idempotent": true,
+      "in": "\u062a\u064f\u0645\u064a\u0651\u0632\u064f\u060c",
+      "out": "\u062a\u064f\u0645\u064a\u0651\u0632\u060c"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0642\u0627\u0644: \u0646\u0639\u0645",
+        "en": "\u0642\u0627\u0644\u064e: \u0646\u0639\u0645\u0652",
+        "ru": "\u0642\u0627\u0644\u064e: \u0646\u0639\u0645\u0652",
+        "tr": "\u0642\u0627\u0644\u064e: \u0646\u0639\u0645\u0652",
+        "uz": "\u0642\u0627\u0644\u064e: \u0646\u0639\u0645\u0652"
+      },
+      "changed": true,
+      "exercises": "final fatha and sukun",
+      "idempotent": true,
+      "in": "\u0642\u0627\u0644\u064e: \u0646\u0639\u0645\u0652",
+      "out": "\u0642\u0627\u0644: \u0646\u0639\u0645"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628",
+        "en": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628",
+        "ru": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628",
+        "tr": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628",
+        "uz": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628"
+      },
+      "changed": false,
+      "exercises": "superscript alef is spelling, kept",
+      "idempotent": true,
+      "in": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628",
+      "out": "\u0647\u0670\u0630\u0627 \u0643\u062a\u0627\u0628"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f",
+        "en": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+        "ru": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+        "tr": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+        "uz": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?"
+      },
+      "changed": true,
+      "exercises": "a newline ends a sentence",
+      "idempotent": true,
+      "in": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643 ?",
+      "out": "\u0645\u0631\u062d\u0628\u0627\n\u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631\u061f \u0646\u0639\u0645\u060c \u0634\u0643\u0631\u0627",
+        "en": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631 \u061f \u0646\u0639\u0645 \u060c \u0634\u0643\u0631\u0627",
+        "ru": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631 \u061f \u0646\u0639\u0645 \u060c \u0634\u0643\u0631\u0627",
+        "tr": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631 \u061f \u0646\u0639\u0645 \u060c \u0634\u0643\u0631\u0627",
+        "uz": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631 \u061f \u0646\u0639\u0645 \u060c \u0634\u0643\u0631\u0627"
+      },
+      "changed": true,
+      "exercises": "Arabic marks already, spaced the wrong way",
+      "idempotent": true,
+      "in": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631 \u061f \u0646\u0639\u0645 \u060c \u0634\u0643\u0631\u0627",
+      "out": "\u0647\u0644 \u0623\u0646\u062a \u0628\u062e\u064a\u0631\u061f \u0646\u0639\u0645\u060c \u0634\u0643\u0631\u0627"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive\u060c \u0645\u0646 \u0641\u0636\u0644\u0643",
+        "en": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive , \u0645\u0646 \u0641\u0636\u0644\u0643",
+        "ru": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive , \u0645\u0646 \u0641\u0636\u0644\u0643",
+        "tr": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive , \u0645\u0646 \u0641\u0636\u0644\u0643",
+        "uz": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive , \u0645\u0646 \u0641\u0636\u0644\u0643"
+      },
+      "changed": true,
+      "exercises": "a Latin name inside an Arabic sentence",
+      "idempotent": true,
+      "in": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive , \u0645\u0646 \u0641\u0636\u0644\u0643",
+      "out": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive\u060c \u0645\u0646 \u0641\u0636\u0644\u0643"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u060c \u0628\u062f\u0627\u064a\u0629",
+        "en": "\u060c \u0628\u062f\u0627\u064a\u0629",
+        "ru": "\u060c \u0628\u062f\u0627\u064a\u0629",
+        "tr": "\u060c \u0628\u062f\u0627\u064a\u0629",
+        "uz": "\u060c \u0628\u062f\u0627\u064a\u0629"
+      },
+      "changed": false,
+      "exercises": "a mark at the very start",
+      "idempotent": true,
+      "in": "\u060c \u0628\u062f\u0627\u064a\u0629",
+      "out": "\u060c \u0628\u062f\u0627\u064a\u0629"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0646\u0647\u0627\u064a\u0629\u060c",
+        "en": "\u0646\u0647\u0627\u064a\u0629 ,",
+        "ru": "\u0646\u0647\u0627\u064a\u0629 ,",
+        "tr": "\u0646\u0647\u0627\u064a\u0629 ,",
+        "uz": "\u0646\u0647\u0627\u064a\u0629 ,"
+      },
+      "changed": true,
+      "exercises": "a mark at the very end",
+      "idempotent": true,
+      "in": "\u0646\u0647\u0627\u064a\u0629 ,",
+      "out": "\u0646\u0647\u0627\u064a\u0629\u060c"
+    },
+    {
+      "byLanguage": {
+        "ar": "Hello, world?",
+        "en": "Hello, world?",
+        "ru": "Hello, world?",
+        "tr": "Hello, world?",
+        "uz": "Hello, world?"
+      },
+      "changed": false,
+      "exercises": "no Arabic letter: untouched",
+      "idempotent": true,
+      "in": "Hello, world?",
+      "out": "Hello, world?"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?",
+        "en": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?",
+        "ru": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?",
+        "tr": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?",
+        "uz": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?"
+      },
+      "changed": false,
+      "exercises": "Cyrillic only: untouched",
+      "idempotent": true,
+      "in": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?",
+      "out": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440?"
+    },
+    {
+      "byLanguage": {
+        "ar": "salom, do\u02bbstim?",
+        "en": "salom, do\u02bbstim?",
+        "ru": "salom, do\u02bbstim?",
+        "tr": "salom, do\u02bbstim?",
+        "uz": "salom, do\u02bbstim?"
+      },
+      "changed": false,
+      "exercises": "Uzbek only: untouched",
+      "idempotent": true,
+      "in": "salom, do\u02bbstim?",
+      "out": "salom, do\u02bbstim?"
+    },
+    {
+      "byLanguage": {
+        "ar": "\u0661\u0662\u0663 , \u061f",
+        "en": "\u0661\u0662\u0663 , \u061f",
+        "ru": "\u0661\u0662\u0663 , \u061f",
+        "tr": "\u0661\u0662\u0663 , \u061f",
+        "uz": "\u0661\u0662\u0663 , \u061f"
+      },
+      "changed": false,
+      "exercises": "Arabic-Indic digits but no Arabic letter: untouched",
+      "idempotent": true,
+      "in": "\u0661\u0662\u0663 , \u061f",
+      "out": "\u0661\u0662\u0663 , \u061f"
+    },
+    {
+      "byLanguage": {
+        "ar": "",
+        "en": "",
+        "ru": "",
+        "tr": "",
+        "uz": ""
+      },
+      "changed": false,
+      "exercises": "empty",
+      "idempotent": true,
+      "in": "",
+      "out": ""
+    }
+  ],
+  "fixture": "arabic-delivery",
+  "generator": "kotiba-golden v1 \u2014 swift run kotiba-golden windows/fixtures/golden",
+  "note": "Arabic as delivered, every mode. Inside Arabic text (the sentence so far \u2014 back to                 the last . ! ? U+061F or newline, a full stop between digits excepted \u2014 has at                 least as many Arabic letters as Latin and Cyrillic ones) `,` `;` `?` become                 U+060C U+061B U+061F with no space before and one after when a letter or digit                 follows; a comma between two digits stays. Arabic-Indic U+0660-0669 and Persian                 U+06F0-06F9 digits become 0-9; U+066B and U+066C between digits become . and ,;                 U+066A after a digit becomes %. Tatweel U+0640 is removed. A fatha, damma, kasra                 or sukun (U+064E U+064F U+0650 U+0652) that is the last mark of a word \u2014 the next                 non-mark scalar is not an Arabic letter \u2014 is removed; tanwin, shadda and every                 mark inside a word stay. Text with no Arabic letter is returned unchanged.",
+  "source": "KotibaCore/ArabicNormaliser.swift \u2014 ArabicNormaliser.forDelivery, Orthography.forDelivery"
+}

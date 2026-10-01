@@ -1,0 +1,16 @@
+// Project-wide build settings for the generated Kotiba.xcodeproj (wired in by project.yml).
+//
+// DEVELOPMENT_TEAM is deliberately empty here: it is the one setting that is different for every
+// person who builds this app. Set yours in Config/Local.xcconfig, which git ignores:
+//
+//     DEVELOPMENT_TEAM = ABCDE12345
+//
+// (Xcode › Settings › Accounts shows the ten-character Team ID; a free personal team works.)
+// `make generate` creates Config/Local.xcconfig from ~/.config/kotiba/Local.xcconfig if that file
+// exists, so one copy serves every checkout and worktree.
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+
+// Optional include: absent on a clean clone, which then builds unsigned-team and fails at signing
+// with a message that names the missing team, not at manifest time.
+#include? "Local.xcconfig"

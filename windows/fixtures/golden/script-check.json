@@ -1,0 +1,979 @@
+{
+  "cases": [
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "the measured mis-route: 6 letters across 5 distinct words",
+      "looksLikeUzbekInCyrillic": true,
+      "nonRussianCyrillicCount": 6,
+      "script": "cyrillic",
+      "text": "\u0445\u043e\u043f \u043c\u0430\u0441\u0430\u043b\u0430\u043d \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u043d\u0456\u043c\u04d9\u0434\u0435\u0439\u0441\u0430\u043c \u0493\u0430\u043c\u044b\u043d \u044f\u049b\u0448\u044b \u0442\u044b\u043d\u044b\u049b \u0447\u043e\u0442\u043a\u0435 \u049b\u044b\u043b\u0438\u043f \u0435\u0437 \u0431\u043e\u043b\u0430\u0434\u044b",
+      "uzbekCyrillicWordCount": 5
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "WhisperKit small on a Russian clip \u2014 well-formed Latin, no error",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "Marguelan Ceisimbay podcast",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Cyrillic out of the Uzbek engine is impossible, not surprising",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u041c\u0430\u0440\u0433\u0443\u043b\u0430\u043d \u0421\u0435\u0439\u0441\u0438\u043c\u0431\u0430\u0439",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "real Russian",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u041c\u0430\u0440\u0433\u0443\u043b\u0430\u043d\u0441\u0438\u0441\u0438\u043c\u0431\u0430\u0439.",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "real Russian",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u0422\u0430\u043a, \u0441\u043a\u0430\u0436\u0438 \u043c\u043d\u0435 \u0431\u0440\u0430\u0442",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "real Russian, \u0451 and \u044c",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u043d\u0443 \u0447\u0451 \u043f\u043e\u0439\u0434\u0451\u043c \u043d\u0430 \u0442\u0440\u0435\u043d\u044c\u043a\u0443",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "two Uzbek-Cyrillic words \u2014 under the 4-word evidence bar",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u0412\u0441\u0442\u0440\u0435\u0442\u0438\u043c\u0441\u044f \u043d\u0430 \u0492\u0430\u0444\u0443\u0440 \u0492\u0443\u043b\u043e\u043c \u0432 \u0441\u0435\u043c\u044c",
+      "uzbekCyrillicWordCount": 2
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "4 letters, 2 words \u2014 more letters than the mis-route, and not a mis-route",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 4,
+      "script": "cyrillic",
+      "text": "\u042f \u0436\u0438\u0432\u0443 \u043d\u0430 \u049a\u045e\u0439\u043b\u0438\u049b, \u0440\u044f\u0434\u043e\u043c \u0441 \u041c\u0438\u0440\u0437\u043e \u0423\u043b\u0443\u0493\u0431\u0435\u043a",
+      "uzbekCyrillicWordCount": 2
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Kazakh letters are not Uzbek letters",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u041d\u04b1\u0440\u0441\u04b1\u043b\u0442\u0430\u043d \u043f\u0440\u0438\u0435\u0445\u0430\u043b \u0438\u0437 \u049a\u0430\u0437\u0430\u049b\u0441\u0442\u0430\u043d\u0430",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Tajik letters are not Uzbek letters",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u041f\u043e\u0437\u0432\u043e\u043d\u0438 \u04b7\u0430\u043c\u0448\u0435\u0434\u0443 \u0432 \u0422\u043e\u04b7\u0438\u043a\u0438\u0441\u0442\u043e\u043d",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Ukrainian letters are not Uzbek letters",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u0426\u0435 \u043d\u0435 \u0440\u043e\u0441\u0456\u0439\u0441\u044c\u043a\u0430 \u043c\u043e\u0432\u0430, \u0446\u0435 \u041a\u0438\u0457\u0432",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Karakalpak: one qof, one word",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 1,
+      "script": "cyrillic",
+      "text": "\u041a\u0430\u0440\u0430\u043a\u0430\u043b\u043f\u0430\u043a\u0441\u0442\u0430\u043d, \u041d\u04e9\u043a\u0438\u0441, \u041c\u043e\u0439\u043d\u0430\u049b",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "all 33 Russian lowercase letters count zero",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u0430\u0431\u0432\u0433\u0434\u0435\u0451\u0436\u0437\u0438\u0439\u043a\u043b\u043c\u043d\u043e\u043f\u0440\u0441\u0442\u0443\u0444\u0445\u0446\u0447\u0448\u0449\u044a\u044b\u044c\u044d\u044e\u044f",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "and all 33 uppercase \u2014 the count lowercases first",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u0410\u0411\u0412\u0413\u0414\u0415\u0401\u0416\u0417\u0418\u0419\u041a\u041b\u041c\u041d\u041e\u041f\u0420\u0421\u0422\u0423\u0424\u0425\u0426\u0427\u0428\u0429\u042a\u042b\u042c\u042d\u042e\u042f",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "the wider rule's letters: Kazakh, Tajik, Ukrainian \u2014 all zero",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u04d9\u04b1\u04af\u04a3\u04b7\u04e3\u0456\u0457\u0454\u0491",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "\u045e twice",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u045e\u045e",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "\u049b twice",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u049b\u049b",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "\u0493 twice",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u0493\u0493",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "\u04b3 twice",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u04b3\u04b3",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "the same four uppercase",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 4,
+      "script": "cyrillic",
+      "text": "\u040e\u049a\u0492\u04b2",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "a code-switched line is the user's normal register, not an error",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "mixed",
+      "text": "bugun bozorga bordim, \u043f\u043e\u0442\u043e\u043c \u0434\u043e\u043c\u043e\u0439",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "normal Uzbek Latin output",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "xo\u02bbp qarang aka, demo akkaunt ochib",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Latin is never Uzbek-in-Cyrillic",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "qaranglar edi nima deysan",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+0041, the first Latin letter counted",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "A",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+005A, the last",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "Z",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+0061",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "a",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+007A",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "z",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "accented Latin is NOT Latin here \u2014 script neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u00c9\u00f1\u0161",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "the okina and tutuq are not Latin \u2014 script neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u02bb\u02bc",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+0400, the first Cyrillic scalar counted",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u0400",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+04FF, the last",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "cyrillic",
+      "text": "\u04ff",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+0500 is Cyrillic Supplement and is NOT counted",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u0500",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Greek is neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u03b1\u03b2",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "digits and an ellipsis are neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "123 \u2026",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "empty is neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "one Latin letter and one Cyrillic letter make it mixed",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "mixed",
+      "text": "salom \u041c\u0430\u0440\u0433\u0443\u043b\u0430\u043d",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 1.000000000,
+      "exercises": "Arabic: agrees with an Arabic route and nothing else",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "arabic",
+      "text": "\u062a\u0634\u0643\u0644\u062a \u0641\u064a \u0627\u0644\u0645\u062d\u064a\u0637 \u0627\u0644\u0623\u0637\u0644\u0633\u064a \u0639\u0627\u0635\u0641\u0629 \u062c\u062f\u064a\u062f\u0629.",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 1.000000000,
+      "exercises": "tashkeel marks are not letters, the letters around them are",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "arabic",
+      "text": "\u0645\u064f\u0633\u064e\u0645\u0651\u0627\u0629",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Arabic-Indic digits and Arabic punctuation alone: neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u0661\u0662\u0663 \u060c \u061b \u061f",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.521739130,
+      "exercises": "Arabic with a Latin name: mixed",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "mixed",
+      "text": "\u0623\u0631\u0633\u0644 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 Google Drive",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 1.000000000,
+      "exercises": "presentation forms count as Arabic letters",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "arabic",
+      "text": "\ufefb\ufe8d",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 1.000000000,
+      "exercises": "tatweel is a letter-shaped mark: Unicode calls it a letter (Lm)",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "arabic",
+      "text": "\u0640",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+0660/U+0669 Arabic-Indic digits: neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u0660\u0669",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "U+0600, a number sign in the block: neither",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u0600",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 1.000000000,
+      "exercises": "U+06FF, the last letter of the block",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "arabic",
+      "text": "\u06ff",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 1.000000000,
+      "exercises": "Arabic Supplement and Extended-A letters",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "arabic",
+      "text": "\u0750\u08a0",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.454545455,
+      "exercises": "Cyrillic and Arabic: mixed",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "mixed",
+      "text": "\u0411\u0443 \u0435\u0440\u0434\u0430 \u0645\u0631\u062d\u0628\u0627",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Turkish: Latin, agrees with a Turkish route",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "\u0130stanbul'a gidiyoruz, \u00e7ok g\u00fczel.",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": false,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "Turkish letters beyond ASCII still carry ASCII letters",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "latin",
+      "text": "\u0131rmak \u015fimdi \u00f6\u011fle",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": true,
+        "en": true,
+        "ru": true,
+        "tr": true,
+        "uz": true
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "only Turkish letters and no ASCII: neither, like other accented Latin",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 0,
+      "script": "neither",
+      "text": "\u011f\u00fc\u015f\u0131\u00f6\u00e7",
+      "uzbekCyrillicWordCount": 0
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "1 distinct Uzbek-Cyrillic words \u2014 the bar is 4",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 2,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "2 distinct Uzbek-Cyrillic words \u2014 the bar is 4",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 3,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u044f\u049b\u0448\u044b",
+      "uzbekCyrillicWordCount": 2
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "3 distinct Uzbek-Cyrillic words \u2014 the bar is 4",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 4,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u044f\u049b\u0448\u044b \u0493\u0430\u043c\u044b\u043d",
+      "uzbekCyrillicWordCount": 3
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "4 distinct Uzbek-Cyrillic words \u2014 the bar is 4",
+      "looksLikeUzbekInCyrillic": true,
+      "nonRussianCyrillicCount": 5,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u044f\u049b\u0448\u044b \u0493\u0430\u043c\u044b\u043d \u049b\u044b\u043b\u0438\u043f",
+      "uzbekCyrillicWordCount": 4
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "5 distinct Uzbek-Cyrillic words \u2014 the bar is 4",
+      "looksLikeUzbekInCyrillic": true,
+      "nonRussianCyrillicCount": 6,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u044f\u049b\u0448\u044b \u0493\u0430\u043c\u044b\u043d \u049b\u044b\u043b\u0438\u043f \u0442\u044b\u043d\u044b\u049b",
+      "uzbekCyrillicWordCount": 5
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "6 distinct Uzbek-Cyrillic words \u2014 the bar is 4",
+      "looksLikeUzbekInCyrillic": true,
+      "nonRussianCyrillicCount": 7,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u044f\u049b\u0448\u044b \u0493\u0430\u043c\u044b\u043d \u049b\u044b\u043b\u0438\u043f \u0442\u044b\u043d\u044b\u049b \u045e\u0437\u0431\u0435\u043a",
+      "uzbekCyrillicWordCount": 6
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": true,
+        "ru": true,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "the same word eight times is still one distinct word",
+      "looksLikeUzbekInCyrillic": false,
+      "nonRussianCyrillicCount": 16,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b \u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b ",
+      "uzbekCyrillicWordCount": 1
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "hyphens split words: the word splitter breaks on any non-letter",
+      "looksLikeUzbekInCyrillic": true,
+      "nonRussianCyrillicCount": 5,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b-\u044f\u049b\u0448\u044b-\u0493\u0430\u043c\u044b\u043d-\u049b\u044b\u043b\u0438\u043f",
+      "uzbekCyrillicWordCount": 4
+    },
+    {
+      "agreesWith": {
+        "ar": false,
+        "en": false,
+        "ru": false,
+        "tr": false,
+        "uz": false
+      },
+      "arabicShare": 0.000000000,
+      "exercises": "digits split words too, in THIS splitter \u2014 it splits on !isLetter",
+      "looksLikeUzbekInCyrillic": true,
+      "nonRussianCyrillicCount": 5,
+      "script": "cyrillic",
+      "text": "\u049b\u0430\u0440\u0430\u043d\u0493\u0430\u043b\u0430\u0434\u044b1\u044f\u049b\u0448\u044b1\u0493\u0430\u043c\u044b\u043d1\u049b\u044b\u043b\u0438\u043f",
+      "uzbekCyrillicWordCount": 4
+    }
+  ],
+  "constants": {
+    "arabicLetterRule": "in an Arabic range, Unicode Alphabetic, and general category not Mn",
+    "arabicRanges": [
+      "U+0600-U+06FF",
+      "U+0750-U+077F",
+      "U+08A0-U+08FF",
+      "U+FB50-U+FDFF",
+      "U+FE70-U+FEFF"
+    ],
+    "arabicShare": "Arabic letters / (ASCII Latin + Cyrillic + Arabic letters); 0 when there are none",
+    "cyrillicRange": "U+0400-U+04FF",
+    "latinRanges": [
+      "U+0041-U+005A",
+      "U+0061-U+007A"
+    ],
+    "letterCountIsCaseInsensitive": true,
+    "scriptOfTwoOrMoreScripts": "mixed",
+    "uzbekCyrillicEvidenceWords": 4,
+    "uzbekCyrillicLetters": [
+      "\u045e",
+      "\u0493",
+      "\u049b",
+      "\u04b3"
+    ],
+    "wordSplitter": "split on !Character.isLetter, then deduplicate through a set"
+  },
+  "count": 59,
+  "fixture": "script-check",
+  "generator": "kotiba-golden v1 \u2014 swift run kotiba-golden windows/fixtures/golden",
+  "note": "The output-script verifier, which runs after transcription and is the only cheap signal that a route was wrong. Three rules a port gets wrong by being reasonable: only ASCII A-Z/a-z count as Latin and only U+0400-U+04FF as Cyrillic, so `\\p{Script=Latin}` is not a substitute; the evidence is counted in DISTINCT WORDS, not letters, because by letters a Russian sentence naming two Tashkent places looks more Uzbek than the real mis-route; and `agrees` is one-directional per route, never symmetric.",
+  "source": "KotibaCore/Routing.swift \u2014 ScriptCheck"
+}

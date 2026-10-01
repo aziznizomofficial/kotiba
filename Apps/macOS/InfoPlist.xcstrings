@@ -1,0 +1,36 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "NSMicrophoneUsageDescription": {
+      "comment": "Shown by macOS when Kotiba first asks for the microphone.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kotiba transcribes what you dictate, on this Mac."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kotiba превращает вашу диктовку в текст прямо на этом Mac."
+          }
+        },
+        "uz-Latn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kotiba aytganlaringizni shu Mac kompyuterining oʻzida matnga aylantiradi."
+          }
+        },
+        "uz-Cyrl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kotiba айтганларингизни шу Mac компьютерининг ўзида матнга айлантиради."
+          }
+        }
+      }
+    }
+  }
+}

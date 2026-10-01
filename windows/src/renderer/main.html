@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      No remote anything, and no INLINE script: `script-src 'self'` refuses an inline
+      script element, which is why the page loads its module by `src`. The 0.2.0 pages mounted
+      from an inline module and would have opened blank under their own policy.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <title>Kotiba</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="root" class="app-root" style="height: 100%"></div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

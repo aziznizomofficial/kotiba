@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    // NodeNext, so `tsc` emits ESM that Electron and node run directly with no
+    // bundler. package.json is frozen (t01 only), so no bundler can be added later:
+    // the emitted output has to be runnable as-is. The cost is that every relative
+    // import needs an explicit `.js` extension — `import { Language } from
+    // '../contracts/index.js'` — even from a .ts file. TypeScript says so plainly if
+    // you forget, and vitest resolves the .js back to the .ts.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "rootDir": ".",
+    "outDir": "dist",
+    "sourceMap": true,
+    "declaration": false,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "useUnknownInCatchVariables": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"]
+}

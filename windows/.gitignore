@@ -1,0 +1,16 @@
+node_modules/
+dist/
+release/
+
+# Model weights never enter git. They are ~1.2 GB and they arrive from the `models-v2`
+# release and the public Hugging Face URLs, checked against a recorded sha256.
+fixtures/models/
+*.bin
+
+# Local scratch
+*.log
+.DS_Store
+
+# Native helpers staged for packaging (scripts/build-native-zig.sh or cmake --install)
+resources/native/
+build-native-zig/

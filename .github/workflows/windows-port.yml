@@ -1,0 +1,353 @@
+# Kotiba for Windows — the logic gate, then the real thing.
+#
+# t01 landed `logic` only: the pure-logic half of D-W10, on Linux, in under a minute.
+# t12 (this change) adds `build`: the parts that need a real Windows box — whisper.cpp
+# and the three native helpers with MSVC, the same logic tests again on `windows-latest`
+# (path building and local-day bucketing are exactly where Windows differs, and both are
+# silent when wrong), the models fetched and sha-verified, the installer packaged, a
+# headless `--check` over a committed WAV fixture, an assertion that the installer is
+# plausible (a 0-byte .exe passes build, upload and release without complaint), and the
+# installer published as a release asset — never a workflow artifact, because this
+# account is on the Free plan where artifact storage is 500 MB and a 1.2 GB installer
+# would not survive it, while a release asset allows 2 GB.
+#
+# THE PUSH TRIGGER IS NOT DECORATION. A workflow that exists only off the default branch
+# is undispatchable: the API refuses `workflow_dispatch` for a file it cannot find on
+# the default ref, and the 404 it returns names the file — so it reads as a typo in the
+# workflow name rather than as "this has not been merged yet". Triggering on pushes to
+# `windows-port` means the job runs, and is seen to run, before any of this reaches main.
+#
+# DEPENDENCIES THIS FILE ASSUMES BUT DOES NOT OWN. Several other in-flight tasks land
+# files this job calls; until they do, `build` fails here for the honest reason that the
+# file is missing, not a workflow bug:
+#   - windows/electron-builder.yml, windows/scripts/fetch-models.mjs   (t01 / t11)
+#   - windows/scripts/verify-installer.mjs                             (unowned in
+#     01-ARCHITECTURE.md as of this writing — needs an owner)
+#   - windows/native/kotiba-hook/, windows/native/kotiba-input/          (t07)
+#   - windows/fixtures/audio/*.wav                                     (t08)
+#   - kotiba.exe --check accepting --fixture / --models / --json         (t10)
+# `build` writes the three native executables to `windows/resources/native/` via
+# `cmake --install`, a path chosen because nothing else claims it — electron-builder.yml
+# should point `extraResources` there.
+
+name: Windows port
+
+on:
+  push:
+    # Two branches, and it stays that way. A worker who needs CI feedback on a Windows
+    # box they do not own adds their own branch here while iterating and REMOVES it
+    # before finishing — t15's `worktree-t15` and t16's `worktree-t16` were both added
+    # and both taken back out. An entry left behind is a workflow that keeps firing for
+    # a branch nobody is working on any more.
+    branches: [main, windows-port, worktree-t18]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows-port.yml'
+  pull_request:
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows-port.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  logic:
+    name: gate (typecheck, lint, tests, layering)
+    runs-on: ubuntu-latest
+    # A gate that can hang is a gate that burns the free-tier minutes. The whole thing
+    # is under a minute warm; ten is a generous ceiling for a cold npm ci.
+    timeout-minutes: 10
+
+    env:
+      # Nothing in this job runs Electron — the logic tests are the point and they run
+      # headless. Skipping the ~100 MB binary is most of the cold-start time.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      # And the on-device engines' install scripts: onnxruntime-node fetches ~500 MB of
+      # CUDA provider libraries from NuGet on linux-x64, which no test here loads.
+      ONNXRUNTIME_NODE_INSTALL: skip
+      NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      # gate.sh installs dependencies itself when node_modules is absent, so it works
+      # identically here and on a developer's machine. Nothing in CI does it a
+      # different way — a gate that only ever passes in one of the two places is not a gate.
+      - name: gate
+        run: bash windows/scripts/gate.sh
+
+  build:
+    name: build, smoke, release (windows-latest)
+    needs: logic
+    runs-on: windows-latest
+    # whisper.cpp + kotiba-stt each compile ggml from source on a 1-core/2-thread box
+    # (measured here 2026-08-11); cold, that is the majority of this budget. Warm, from
+    # cache, the whole job is a fraction of it. 75 is generous rather than tight, because
+    # a job that times out mid-release-upload leaves a half-published release behind.
+    timeout-minutes: 75
+
+    # `gh release create`/`upload` need write access to the repo's releases, which the
+    # default GITHUB_TOKEN does not have on a private repo unless granted here.
+    permissions:
+      contents: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      WHISPER_TAG: v1.9.2
+      MODELS_DIR: windows/fixtures/models
+      NATIVE_INSTALL_DIR: windows/resources/native
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      # The real Electron binary this time — `build` is what actually ships, so nothing
+      # here may be skipped the way `logic` skips it.
+      - name: npm ci
+        working-directory: windows
+        run: npm ci --no-audit --no-fund
+
+      # ---------------------------------------------------------------------------
+      # whisper.cpp v1.9.2 — D-W7, and the SIGILL this recipe exists to prevent
+      # ---------------------------------------------------------------------------
+      # cmake's GGML_NATIVE defaults to ON: compile for the CPU doing the building.
+      # GitHub's windows-latest fleet is heterogeneous — this repo has already served a
+      # Xeon 8573C and an AMD EPYC 7763 on consecutive runs — so a binary built on one
+      # runner can hit an illegal instruction (exit 132) restoring a cache from another.
+      # The CPU model goes in the cache key as belt and braces; the flags below are the
+      # actual fix and are forced OFF/ON exactly as `.github/workflows/windows-cpu-benchmark.yml`
+      # already proved works, and exactly as `windows/native/kotiba-stt/CMakeLists.txt` forces
+      # them for its own FetchContent build.
+      - name: Identify the CPU for the cache key
+        id: cpu
+        shell: pwsh
+        run: |
+          $m = ((Get-CimInstance Win32_Processor).Name -join '-') -replace '[^A-Za-z0-9]','-'
+          "model=$m" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "cpu: $m"
+
+      - name: Cache the whisper.cpp build
+        id: wcpp-cache
+        uses: actions/cache@v4
+        with:
+          path: wcpp
+          key: wcpp-${{ env.WHISPER_TAG }}-cpu-nonative-${{ runner.os }}-${{ steps.cpu.outputs.model }}
+
+      - name: Build whisper.cpp, CPU only, baseline ISA
+        if: steps.wcpp-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          git clone --depth 1 --branch "$WHISPER_TAG" https://github.com/ggml-org/whisper.cpp wcpp
+          cmake -S wcpp -B wcpp/build -DCMAKE_BUILD_TYPE=Release \
+                -DGGML_NATIVE=OFF \
+                -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_AVX512=OFF \
+                -DGGML_FMA=ON -DGGML_F16C=ON \
+                -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=ON -DWHISPER_BUILD_SERVER=OFF
+          cmake --build wcpp/build --config Release -j 2 --target whisper-cli
+
+      # NEVER trust a restored cache without running it: a poisoned cache from a
+      # different CPU is what produced exit 132 here before, and unproven it surfaces
+      # mid-build as a broken kotiba-stt link rather than as what it actually is.
+      - name: Prove the cached whisper.cpp binary actually runs here
+        shell: bash
+        run: |
+          CLI=$(find wcpp/build -iname 'whisper-cli.exe' | head -1)
+          if [ -z "$CLI" ]; then
+            echo "::error::no whisper-cli.exe in the cached/built tree — build did not produce one"
+            exit 1
+          fi
+          echo "cli: $CLI"
+          if ! "$CLI" --help >/dev/null 2>&1; then
+            echo "::error::whisper-cli will not execute here (exit $?). A cached build from a"
+            echo "::error::different CPU is the likely cause — bump the wcpp cache key."
+            exit 1
+          fi
+          echo "it runs"
+
+      # ---------------------------------------------------------------------------
+      # The three native helpers, MSVC. D-W7 / D-W4 / 01-ARCHITECTURE.md.
+      # ---------------------------------------------------------------------------
+      # windows-latest's default cmake generator is the installed Visual Studio, so no
+      # toolset needs to be named explicitly; -A x64 pins the architecture the AVX2
+      # build above targets rather than letting cmake infer it.
+      - name: Build native/kotiba-stt (links whisper.cpp from source, D-W7 parity)
+        shell: bash
+        run: |
+          cmake -S windows/native/kotiba-stt -B build/kotiba-stt \
+                -A x64 -DCMAKE_BUILD_TYPE=Release \
+                -DKOTIBA_WHISPER_SOURCE_DIR="$(pwd)/wcpp"
+          cmake --build build/kotiba-stt --config Release -j 2
+          cmake --install build/kotiba-stt --config Release --prefix "$NATIVE_INSTALL_DIR"
+
+      - name: Build native/kotiba-hook (WH_KEYBOARD_LL push-to-talk reporter, D-W4)
+        shell: bash
+        run: |
+          if [ ! -f windows/native/kotiba-hook/CMakeLists.txt ]; then
+            echo "::error::windows/native/kotiba-hook/CMakeLists.txt not found — t07 has not landed this component yet."
+            exit 1
+          fi
+          cmake -S windows/native/kotiba-hook -B build/kotiba-hook -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/kotiba-hook --config Release -j 2
+          cmake --install build/kotiba-hook --config Release --prefix "$NATIVE_INSTALL_DIR"
+
+      - name: Build native/kotiba-input (SendInput unicode + paste, D-W4)
+        shell: bash
+        run: |
+          if [ ! -f windows/native/kotiba-input/CMakeLists.txt ]; then
+            echo "::error::windows/native/kotiba-input/CMakeLists.txt not found — t07 has not landed this component yet."
+            exit 1
+          fi
+          cmake -S windows/native/kotiba-input -B build/kotiba-input -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/kotiba-input --config Release -j 2
+          cmake --install build/kotiba-input --config Release --prefix "$NATIVE_INSTALL_DIR"
+
+      - name: List what got installed
+        shell: bash
+        run: find "$NATIVE_INSTALL_DIR" -type f
+
+      # ---------------------------------------------------------------------------
+      # D-W10: the SAME logic tests, again, on Windows. Not redundant — path building
+      # and local-day bucketing are exactly where a port silently differs, and this is
+      # the only machine in the whole pipeline that can catch it.
+      # ---------------------------------------------------------------------------
+      - name: gate, again, on Windows
+        shell: bash
+        run: bash windows/scripts/gate.sh
+
+      - name: Compile TypeScript
+        working-directory: windows
+        run: npm run build
+
+      # ---------------------------------------------------------------------------
+      # Models — D-W3 / D-W9. Bundled, not fetched at first run: the Uzbek engine is not
+      # publicly gettable and a first-run download is a second chance to fail on Uzbek
+      # mobile data after the user already committed. Cached on the manifest's hash, so
+      # an unchanged manifest never re-pulls ~1.2 GB.
+      # ---------------------------------------------------------------------------
+      - name: Cache the models
+        id: models-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.MODELS_DIR }}
+          key: kotiba-models-${{ hashFiles('Scripts/Manifest.json') }}
+
+      - name: Fetch and sha256-verify the models
+        if: steps.models-cache.outputs.cache-hit != 'true'
+        shell: bash
+        working-directory: windows
+        run: node scripts/fetch-models.mjs --manifest ../Scripts/Manifest.json --dest fixtures/models
+
+      - name: Package with electron-builder
+        working-directory: windows
+        # Output directory pinned explicitly on the CLI rather than trusted to
+        # electron-builder.yml: tsc's own outDir is `dist` (package.json main is
+        # `dist/src/main/index.js`), and electron-builder's default output directory is
+        # also `dist` — an unconfigured collision that would silently eat the compiled
+        # app the moment packaging touched it. `release` is already the name this
+        # project's own `.gitignore` reserves for it.
+        run: npx electron-builder --win --x64 --publish never --config.directories.output=release
+
+      - name: Assert the installer is plausible, before anything trusts it
+        shell: bash
+        working-directory: windows
+        run: |
+          INSTALLER=$(find release -maxdepth 1 -iname '*.exe' | head -1)
+          if [ -z "$INSTALLER" ]; then
+            echo "::error::electron-builder produced no .exe under windows/release"
+            exit 1
+          fi
+          BYTES=$(stat -c%s "$INSTALLER" 2>/dev/null || stat -f%z "$INSTALLER")
+          echo "installer: $INSTALLER ($BYTES bytes)"
+          # D-W3: bundled models alone are ~1.17 GB. Half that is still definitively not
+          # a build that could contain them — a 0-byte .exe is the exact failure this
+          # guards, but so is a build that silently packaged without its resources.
+          if [ "$BYTES" -lt 600000000 ]; then
+            echo "::error::installer is implausibly small ($BYTES bytes) for a bundle that must contain ~1.17 GB of models"
+            exit 1
+          fi
+          echo "$INSTALLER" > installer-path.txt
+
+      - name: node windows/scripts/verify-installer.mjs
+        working-directory: windows
+        run: node scripts/verify-installer.mjs "$(cat installer-path.txt)"
+        shell: bash
+
+      # ---------------------------------------------------------------------------
+      # D-W10: `--check` runs the WHOLE pipeline over a committed WAV fixture and exits
+      # non-zero on anything actually wrong. It runs the UNPACKED app, not the
+      # installer — electron-builder always produces `release/win-unpacked/` as part of
+      # building the NSIS target, and running that directly means this step tests the
+      # real packaged binary without first installing it on the runner.
+      #
+      # The 10-minute bound is a step-level timeout rather than a shell `timeout`
+      # wrapper: Git Bash on windows-latest has no GNU `timeout`, and a step timeout
+      # fails the same way — clearly, with the step named in the log — without needing
+      # one.
+      # ---------------------------------------------------------------------------
+      - name: Smoke test — kotiba.exe --check over the committed WAV fixtures
+        timeout-minutes: 10
+        shell: bash
+        working-directory: windows
+        run: |
+          APP=$(find release/win-unpacked -maxdepth 1 -iname '*.exe' | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::no .exe in release/win-unpacked — electron-builder did not produce an unpacked app"
+            exit 1
+          fi
+          echo "app: $APP"
+
+          shopt -s nullglob
+          fixtures=(fixtures/audio/*.wav)
+          if [ ${#fixtures[@]} -eq 0 ]; then
+            echo "::error::no committed WAV fixtures under windows/fixtures/audio — t08 has not landed them yet"
+            exit 1
+          fi
+          echo "fixtures: ${fixtures[*]}"
+
+          # `--fixtures <DIR>`, not `--fixture <FILE>`: src/main/launch.ts defines the flag
+          # as a plural directory and `--check` walks it itself. This step used to pass the
+          # singular name one file at a time, and parseLaunchOptions ignores an argument it
+          # does not recognise — deliberately, because Electron and Windows both inject
+          # their own — so the wrong name did not error, it just left `--check` reading its
+          # own packaged `resources/fixtures/audio`, which is empty. It then failed with
+          # "no .wav fixtures", naming a directory nobody in this file had mentioned.
+          #
+          # The path must be a WINDOWS path: this is Git Bash driving a native .exe, and
+          # `pwd` here yields /d/a/... which the app cannot open. `pwd -W` yields D:/a/... .
+          "$APP" --check --fixtures "$(pwd -W)/fixtures/audio" --models "$MODELS_DIR" --json
+
+      - name: Publish the installer as a release asset (not a workflow artifact)
+        shell: bash
+        working-directory: windows
+        run: |
+          # A workflow artifact caps at what the account's plan allows for artifact
+          # storage — 500 MB on this Free-plan account — and a ~1.2 GB installer would
+          # not survive it. A release asset allows 2 GB, so that is the only place this
+          # can go. One rolling private pre-release per branch, so a re-run replaces
+          # rather than accumulates.
+          TAG="windows-build-${{ github.ref_name }}"
+          INSTALLER="$(cat installer-path.txt)"
+          NOTES="Windows build of ${{ github.sha }} on ${{ github.ref_name }}, from run ${{ github.run_id }}. Unsigned (D-W8) — SmartScreen will warn; More info → Run anyway."
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --title "Kotiba for Windows — $TAG" \
+              --notes "$NOTES" \
+              --prerelease
+          else
+            gh release edit "$TAG" --notes "$NOTES"
+          fi
+          gh release upload "$TAG" "$INSTALLER" --clobber

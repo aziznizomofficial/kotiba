@@ -1,0 +1,79 @@
+name: CI
+
+# Bands 1 and 2 only: pure logic and audio-graph tests against WAV fixtures. No signing, no
+# models, no microphone — a test that touches the mic needs a TCC grant that does not exist on
+# a runner, and would pop a dialog locally.
+#
+# ⚠️ KNOWN RISK, recorded rather than hidden: this package needs Swift 6.2 and the macOS 26
+# SDK (swift-tools-version 6.2, platforms .macOS(.v26)). GitHub-hosted runners lag Apple's
+# releases, so `macos-latest` may not yet ship a toolchain new enough to parse Package.swift
+# at all. If the first run fails at manifest parsing, that is why — and the answer is either
+# to wait for the runner image, or to register this Mac as a self-hosted runner, which is the
+# only machine the Band-3 model tests could ever run on anyway.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The whisper.cpp xcframework is a 53 MB pinned binary target fetched from a GitHub
+      # release. Caching it keeps the download off every run, and the checksum in Package.swift
+      # means a poisoned cache fails the build rather than shipping.
+      - name: Cache binary dependencies
+        uses: actions/cache@v4
+        with:
+          path: .build/artifacts
+          key: artifacts-${{ hashFiles('Package.swift') }}
+
+      - name: Toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Build
+        run: swift build
+
+      - name: Test (Bands 1 and 2)
+        run: swift test
+
+      # The architectural rule that keeps Band 1 fast is worth more as a build failure than as
+      # a paragraph in a document.
+      - name: KotibaCore stays pure
+        run: make lint
+
+      # windows/fixtures/golden is the Mac's answer sheet for the Windows port; stale or
+      # ungeneratable fixtures used to pass both platforms' gates.
+      - name: Golden fixtures are current
+        run: make golden-check
+
+  generate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # The .xcodeproj is gitignored because XcodeGen's output is byte-identical across runs.
+      # Generation itself needs no network: XcodeGen reads project.yml, not the package graph.
+      # If that ever stops being true, this job catches it rather than a confusing diff.
+      - name: Project generation is deterministic
+        run: |
+          xcodegen generate
+          shasum -a 256 Kotiba.xcodeproj/project.pbxproj > /tmp/first
+          xcodegen generate
+          shasum -a 256 Kotiba.xcodeproj/project.pbxproj > /tmp/second
+          diff /tmp/first /tmp/second
+          git status --porcelain --untracked-files=no | tee /tmp/dirty
+          test ! -s /tmp/dirty

@@ -1,0 +1,1356 @@
+{
+  "cases": [
+    {
+      "isUzbek": true,
+      "mass": 0.800000000,
+      "name": "clean Uzbek, measured \u2014 tr 0.63 / az 0.17 / uz 0.00",
+      "posterior": {
+        "az": 0.170000,
+        "en": 0.120000,
+        "ru": 0.080000,
+        "tr": 0.630000,
+        "uz": 0.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.800000000,
+      "name": "clean Uzbek, measured \u2014 tr 0.63 / az 0.17 / uz 0.00",
+      "posterior": {
+        "az": 0.170000,
+        "en": 0.120000,
+        "ru": 0.080000,
+        "tr": 0.630000,
+        "uz": 0.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.800000000,
+      "name": "clean Uzbek, measured \u2014 tr 0.63 / az 0.17 / uz 0.00",
+      "posterior": {
+        "az": 0.170000,
+        "en": 0.120000,
+        "ru": 0.080000,
+        "tr": 0.630000,
+        "uz": 0.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.213503650,
+      "name": "GAP-01 clip 0000, ggml-base \u2014 heard mostly as Korean",
+      "posterior": {
+        "ar": 0.098000,
+        "az": 0.014000,
+        "de": 0.044000,
+        "en": 0.088000,
+        "id": 0.042000,
+        "ko": 0.159000,
+        "tr": 0.103000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.213503650,
+      "name": "GAP-01 clip 0000, ggml-base \u2014 heard mostly as Korean",
+      "posterior": {
+        "ar": 0.098000,
+        "az": 0.014000,
+        "de": 0.044000,
+        "en": 0.088000,
+        "id": 0.042000,
+        "ko": 0.159000,
+        "tr": 0.103000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.213503650,
+      "name": "GAP-01 clip 0000, ggml-base \u2014 heard mostly as Korean",
+      "posterior": {
+        "ar": 0.098000,
+        "az": 0.014000,
+        "de": 0.044000,
+        "en": 0.088000,
+        "id": 0.042000,
+        "ko": 0.159000,
+        "tr": 0.103000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.030000000,
+      "name": "clear English",
+      "posterior": {
+        "en": 0.940000,
+        "ru": 0.030000,
+        "tr": 0.030000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.030000000,
+      "name": "clear English",
+      "posterior": {
+        "en": 0.940000,
+        "ru": 0.030000,
+        "tr": 0.030000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.030000000,
+      "name": "clear English",
+      "posterior": {
+        "en": 0.940000,
+        "ru": 0.030000,
+        "tr": 0.030000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear English, near-certain",
+      "posterior": {
+        "en": 0.998000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear English, near-certain",
+      "posterior": {
+        "en": 0.998000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear English, near-certain",
+      "posterior": {
+        "en": 0.998000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear Russian",
+      "posterior": {
+        "en": 0.050000,
+        "ru": 0.880000,
+        "uk": 0.070000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear Russian",
+      "posterior": {
+        "en": 0.050000,
+        "ru": 0.880000,
+        "uk": 0.070000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear Russian",
+      "posterior": {
+        "en": 0.050000,
+        "ru": 0.880000,
+        "uk": 0.070000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear Russian, near-certain",
+      "posterior": {
+        "en": 0.001000,
+        "nn": 0.001000,
+        "ru": 0.996000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear Russian, near-certain",
+      "posterior": {
+        "en": 0.001000,
+        "nn": 0.001000,
+        "ru": 0.996000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "clear Russian, near-certain",
+      "posterior": {
+        "en": 0.001000,
+        "nn": 0.001000,
+        "ru": 0.996000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.012738854,
+      "name": "the worst control measured, ru03 at 0.012",
+      "posterior": {
+        "az": 0.004000,
+        "ru": 0.930000,
+        "tr": 0.008000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.012738854,
+      "name": "the worst control measured, ru03 at 0.012",
+      "posterior": {
+        "az": 0.004000,
+        "ru": 0.930000,
+        "tr": 0.008000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.012738854,
+      "name": "the worst control measured, ru03 at 0.012",
+      "posterior": {
+        "az": 0.004000,
+        "ru": 0.930000,
+        "tr": 0.008000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.550000000,
+      "name": "Tajik \u2014 same geography, different family, still in the cluster",
+      "posterior": {
+        "en": 0.250000,
+        "ru": 0.200000,
+        "tg": 0.550000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.550000000,
+      "name": "Tajik \u2014 same geography, different family, still in the cluster",
+      "posterior": {
+        "en": 0.250000,
+        "ru": 0.200000,
+        "tg": 0.550000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.550000000,
+      "name": "Tajik \u2014 same geography, different family, still in the cluster",
+      "posterior": {
+        "en": 0.250000,
+        "ru": 0.200000,
+        "tg": 0.550000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.230000000,
+      "name": "diagnostics: English at cluster mass 0.230, routed to Uzbek",
+      "posterior": {
+        "en": 0.770000,
+        "tr": 0.230000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.230000000,
+      "name": "diagnostics: English at cluster mass 0.230, routed to Uzbek",
+      "posterior": {
+        "en": 0.770000,
+        "tr": 0.230000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.230000000,
+      "name": "diagnostics: English at cluster mass 0.230, routed to Uzbek",
+      "posterior": {
+        "en": 0.770000,
+        "tr": 0.230000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.119000000,
+      "name": "diagnostics: English at cluster mass 0.119, routed to Uzbek",
+      "posterior": {
+        "en": 0.881000,
+        "tr": 0.119000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.119000000,
+      "name": "diagnostics: English at cluster mass 0.119, routed to Uzbek",
+      "posterior": {
+        "en": 0.881000,
+        "tr": 0.119000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.119000000,
+      "name": "diagnostics: English at cluster mass 0.119, routed to Uzbek",
+      "posterior": {
+        "en": 0.881000,
+        "tr": 0.119000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.183000000,
+      "name": "diagnostics: real Uzbek at 0.183",
+      "posterior": {
+        "en": 0.817000,
+        "tr": 0.183000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.183000000,
+      "name": "diagnostics: real Uzbek at 0.183",
+      "posterior": {
+        "en": 0.817000,
+        "tr": 0.183000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.183000000,
+      "name": "diagnostics: real Uzbek at 0.183",
+      "posterior": {
+        "en": 0.817000,
+        "tr": 0.183000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.012200000,
+      "name": "diagnostics: real Uzbek at 0.0122 \u2014 this is the silent mis-route",
+      "posterior": {
+        "ru": 0.987800,
+        "tr": 0.012200
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.012200000,
+      "name": "diagnostics: real Uzbek at 0.0122 \u2014 this is the silent mis-route",
+      "posterior": {
+        "ru": 0.987800,
+        "tr": 0.012200
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.012200000,
+      "name": "diagnostics: real Uzbek at 0.0122 \u2014 this is the silent mis-route",
+      "posterior": {
+        "ru": 0.987800,
+        "tr": 0.012200
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "empty posterior",
+      "posterior": {},
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "empty posterior",
+      "posterior": {},
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "empty posterior",
+      "posterior": {},
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "all-zero posterior",
+      "posterior": {
+        "en": 0.000000,
+        "uz": 0.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "all-zero posterior",
+      "posterior": {
+        "en": 0.000000,
+        "uz": 0.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "all-zero posterior",
+      "posterior": {
+        "en": 0.000000,
+        "uz": 0.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.630000000,
+      "name": "unnormalised \u2014 the rule divides through",
+      "posterior": {
+        "en": 37.000000,
+        "tr": 63.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.630000000,
+      "name": "unnormalised \u2014 the rule divides through",
+      "posterior": {
+        "en": 37.000000,
+        "tr": 63.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.630000000,
+      "name": "unnormalised \u2014 the rule divides through",
+      "posterior": {
+        "en": 37.000000,
+        "tr": 63.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.630000000,
+      "name": "unnormalised, large",
+      "posterior": {
+        "en": 3700.000000,
+        "tr": 6300.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.630000000,
+      "name": "unnormalised, large",
+      "posterior": {
+        "en": 3700.000000,
+        "tr": 6300.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.630000000,
+      "name": "unnormalised, large",
+      "posterior": {
+        "en": 3700.000000,
+        "tr": 6300.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.050000000,
+      "name": "exactly at 0.05, exactly representable \u2014 1 against 19",
+      "posterior": {
+        "en": 19.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.050000000,
+      "name": "exactly at 0.05, exactly representable \u2014 1 against 19",
+      "posterior": {
+        "en": 19.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.050000000,
+      "name": "exactly at 0.05, exactly representable \u2014 1 against 19",
+      "posterior": {
+        "en": 19.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.050000000,
+      "name": "exactly at 0.05 as decimals",
+      "posterior": {
+        "en": 0.950000,
+        "tr": 0.050000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.050000000,
+      "name": "exactly at 0.05 as decimals",
+      "posterior": {
+        "en": 0.950000,
+        "tr": 0.050000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.050000000,
+      "name": "exactly at 0.05 as decimals",
+      "posterior": {
+        "en": 0.950000,
+        "tr": 0.050000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.047619048,
+      "name": "just under 0.05 \u2014 1 against 20",
+      "posterior": {
+        "en": 20.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.047619048,
+      "name": "just under 0.05 \u2014 1 against 20",
+      "posterior": {
+        "en": 20.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.047619048,
+      "name": "just under 0.05 \u2014 1 against 20",
+      "posterior": {
+        "en": 20.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.052631579,
+      "name": "just over 0.05 \u2014 1 against 18",
+      "posterior": {
+        "en": 18.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.052631579,
+      "name": "just over 0.05 \u2014 1 against 18",
+      "posterior": {
+        "en": 18.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.052631579,
+      "name": "just over 0.05 \u2014 1 against 18",
+      "posterior": {
+        "en": 18.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.500000000,
+      "name": "exactly at 0.5 \u2014 the abandoned threshold",
+      "posterior": {
+        "en": 1.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.500000000,
+      "name": "exactly at 0.5 \u2014 the abandoned threshold",
+      "posterior": {
+        "en": 1.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.500000000,
+      "name": "exactly at 0.5 \u2014 the abandoned threshold",
+      "posterior": {
+        "en": 1.000000,
+        "tr": 1.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.070000000,
+      "name": "cluster mass spread across all seven codes",
+      "posterior": {
+        "az": 0.010000,
+        "en": 0.930000,
+        "kk": 0.010000,
+        "ky": 0.010000,
+        "tg": 0.010000,
+        "tk": 0.010000,
+        "tr": 0.010000,
+        "uz": 0.010000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.070000000,
+      "name": "cluster mass spread across all seven codes",
+      "posterior": {
+        "az": 0.010000,
+        "en": 0.930000,
+        "kk": 0.010000,
+        "ky": 0.010000,
+        "tg": 0.010000,
+        "tk": 0.010000,
+        "tr": 0.010000,
+        "uz": 0.010000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.070000000,
+      "name": "cluster mass spread across all seven codes",
+      "posterior": {
+        "az": 0.010000,
+        "en": 0.930000,
+        "kk": 0.010000,
+        "ky": 0.010000,
+        "tg": 0.010000,
+        "tk": 0.010000,
+        "tr": 0.010000,
+        "uz": 0.010000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.990000000,
+      "name": "uz alone wins outright",
+      "posterior": {
+        "en": 0.010000,
+        "uz": 0.990000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.990000000,
+      "name": "uz alone wins outright",
+      "posterior": {
+        "en": 0.010000,
+        "uz": 0.990000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.990000000,
+      "name": "uz alone wins outright",
+      "posterior": {
+        "en": 0.010000,
+        "uz": 0.990000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 1.000000000,
+      "name": "the whole mass is Turkic",
+      "posterior": {
+        "tr": 1.000000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 1.000000000,
+      "name": "the whole mass is Turkic",
+      "posterior": {
+        "tr": 1.000000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": true,
+      "mass": 1.000000000,
+      "name": "the whole mass is Turkic",
+      "posterior": {
+        "tr": 1.000000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language az at 0.06 against ja 0.94",
+      "posterior": {
+        "az": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language az at 0.06 against ja 0.94",
+      "posterior": {
+        "az": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language az at 0.06 against ja 0.94",
+      "posterior": {
+        "az": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language kk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "kk": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language kk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "kk": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language kk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "kk": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language ky at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ky": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language ky at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ky": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language ky at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ky": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language tg at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tg": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language tg at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tg": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language tg at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tg": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language tk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tk": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language tk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tk": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language tk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tk": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language tr at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tr": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language tr at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tr": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language tr at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tr": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language uz at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "uz": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": true,
+      "mass": 0.060000000,
+      "name": "single language uz at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "uz": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.060000000,
+      "name": "single language uz at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "uz": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ar at 0.06 against ja 0.94",
+      "posterior": {
+        "ar": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ar at 0.06 against ja 0.94",
+      "posterior": {
+        "ar": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ar at 0.06 against ja 0.94",
+      "posterior": {
+        "ar": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ba at 0.06 against ja 0.94",
+      "posterior": {
+        "ba": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ba at 0.06 against ja 0.94",
+      "posterior": {
+        "ba": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ba at 0.06 against ja 0.94",
+      "posterior": {
+        "ba": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language de at 0.06 against ja 0.94",
+      "posterior": {
+        "de": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language de at 0.06 against ja 0.94",
+      "posterior": {
+        "de": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language de at 0.06 against ja 0.94",
+      "posterior": {
+        "de": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language en at 0.06 against ja 0.94",
+      "posterior": {
+        "en": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language en at 0.06 against ja 0.94",
+      "posterior": {
+        "en": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language en at 0.06 against ja 0.94",
+      "posterior": {
+        "en": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language fa at 0.06 against ja 0.94",
+      "posterior": {
+        "fa": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language fa at 0.06 against ja 0.94",
+      "posterior": {
+        "fa": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language fa at 0.06 against ja 0.94",
+      "posterior": {
+        "fa": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language id at 0.06 against ja 0.94",
+      "posterior": {
+        "id": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language id at 0.06 against ja 0.94",
+      "posterior": {
+        "id": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language id at 0.06 against ja 0.94",
+      "posterior": {
+        "id": 0.060000,
+        "ja": 0.940000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ko at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ko": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ko at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ko": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ko at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ko": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language mn at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "mn": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language mn at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "mn": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language mn at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "mn": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ru at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ru": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ru at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ru": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ru at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ru": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language tt at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tt": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language tt at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tt": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language tt at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "tt": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ug at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ug": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ug at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ug": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language ug at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "ug": 0.060000
+      },
+      "threshold": 0.500000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language uk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "uk": 0.060000
+      },
+      "threshold": 0.012000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language uk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "uk": 0.060000
+      },
+      "threshold": 0.050000
+    },
+    {
+      "isUzbek": false,
+      "mass": 0.000000000,
+      "name": "single language uk at 0.06 against ja 0.94",
+      "posterior": {
+        "ja": 0.940000,
+        "uk": 0.060000
+      },
+      "threshold": 0.500000
+    }
+  ],
+  "constants": {
+    "comparison": ">=",
+    "defaultThreshold": 0.050000,
+    "turkicCluster": [
+      "az",
+      "kk",
+      "ky",
+      "tg",
+      "tk",
+      "tr",
+      "uz"
+    ]
+  },
+  "count": 129,
+  "fixture": "cluster-mass",
+  "generator": "kotiba-golden v1 \u2014 swift run kotiba-golden windows/fixtures/golden",
+  "massTolerance": "1e-9",
+  "massToleranceWhy": "`mass` sums a dictionary's values, and dictionary iteration order differs between processes and between languages, so the last bits of the sum are not portable. Compare `mass` within 1e-9; compare `isUzbek` exactly. No case here sits within 1e-9 of its threshold except the two deliberately exact ones, whose ratio is representable with no error at all.",
+  "note": "Turkic cluster mass, the acoustic tier of the router. The rule is `mass >= threshold`, not `>`: a tie routes to Uzbek on purpose, because the unified engine cannot emit Uzbek at all while the Uzbek engine merely emits English badly. `mass` is the summed probability of the cluster over the total of every entry, and returns 0 for an empty or all-zero posterior rather than dividing by zero.",
+  "source": "KotibaCore/Routing.swift \u2014 ClusterMass.mass / ClusterMass.isUzbek"
+}

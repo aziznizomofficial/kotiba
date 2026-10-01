@@ -1,0 +1,821 @@
+{
+  "cases": [
+    {
+      "counted": 9,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "plain English: every word known",
+      "known": 9,
+      "latin": 9,
+      "readsAsEnglish": true,
+      "text": "Please send the report to the team before lunch.",
+      "words": 9
+    },
+    {
+      "counted": 4,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "short English",
+      "known": 4,
+      "latin": 4,
+      "readsAsEnglish": true,
+      "text": "Okay, fix them all.",
+      "words": 4
+    },
+    {
+      "counted": 1,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "one word",
+      "known": 1,
+      "latin": 1,
+      "readsAsEnglish": true,
+      "text": "Okay.",
+      "words": 1
+    },
+    {
+      "counted": 8,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "I mid-sentence is counted",
+      "known": 8,
+      "latin": 9,
+      "readsAsEnglish": true,
+      "text": "I think we should move the meeting to Thursday.",
+      "words": 9
+    },
+    {
+      "counted": 12,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "clitics: 'll, n't, 's",
+      "known": 12,
+      "latin": 12,
+      "readsAsEnglish": true,
+      "text": "We'll see, but I don't think it's ready and they shouldn't ship.",
+      "words": 12
+    },
+    {
+      "counted": 6,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "curly apostrophes fold to '",
+      "known": 6,
+      "latin": 6,
+      "readsAsEnglish": true,
+      "text": "It\u2019s the cat\u2019s toy, isn\u2019t it?",
+      "words": 6
+    },
+    {
+      "counted": 7,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "proper nouns and an acronym are not counted",
+      "known": 7,
+      "latin": 10,
+      "readsAsEnglish": true,
+      "text": "Ask Gonka about the Codex bridge on the OVH server.",
+      "words": 10
+    },
+    {
+      "counted": 6,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "a capital after the first letter: not counted",
+      "known": 6,
+      "latin": 9,
+      "readsAsEnglish": true,
+      "text": "Open YouTube and iCloud, then check the MCP logs.",
+      "words": 9
+    },
+    {
+      "counted": 5,
+      "coverage": 0.600000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "a capitalised word that starts a sentence IS counted",
+      "known": 3,
+      "latin": 5,
+      "readsAsEnglish": true,
+      "text": "Deploy it. Kotib should restart.",
+      "words": 5
+    },
+    {
+      "counted": 10,
+      "coverage": 0.700000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "lowercase jargon is counted as unknown",
+      "known": 7,
+      "latin": 10,
+      "readsAsEnglish": true,
+      "text": "the api key for the vps is in the keychain",
+      "words": 10
+    },
+    {
+      "counted": 3,
+      "coverage": 0.666667,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "apostrophes inside words are kept",
+      "known": 2,
+      "latin": 3,
+      "readsAsEnglish": true,
+      "text": "rock'n'roll o'clock ma'am",
+      "words": 3
+    },
+    {
+      "counted": 2,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "an apostrophe at the edge of a word is not part of it",
+      "known": 2,
+      "latin": 2,
+      "readsAsEnglish": true,
+      "text": "'quoted' words",
+      "words": 2
+    },
+    {
+      "counted": 2,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "digits are not words",
+      "known": 2,
+      "latin": 2,
+      "readsAsEnglish": true,
+      "text": "Twenty five. 25!",
+      "words": 2
+    },
+    {
+      "counted": 5,
+      "coverage": 0.000000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "made-up Latin: nothing known",
+      "known": 0,
+      "latin": 5,
+      "readsAsEnglish": false,
+      "text": "Morvalen tikoshar penduvi askarel dunemba.",
+      "words": 5
+    },
+    {
+      "counted": 5,
+      "coverage": 0.200000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "diacritics: every such word is unknown",
+      "known": 1,
+      "latin": 5,
+      "readsAsEnglish": false,
+      "text": "Ke\u0161tar volun\u0117 \u0161imka tar l\u0117mos.",
+      "words": 5
+    },
+    {
+      "counted": 5,
+      "coverage": 0.200000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "a few short words look English",
+      "known": 1,
+      "latin": 6,
+      "readsAsEnglish": false,
+      "text": "De morvalen sal tikoshar met Windows.",
+      "words": 6
+    },
+    {
+      "counted": 5,
+      "coverage": 0.600000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "mostly English-looking, one in three unknown",
+      "known": 3,
+      "latin": 5,
+      "readsAsEnglish": true,
+      "text": "I can tikoshar a penduvi.",
+      "words": 5
+    },
+    {
+      "counted": 3,
+      "coverage": 0.666667,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "two of three known: 0.67 is under 0.7",
+      "known": 2,
+      "latin": 3,
+      "readsAsEnglish": true,
+      "text": "Has made tolvik?",
+      "words": 3
+    },
+    {
+      "counted": 6,
+      "coverage": 0.166667,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "Uzbek Latin",
+      "known": 1,
+      "latin": 6,
+      "readsAsEnglish": false,
+      "text": "bugun bozorga bordim va non oldim.",
+      "words": 6
+    },
+    {
+      "counted": 6,
+      "coverage": 0.166667,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "Uzbek with the okina",
+      "known": 1,
+      "latin": 6,
+      "readsAsEnglish": false,
+      "text": "xo\u02bbp, qarang aka, men hozir kelaman.",
+      "words": 6
+    },
+    {
+      "counted": 5,
+      "coverage": 0.400000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "Uzbek with ASCII apostrophes",
+      "known": 2,
+      "latin": 5,
+      "readsAsEnglish": false,
+      "text": "xo'p, men ham borsam bo'ladimi?",
+      "words": 5
+    },
+    {
+      "counted": 5,
+      "coverage": 0.400000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "Uzbek words that happen to be English words",
+      "known": 2,
+      "latin": 5,
+      "readsAsEnglish": false,
+      "text": "men ham shu gapni aytdim",
+      "words": 5
+    },
+    {
+      "counted": 7,
+      "coverage": 0.714286,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "code-switched, mostly English",
+      "known": 5,
+      "latin": 7,
+      "readsAsEnglish": true,
+      "text": "first send all the files, keyin ko'ramiz",
+      "words": 7
+    },
+    {
+      "counted": 9,
+      "coverage": 0.111111,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "Uzbek with one English word",
+      "known": 1,
+      "latin": 9,
+      "readsAsEnglish": false,
+      "text": "bu loyiha uchun yangi dizayn kerak edi, deadline ertaga",
+      "words": 9
+    },
+    {
+      "counted": 3,
+      "coverage": 0.000000,
+      "cyrillic": 3,
+      "doubt": null,
+      "exercises": "Russian: not judged here",
+      "known": 0,
+      "latin": 0,
+      "readsAsEnglish": false,
+      "text": "\u041f\u0440\u0438\u0432\u0435\u0442, \u043a\u0430\u043a \u0434\u0435\u043b\u0430?",
+      "words": 3
+    },
+    {
+      "counted": 3,
+      "coverage": 0.666667,
+      "cyrillic": 1,
+      "doubt": "notEnglish",
+      "exercises": "more Latin than Cyrillic words: judged",
+      "known": 2,
+      "latin": 2,
+      "readsAsEnglish": true,
+      "text": "\u041f\u0440\u0438\u0432\u0435\u0442 hello world",
+      "words": 3
+    },
+    {
+      "counted": 3,
+      "coverage": 0.333333,
+      "cyrillic": 2,
+      "doubt": null,
+      "exercises": "more Cyrillic than Latin: not judged",
+      "known": 1,
+      "latin": 1,
+      "readsAsEnglish": false,
+      "text": "\u041f\u0440\u0438\u0432\u0435\u0442 \u043c\u0438\u0440 hello",
+      "words": 3
+    },
+    {
+      "counted": 0,
+      "coverage": null,
+      "cyrillic": 0,
+      "doubt": "noWords",
+      "exercises": "empty: no words",
+      "known": 0,
+      "latin": 0,
+      "readsAsEnglish": false,
+      "text": "",
+      "words": 0
+    },
+    {
+      "counted": 0,
+      "coverage": null,
+      "cyrillic": 0,
+      "doubt": "noWords",
+      "exercises": "punctuation only: no words",
+      "known": 0,
+      "latin": 0,
+      "readsAsEnglish": false,
+      "text": "...",
+      "words": 0
+    },
+    {
+      "counted": 0,
+      "coverage": null,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "a number is a transcript, not an absence of one",
+      "known": 0,
+      "latin": 0,
+      "readsAsEnglish": false,
+      "text": "25",
+      "words": 0
+    },
+    {
+      "counted": 2,
+      "coverage": 0.000000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "Greek: words, neither Latin nor Cyrillic",
+      "known": 0,
+      "latin": 0,
+      "readsAsEnglish": false,
+      "text": "\u03b1\u03b2\u03b3 \u03b4\u03b5",
+      "words": 2
+    },
+    {
+      "counted": 2,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "the list's own accented entries",
+      "known": 2,
+      "latin": 2,
+      "readsAsEnglish": true,
+      "text": "caf\u00e9 clich\u00e9",
+      "words": 2
+    },
+    {
+      "counted": 0,
+      "coverage": null,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "all capitals: not counted",
+      "known": 0,
+      "latin": 1,
+      "readsAsEnglish": false,
+      "text": "\u00c9CLAIRS",
+      "words": 1
+    },
+    {
+      "counted": 1,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "supplement: a whole English dictation the list lacks",
+      "known": 1,
+      "latin": 1,
+      "readsAsEnglish": true,
+      "text": "Yeah.",
+      "words": 1
+    },
+    {
+      "counted": 1,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "supplement: ok",
+      "known": 1,
+      "latin": 1,
+      "readsAsEnglish": true,
+      "text": "Ok.",
+      "words": 1
+    },
+    {
+      "counted": 6,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "supplement: yep, app, email",
+      "known": 6,
+      "latin": 6,
+      "readsAsEnglish": true,
+      "text": "Yep, the app sent the email.",
+      "words": 6
+    },
+    {
+      "counted": 5,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "supplement: nope, gonna, upload, online",
+      "known": 5,
+      "latin": 6,
+      "readsAsEnglish": true,
+      "text": "Nope, I'm gonna upload it online.",
+      "words": 6
+    },
+    {
+      "counted": 1,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "a hesitation beside a word is not counted",
+      "known": 1,
+      "latin": 2,
+      "readsAsEnglish": true,
+      "text": "Um, yeah.",
+      "words": 2
+    },
+    {
+      "counted": 1,
+      "coverage": 0.000000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "only hesitations: counted, and not English",
+      "known": 0,
+      "latin": 1,
+      "readsAsEnglish": false,
+      "text": "Uh.",
+      "words": 1
+    },
+    {
+      "counted": 3,
+      "coverage": 0.000000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "several hesitations and nothing else",
+      "known": 0,
+      "latin": 3,
+      "readsAsEnglish": false,
+      "text": "Um uh hmm.",
+      "words": 3
+    },
+    {
+      "counted": 2,
+      "coverage": 0.000000,
+      "cyrillic": 0,
+      "doubt": "notEnglish",
+      "exercises": "a hesitation beside non-English",
+      "known": 0,
+      "latin": 3,
+      "readsAsEnglish": false,
+      "text": "Um morvalen tikoshar.",
+      "words": 3
+    },
+    {
+      "counted": 5,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "digit suffixes are not counted",
+      "known": 5,
+      "latin": 10,
+      "readsAsEnglish": true,
+      "text": "Er, the 1st and 2nd of the 90s at 9am.",
+      "words": 10
+    },
+    {
+      "counted": 3,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "3rd: `rd` is a suffix",
+      "known": 3,
+      "latin": 4,
+      "readsAsEnglish": true,
+      "text": "Meet on the 3rd.",
+      "words": 4
+    },
+    {
+      "counted": 3,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "a spaced digit does not make the next word a suffix",
+      "known": 3,
+      "latin": 3,
+      "readsAsEnglish": true,
+      "text": "I saw 2 cats.",
+      "words": 3
+    },
+    {
+      "counted": 3,
+      "coverage": 1.000000,
+      "cyrillic": 0,
+      "doubt": null,
+      "exercises": "an apostrophe at the edge",
+      "known": 3,
+      "latin": 3,
+      "readsAsEnglish": true,
+      "text": "The apps' downloads.",
+      "words": 3
+    }
+  ],
+  "constants": {
+    "lexiconCount": 39154,
+    "lexiconSHA256": "92a9c795a84409c474ecd3de75ee1183671549cbdfa11bfcd22d8960490e5b0d",
+    "notEnglishBelow": 0.700000,
+    "readsAsEnglishFrom": 0.500000
+  },
+  "count": 45,
+  "fixture": "transcript-check",
+  "generator": "kotiba-golden v1 \u2014 swift run kotiba-golden windows/fixtures/golden",
+  "lookups": [
+    {
+      "isEnglishWord": true,
+      "word": "a"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "i"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "the"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "okay"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "\u00e9clairs"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "zygote"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "don't"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "shouldn't"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "we'll"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "cat's"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "o'clock"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "api"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "kotib"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "gonka"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "va"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "bu"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "men"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "ham"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "koszta"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "n't"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "'s"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "yeah"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "ok"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "yep"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "yup"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "nope"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "nah"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "alright"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "gotcha"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "huh"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "oops"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "lol"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "gonna"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "wanna"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "gotta"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "kinda"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "dunno"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "anyways"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "app"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "apps"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "online"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "offline"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "download"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "downloads"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "downloaded"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "upload"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "uploaded"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "website"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "websites"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "setup"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "login"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "email"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "emails"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "browser"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "screenshot"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "screenshots"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "inbox"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "username"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "wifi"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "laptop"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "podcast"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "blog"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "app's"
+    },
+    {
+      "isEnglishWord": true,
+      "word": "email's"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "um"
+    },
+    {
+      "isEnglishWord": false,
+      "word": "uh"
+    }
+  ],
+  "note": "The key-up reading of Parakeet's transcript (DictationSession step 4a\u2032). Words are runs of Unicode-alphabetic scalars, with ' or U+2019 kept only between two letters; a word after . ! ? (or the first) starts a sentence. A word is not counted if any scalar after its first is uppercase, or if its first is uppercase, it does not start a sentence and it is not \"I\", or if the scalar before it is numeric (the st of 1st, the s of 90s). Counted words are lowercased and U+2019 folded to '; a hesitation (uh um hmm mhm er erm mm ah) is set aside, and counts - as not English - only when nothing else was counted. The rest are looked up as they are in the list or its supplement (the lookups pin every supplement word), then in the list alone without 's, then without one of n't 're 've 'll 'd 'm. doubt: no words and no numeric scalar -> noWords; else, if latin >= cyrillic and something was counted, coverage < notEnglishBelow -> notEnglish. Latin = any scalar in A-Z a-z U+00C0-U+024F (not U+00D7, U+00F7) U+1E00-U+1EFF; Cyrillic = any in U+0400-U+04FF, checked first.",
+  "source": "KotibaCore/Routing.swift \u2014 TranscriptCheck; list: KotibaCore/EnglishWords.swift"
+}

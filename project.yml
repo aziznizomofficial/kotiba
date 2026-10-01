@@ -1,0 +1,190 @@
+name: Kotiba
+
+# Generated into Kotiba.xcodeproj by `make generate`; the .xcodeproj is gitignored on purpose.
+# XcodeGen 2.45.4 output is byte-identical across runs, so regenerating is free and the project
+# file never shows up in a diff.
+#
+# Apps are thin. Everything that is not the activation gesture, the presentation shell, or the
+# delivery mechanism belongs in a SwiftPM target under Sources/.
+
+options:
+  bundleIdPrefix: uz.kotiba
+  deploymentTarget:
+    macOS: "26.0"
+    iOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+# B-04, approved 2026-08-06. These are frozen. Free-team bundle IDs can NEVER be re-used, and
+# the macOS bundle ID is baked into the TCC designated requirement — a display-name rename is
+# free, a bundle-ID change re-grants every permission and orphans the keychain. Changing any
+# string below is a migration, not an edit.
+#
+# The Team ID is not in this file. Config/Kotiba.xcconfig sets it from the git-ignored
+# Config/Local.xcconfig, so each contributor signs with their own team. Everything else about
+# signing is the same for everyone.
+configFiles:
+  Debug: Config/Kotiba.xcconfig
+  Release: Config/Kotiba.xcconfig
+
+settingGroups:
+  signing:
+    base:
+      CODE_SIGN_STYLE: Automatic
+
+packages:
+  Kotiba:
+    path: .
+
+targets:
+  KotibaMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: Apps/macOS
+        excludes: ["Info.plist", "LaunchAgents/**"]
+      # Always-on. `SMAppService.agent(plistName:)` only looks in Contents/Library/LaunchAgents,
+      # so the plist is copied there rather than into Resources. See AppLifecycle.swift.
+      - path: Apps/macOS/LaunchAgents/uz.kotiba.app.agent.plist
+        buildPhase:
+          copyFiles:
+            destination: wrapper
+            subpath: Contents/Library/LaunchAgents
+    dependencies:
+      - package: Kotiba
+        product: KotibaCore
+      - package: Kotiba
+        product: KotibaAudio
+      - package: Kotiba
+        product: KotibaPlatform
+      - package: Kotiba
+        product: KotibaUI
+    settings:
+      groups: [signing]
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uz.kotiba.app
+        # The split pencil nib, carried over from v1. Deliberately the same mark: the app is a
+        # rebuild, not a different product, and a user who recognises the icon should be right.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # macOS needs no provisioning profile at all: no restricted entitlements means no
+        # 7-day clock. TN3125, confirmed twice and demonstrated locally. The 7-day problem
+        # is iOS-only and nothing here should imply otherwise.
+    # XcodeGen 2.45.4 does not set GENERATE_INFOPLIST_FILE, so a target with no `info:` block
+    # fails with "Build input file cannot be found: …/Info.plist". Declare it explicitly on
+    # every target rather than relying on the INFOPLIST_KEY_* shorthand.
+    info:
+      path: Apps/macOS/Info.plist
+      properties:
+        # Menu-bar only: no Dock icon, no main window.
+        LSUIElement: true
+        # The executable is KotibaMac (a Mac target beside the iOS one); what people read — the
+        # app menu, notifications, the Privacy & Security lists — is this.
+        CFBundleDisplayName: Kotiba
+        # And this. The bold app menu at the top left of the menu bar is titled from
+        # CFBundleName, which XcodeGen fills with $(PRODUCT_NAME) — so while the window was open
+        # the menu bar read "KotibaMac" (owner's review, 2026-09-30). Set here rather than by
+        # renaming the product: PRODUCT_NAME is also the executable, and Contents/MacOS/KotibaMac
+        # is what the always-on agent's BundleProgram names (LaunchAgents/uz.kotiba.app.agent.plist),
+        # what `make install` pkills and what make-dmg.sh copies. The bundle id does not move.
+        CFBundleName: Kotiba
+        NSMicrophoneUsageDescription: "Kotiba transcribes what you dictate, on this Mac."
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "5"
+    entitlements:
+      path: Apps/macOS/Kotiba.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        # <TeamID>.<name> needs no portal registration on macOS — Apple's own words. The iOS
+        # side uses group.uz.kotiba.shared, which does.
+        com.apple.security.application-groups: [$(TeamIdentifierPrefix)kotiba]
+
+  KotibaiOS:
+    type: application
+    platform: iOS
+    # The generated Info.plist lands inside Apps/iOS, and the Keyboard target's sources live
+    # under it. Without these excludes the app target globs both as resources and Xcode gets
+    # two commands producing the same Info.plist.
+    sources:
+      - path: Apps/iOS
+        excludes: ["Keyboard/**", "Info.plist"]
+    dependencies:
+      - package: Kotiba
+        product: KotibaCore
+      - package: Kotiba
+        product: KotibaAudio
+      - package: Kotiba
+        product: KotibaPlatform
+      - package: Kotiba
+        product: KotibaUI
+      - target: KotibaKeyboard
+        embed: true
+    settings:
+      groups: [signing]
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uz.kotiba.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # One target for iPhone and iPad. Two would double the App-ID count against a quota
+        # of 10 per 7 days, and free-team bundle IDs can never be re-used.
+        TARGETED_DEVICE_FAMILY: "1,2"
+    # Everything goes in `info:` and nothing in INFOPLIST_KEY_*: the shorthand implies
+    # GENERATE_INFOPLIST_FILE, and mixing the two makes two build commands produce the same
+    # Info.plist ("Multiple commands produce …").
+    info:
+      path: Apps/iOS/Info.plist
+      properties:
+        NSMicrophoneUsageDescription: "Kotiba transcribes what you dictate, on this device."
+        UILaunchScreen: {}
+        UIBackgroundModes: [audio]
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "5"
+    entitlements:
+      path: Apps/iOS/Kotiba.entitlements
+      properties:
+        com.apple.security.application-groups: [group.uz.kotiba.shared]
+        # Verified present in an issued free-team profile and in the signed binary,
+        # 2026-08-05, spikes/gap08. Advisory at runtime regardless — size against
+        # os_proc_available_memory().
+        com.apple.developer.kernel.increased-memory-limit: true
+
+  KotibaKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Apps/iOS/Keyboard
+        excludes: ["Info.plist"]
+    dependencies:
+      - package: Kotiba
+        product: KotibaCore
+    settings:
+      groups: [signing]
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uz.kotiba.app.keyboard
+    info:
+      path: Apps/iOS/Keyboard/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+          NSExtensionAttributes:
+            # Needed to reach the shared container. The extension cannot open the microphone
+            # regardless — error 561145187 '!rec', FB16791704 — so it never records; it only
+            # inserts text the containing app produced.
+            RequestsOpenAccess: true
+            IsASCIICapable: false
+            PrefersRightToLeft: false
+            PrimaryLanguage: en-US
+    entitlements:
+      path: Apps/iOS/Keyboard/Keyboard.entitlements
+      properties:
+        com.apple.security.application-groups: [group.uz.kotiba.shared]
+
+schemes:
+  KotibaMac:
+    build:
+      targets: { KotibaMac: all }
+    test:
+      gatherCoverageData: true
+  # The scheme name is load-bearing for the renewal harness, which builds by scheme.
+  KotibaiOS:
+    build:
+      targets: { KotibaiOS: all }

@@ -1,0 +1,242 @@
+# windows/electron-builder.yml — D-W3, D-W9, D-W25: one installer, ~0.67 GB, carrying what
+# Uzbek needs (Kotib STT, the whisper-base detector, Silero); English/Russian (Parakeet) and the
+# modes (Qwen) download after setup, Turkish/Arabic when turned on. Built and verified on
+# windows-latest; delivered as a GitHub release asset.
+#
+# It runs on `windows-latest` in CI (.github/workflows/windows-port.yml) AND on a Mac:
+# electron-builder cross-builds the NSIS target with its bundled makensis. The Mac recipe
+# (local Electron mirror, win-x64 prebuilts, helpers from scripts/build-native-zig.sh) is in
+# docs/windows/90-DELIVERY/WINDOWS-TEST-CHECKLIST.md, "Building the installer on a Mac".
+#
+# Before this runs (see t12's `build` job in .github/workflows/windows-port.yml, which
+# is the ground truth these paths are pinned against):
+#   1. `npm run build`                                     → dist/**
+#   2. `node scripts/fetch-models.mjs --dest fixtures/models --manifest ../Scripts/Manifest.json`
+#                                                            → fixtures/models/*.bin
+#   3. `cmake --install ... --prefix resources/native`      → resources/native/*.exe
+#      (t06's kotiba-stt, t07's kotiba-hook and kotiba-input — each installs RUNTIME
+#      DESTINATION `.`, i.e. flat into that one directory, not a `bin/` subfolder)
+# `electron-builder` reads this file last and fails loudly if any `extraResources` source
+# is missing — a missing model or a missing helper is a build failure, not a smaller app.
+#
+# `fixtures/models` as the STAGING directory (rather than `resources/models`, which is
+# what 01-ARCHITECTURE.md's tree otherwise reserves for golden fixtures and test WAVs) is
+# not this task's first choice — it is t12's `build` job, already committed, calling this
+# exact `--dest`. `extraResources.to` below is what actually matters for the shipped app:
+# it always lands at `<install dir>\resources\models\`, matching windows/README.md's
+# runtime path table, regardless of what the pre-package staging directory is named.
+
+appId: uz.kotiba.win
+productName: Kotiba
+copyright: Copyright © Kotiba
+
+directories:
+  # NOT "dist" — tsc already owns that name (see tsconfig.json's outDir) and the two
+  # would silently overwrite each other if this pointed at the same directory.
+  output: release
+  buildResources: build
+
+# D-W3: the payload is 1.17 GB of q5-quantised whisper weights, which are already
+# floating point mantissas near the entropy floor — LZMA (electron-builder's default)
+# gains nothing on them and spends real minutes compressing on a 1-core windows-latest
+# runner for a file that then has to be decompressed again by NSIS at install time.
+# `store` is correct here specifically because the models dominate the payload; it would
+# be the wrong call for a text-heavy app.
+compression: store
+
+files:
+  - dist/**/*
+  - package.json
+  - '!dist/**/*.map'
+  - '!**/*.test.js'
+  # `tsc`'s `include` covers `test/**`, so `dist/test/` exists and `dist/**/*` sweeps it
+  # in. `!**/*.test.js` catches the suites but not `fakes.js`, `golden.js` or the
+  # compiled `vitest.config.js` beside them. None of it belongs in an installer.
+  - '!dist/test/**'
+  - '!dist/vitest.config.js'
+
+  # THE PAGES, WHICH `tsc` DOES NOT COPY — AND THEY MUST LAND BESIDE THEIR SCRIPTS.
+  #
+  # `npm run build` is `tsc`, and `tsc` emits the `.ts` beside a `.html` and ignores the
+  # `.html`. `package.json` is frozen (t01 only) so no copy step can be added to the build
+  # script. Without this entry `dist/` holds four windows' worth of JavaScript and not one
+  # page for any of them to load, and every window in the installer opens a blank document.
+  #
+  # `to: dist/src/renderer` and NOT `src/renderer`, which is the part that is easy to get
+  # half right. Each page loads its own script as a SIBLING —
+  # `main.html` loads `./main.js` by `src` — and those
+  # scripts are `tsc` output living in `dist/src/renderer/`. A page copied anywhere else
+  # resolves `./main.js` against a directory that does not contain it, so the window
+  # opens, finds nothing, and stays blank with a 404 in a console nobody can see. Landing
+  # them here also means `rendererFile()`'s FIRST candidate hits, rather than its fallback.
+  - from: src/renderer
+    to: dist/src/renderer
+    filter:
+      - '*.html'
+      - '*.css'
+
+  # THE ON-DEVICE ENGINES' NATIVE BINARIES, trimmed to win-x64 (C1 §8, C3 §7).
+  #
+  # `onnxruntime-node` ships every platform's library in one package (~290 MB); only
+  # `bin/napi-v6/win32/x64` (onnxruntime.dll, DirectML.dll, dxcompiler.dll, dxil.dll and the
+  # binding, ~70 MB) belongs in a Windows installer. `node-llama-cpp` pulls its prebuilt
+  # llama.cpp from per-platform optional packages; `npm ci` on a win-x64 runner installs
+  # the CPU, Vulkan AND the two CUDA ones, and the CUDA pair is ~545 MB of kernels for GPUs
+  # this audience does not have — excluded, so `gpu: 'auto'` picks Vulkan or the CPU. The
+  # 35 MB llama.cpp source bundle is only for building from source, which the app never
+  # does (`build: 'never'`).
+  - '!node_modules/onnxruntime-node/bin/napi-v6/darwin/**'
+  - '!node_modules/onnxruntime-node/bin/napi-v6/linux/**'
+  - '!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**'
+  - '!node_modules/node-llama-cpp/llama/gitRelease.bundle'
+  - '!node_modules/@node-llama-cpp/*-cuda/**'
+  - '!node_modules/@node-llama-cpp/*-cuda-ext/**'
+  - '!node_modules/@node-llama-cpp/mac-*/**'
+  - '!node_modules/@node-llama-cpp/linux-*/**'
+  - '!node_modules/@node-llama-cpp/win-arm64/**'
+  # ipull's (node-llama-cpp's downloader) copy-on-write binding: only win32-x64 belongs here.
+  # A build made on a Mac otherwise carries the darwin one and not this one
+  # (scripts/build-installer-mac.sh installs the win32-x64 package next to it).
+  - '!node_modules/@reflink/reflink-darwin-*/**'
+  - '!node_modules/@reflink/reflink-linux-*/**'
+  - '!node_modules/@reflink/reflink-win32-arm64-*/**'
+  # C4: transcribe.cpp (Cohere Transcribe Arabic) — its koffi FFI binding and the win-x64
+  # CPU+Vulkan build of transcribe.dll with its ggml DLLs (17 MB). Every other platform's copy,
+  # and koffi's C++ sources and docs (only for building from source), stay out.
+  - '!node_modules/@transcribe-cpp/darwin-*/**'
+  - '!node_modules/@transcribe-cpp/linux-*/**'
+  - '!node_modules/@koromix/koffi-darwin-*/**'
+  - '!node_modules/@koromix/koffi-linux-*/**'
+  - '!node_modules/@koromix/koffi-win32-arm64/**'
+  - '!node_modules/@koromix/koffi-win32-ia32/**'
+  # Only koffi's C++ (its `.cjs` beside them is loaded at runtime and must stay).
+  - '!node_modules/koffi/src/koffi/src/**/*.{cc,hh,inc,def,S,asm}'
+  - '!node_modules/koffi/src/koffi/CMakeLists.txt'
+  - '!node_modules/koffi/vendor/**'
+  - '!node_modules/koffi/lib/**'
+  - '!node_modules/koffi/doc/**'
+
+# NATIVE ADDONS LOAD FROM DISK, NOT FROM INSIDE app.asar. Windows' loader cannot map a DLL
+# out of an archive, and both packages locate their libraries relative to their own files:
+# onnxruntime-node's binding loads `onnxruntime.dll` beside itself, and node-llama-cpp
+# loads `@node-llama-cpp/win-x64*/bins/**/llama-addon.node` and its ggml DLLs. Everything
+# they need is unpacked to `app.asar.unpacked`, which Electron's module loader redirects to.
+#
+# D-W22: Parakeet and Qwen each run in an Electron UTILITY PROCESS (`dist/src/engines/
+# engine-host.js`, started from INSIDE app.asar — a utility process reads the archive like
+# main does, and the host must resolve node-llama-cpp's JavaScript, which is only there).
+# Their `.node` addons and DLLs load from app.asar.unpacked, redirected by Electron.
+#
+# The worker-thread path stays as the fallback for a host that cannot start, and for
+# `--check`: its whole module graph is unpacked — its script, the pure decoder it imports,
+# and all of onnxruntime-node and onnxruntime-common — so the thread never loads a script or
+# resolves a package from inside the archive. `parakeetWorkerPath()` points it there.
+asarUnpack:
+  - 'dist/src/engines/parakeet-worker.js'
+  - 'dist/src/engines/parakeet-runtime.js'
+  - 'dist/src/core/stt/**'
+  - 'node_modules/onnxruntime-node/**'
+  - 'node_modules/onnxruntime-common/**'
+  - 'node_modules/node-llama-cpp/bins/**'
+  - 'node_modules/node-llama-cpp/llama/**'
+  - 'node_modules/@node-llama-cpp/**'
+  # C4: Arabic's Cohere runs through transcribe.cpp's koffi binding in the Arabic engine
+  # process. koffi's `koffi.node` and transcribe.dll + ggml*.dll must be real files on disk —
+  # `arabic-runtime.ts` points TRANSCRIBE_LIBRARY at the unpacked copy, because LoadLibrary
+  # cannot read inside an archive. (transcribe-cpp's JavaScript stays in app.asar: the engine
+  # host imports it from there, as it does node-llama-cpp's.)
+  - 'node_modules/koffi/**'
+  - 'node_modules/@koromix/koffi-win32-x64/**'
+  - 'node_modules/@transcribe-cpp/win32-x64-cpu-vulkan/**'
+
+# The only native Node addons are onnxruntime-node and node-llama-cpp, and both are N-API
+# prebuilts — ABI-stable across Node and Electron versions, so there is nothing for
+# electron-rebuild to do (the three helpers are separate spawned .exe processes — D-W5,
+# D-W7). Skipping it is one less step that can fail on a runner nobody can log into; a
+# rebuild would also try to compile llama.cpp from source.
+npmRebuild: false
+
+extraResources:
+  # C4: the standard 3 s Arabic clip Cohere's first-run speed check decodes (96 KB, FLEURS
+  # ar_eg, CC-BY-4.0 — fixtures/speed-check/README.md). Lands at `<install dir>\resources\audio\`,
+  # where `arabicSpeedClipSearch()` looks first.
+  - from: fixtures/speed-check
+    to: audio
+    filter:
+      - 'arabic-speed-check.wav'
+
+  # Staged by `scripts/fetch-models.mjs --dest fixtures/models`. Lands at
+  # `<install dir>\resources\models\`, matching windows/README.md's runtime path table
+  # and the LAST step of the three-step model resolution in `bundledResourcesDirectory()`
+  # (src/platform).
+  #
+  # BY NAME, not `*.bin` (D-W25): whisper turbo left the installer, and a staging directory
+  # (a CI cache, a Mac's symlinks) that still holds it must not put 574 MB back in.
+  # `verify-installer.mjs` fails a build that carries it.
+  - from: fixtures/models
+    to: models
+    filter:
+      - 'ggml-uzbek-stt-v1-q5_0.bin'
+      - 'ggml-base-q5_1.bin'
+
+  # Silero VAD (885 KB, MIT) — the streaming Uzbek session's pause detector, SHIPPED rather
+  # than downloaded (`SILERO_VAD.shipped`). Staged by the same `fetch-models.mjs` run into its
+  # bundle directory, and it must land in the same one: the app's bundle store looks for
+  # `resources/models/silero-vad-v6.2.0/ggml-silero-v6.2.0.bin` and hashes it once per launch.
+  - from: fixtures/models/silero-vad-v6.2.0
+    to: models/silero-vad-v6.2.0
+    filter:
+      - 'ggml-silero-v6.2.0.bin'
+
+  # Installed by t06 (kotiba-stt) and t07 (kotiba-hook, kotiba-input) via
+  # `cmake --install --prefix resources/native` in t12's CI — each CMakeLists installs
+  # `RUNTIME DESTINATION .`, i.e. flat, so all three .exe land directly in that one
+  # directory with no per-helper subfolder. Lands at `<install dir>\resources\native\`.
+  #
+  # `*.dll` too, for either build of kotiba-stt:
+  #   - MSVC (A3): it links the DLL C runtime (whisper.cpp's own build decides that), and its
+  #     CMakeLists installs VCRUNTIME140(_1).dll and MSVCP140.dll into this same flat
+  #     directory, app-local, because a clean Windows has neither and a per-user installer
+  #     cannot install the redistributable. kotiba-hook and kotiba-input link it statically.
+  #   - zig/mingw (scripts/build-native-zig.sh): no C++ runtime DLL at all, but
+  #     KOTIBA_CPU_ALL_VARIANTS makes whisper.dll, ggml*.dll and one ggml-cpu-<level>.dll per
+  #     x86 level, which kotiba-stt picks from at startup. All of them must sit beside it.
+  - from: resources/native
+    to: native
+    filter:
+      - '*.exe'
+      - '*.dll'
+
+win:
+  icon: build/icon.ico
+  # x64 only (D-W9's runner and every audience machine this ships to). No arm64 build —
+  # nothing here has been measured on it, and D-W9 forbids quoting a performance number
+  # from a machine nobody has.
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  artifactName: 'Kotiba-Setup-${version}.${ext}'
+
+# D-W3 / the owner's ask: "install and start using it without problems". An installer
+# that demands admin is a step where people stop — perMachine + allowElevation both false
+# is what keeps this a plain per-user install with no UAC prompt.
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Kotiba
+  uninstallDisplayName: Kotiba
+  artifactName: 'Kotiba-Setup-${version}.${ext}'
+  # D-W8: unsigned. SmartScreen will warn and windows/README.md says so first. An OV
+  # certificate is $200-400/yr and has to accumulate reputation before the warning stops.
+
+# D-W9: published as a GitHub *release* asset by the workflow itself (2 GB per-asset
+# limit vs. 500 MB for Actions artifact storage on the Free plan), never by
+# electron-builder's own `publish` step — that step needs credentials and a target this
+# repo's CI does not want electron-builder itself deciding.
+publish: null

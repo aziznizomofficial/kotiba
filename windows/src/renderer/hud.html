@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      No remote anything, ever. The pill floats over whatever the user is dictating into,
+      and a page that can fetch is a page that can leak a transcript. No inline script
+      either — see main.html.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <title>Kotiba</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <!--
+    `pointer-events: none` on the body is the SECOND layer of click-through, on top of the
+    window's own WS_EX_TRANSPARENT. There is no focusable element on this page at all.
+  -->
+  <body class="pill-body">
+    <div id="root"></div>
+    <script type="module" src="./hud.js"></script>
+  </body>
+</html>

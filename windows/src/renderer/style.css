@@ -1,0 +1,1403 @@
+/*
+ * Kotiba's one stylesheet: the app window and the pill.
+ *
+ * The port of `Theme.swift`. Pure black is a product decision, not a default: `#000000`
+ * behind everything, with the icon's own green `#7EF0C8` as the only colour that means
+ * something. Surfaces are LIFTED off black in small steps (#0B0B0C → #141416 → #1C1C1F)
+ * rather than tinted, and hairlines do the work a grey background would do in a light
+ * theme. Always dark, as on the Mac: the product has one look.
+ *
+ * Motion: `--spring-<name>` and `--spring-<name>-ms` are the Mac's five SwiftUI springs,
+ * sampled into CSS `linear()` easings by `src/main/motion.ts` and set on :root at mount.
+ * The fallbacks below are only for the instant before that script runs.
+ */
+
+:root {
+  --bg: #000000;
+  --surface: #0b0b0c;
+  --raised: #141416;
+  --elevated: #1c1c1f;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --text: rgba(255, 255, 255, 0.94);
+  --secondary: rgba(255, 255, 255, 0.6);
+  --tertiary: rgba(255, 255, 255, 0.38);
+  --accent: #7ef0c8;
+  --accent-ink: #03140d;
+  --accent-soft: rgba(126, 240, 200, 0.14);
+  --accent-glow: rgba(126, 240, 200, 0.35);
+  --amber: #ffc061;
+  --amber-soft: rgba(255, 192, 97, 0.14);
+  --danger: #ff6e6e;
+  --danger-soft: rgba(255, 110, 110, 0.14);
+  --series-1: #7ef0c8;
+  --series-2: #5fb3f5;
+  --series-3: #c9a6ff;
+  --series-4: #ffc061;
+
+  --radius-small: 6px;
+  --radius-control: 9px;
+  --radius-card: 14px;
+  --radius-panel: 20px;
+
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-m: 12px;
+  --space-l: 16px;
+  --space-xl: 24px;
+  --space-xxl: 32px;
+
+  --titlebar: 40px;
+
+  --spring-snappy: ease-out;
+  --spring-snappy-ms: 260ms;
+  --spring-smooth: ease-out;
+  --spring-smooth-ms: 400ms;
+  --spring-pop: ease-out;
+  --spring-pop-ms: 420ms;
+  --spring-morph: ease-out;
+  --spring-morph-ms: 480ms;
+  --spring-section: ease-out;
+  --spring-section-ms: 340ms;
+
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* `hidden` must win over every `display:` a class sets, or a hidden card still shows. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+.selectable {
+  user-select: text;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ type */
+
+.t-display { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+.t-title { font-size: 20px; font-weight: 600; }
+.t-headline { font-size: 13px; font-weight: 600; }
+.t-body { font-size: 13px; }
+.t-callout { font-size: 12px; }
+.t-caption { font-size: 11px; }
+.t-micro { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
+.t-metric { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.t-mono { font-family: 'Cascadia Mono', Consolas, ui-monospace, monospace; font-size: 11px; }
+.c-secondary { color: var(--secondary); }
+.c-tertiary { color: var(--tertiary); }
+.c-accent { color: var(--accent); }
+.c-amber { color: var(--amber); }
+.c-danger { color: var(--danger); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ the frame */
+
+.app {
+  display: flex;
+  height: 100%;
+  position: relative;
+}
+
+/* The draggable strip: the native caption buttons sit over its right end (titleBarOverlay). */
+.titlebar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--titlebar);
+  -webkit-app-region: drag;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.no-drag,
+button,
+input,
+select,
+textarea,
+a,
+[role='button'] {
+  -webkit-app-region: no-drag;
+}
+
+.sidebar {
+  position: relative;
+  flex: none;
+  width: 208px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px 14px;
+  background: var(--bg);
+  transition:
+    width var(--spring-morph-ms) var(--spring-morph),
+    padding var(--spring-morph-ms) var(--spring-morph);
+  z-index: 6;
+}
+
+.sidebar .fold {
+  height: var(--titlebar);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+  -webkit-app-region: drag;
+}
+
+.sidebar .fold button {
+  -webkit-app-region: no-drag;
+}
+
+.app.rail .sidebar {
+  width: 60px;
+  padding: 0 8px 14px;
+}
+
+.app.rail .rail-hide {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rail-hide {
+  transition: opacity var(--spring-smooth-ms) var(--spring-smooth);
+  white-space: nowrap;
+}
+
+.divider {
+  flex: none;
+  width: 1px;
+  background: var(--hairline);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px;
+  margin-bottom: var(--space-l);
+  min-height: 34px;
+}
+
+.app.rail .brand {
+  padding: 0 7px;
+}
+
+/* The app icon, rounded the way the taskbar and the Mac's Dock round it: 22.5% of the side. */
+.brand-mark {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 22.5%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 14px rgba(126, 240, 200, 0.22);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.brand-mark.large { width: 40px; height: 40px; }
+.brand-mark.small { width: 26px; height: 26px; }
+
+.brand-name { font-size: 15px; font-weight: 600; }
+
+.nav-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--secondary);
+  cursor: default;
+  text-align: left;
+  width: 100%;
+  transition: opacity var(--spring-snappy-ms) var(--spring-snappy);
+}
+
+.app.rail .nav-row {
+  justify-content: center;
+  padding: 0;
+}
+
+.nav-row:active { opacity: 0.7; }
+
+.nav-row .icon { color: var(--secondary); flex: none; }
+.nav-row.selected { color: var(--text); font-weight: 600; }
+.nav-row.selected .icon { color: var(--accent); }
+.nav-row:hover:not(.selected) { color: var(--text); }
+
+/* The selection capsule: one element that slides between rows (matchedGeometryEffect). */
+.nav-selection {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  border: 1px solid var(--hairline);
+  transition:
+    transform var(--spring-section-ms) var(--spring-section),
+    left var(--spring-morph-ms) var(--spring-morph),
+    right var(--spring-morph-ms) var(--spring-morph);
+  pointer-events: none;
+}
+
+.app.rail .nav-selection { left: 8px; right: 8px; }
+
+.nav-row > * { position: relative; }
+
+.badge-dot {
+  margin-left: auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 192, 97, 0.85);
+  animation: pop-in var(--spring-pop-ms) var(--spring-pop) both;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  min-height: 34px;
+}
+
+.app.rail .sidebar-footer { justify-content: center; padding: 0; }
+
+.dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: background var(--spring-smooth-ms) var(--spring-smooth);
+}
+
+.dot.warning { background: var(--amber); box-shadow: 0 0 8px rgba(255, 192, 97, 0.5); }
+.dot.bad { background: var(--danger); box-shadow: 0 0 8px rgba(255, 110, 110, 0.5); }
+.dot.neutral { background: var(--tertiary); box-shadow: none; }
+.dot.pulsing { animation: pulse 1.4s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+/* ------------------------------------------------------------------ pages */
+
+.detail {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: calc(var(--titlebar) + 8px) 24px 32px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--elevated) transparent;
+}
+
+.page-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+}
+
+.page-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-s); }
+.page-header .t-display { margin: 0; }
+.page-header .subtitle { color: var(--secondary); font-size: 13px; }
+
+.page.entering {
+  animation: page-in var(--spring-section-ms) var(--spring-section) both;
+}
+
+.page.leaving {
+  animation: page-out 140ms ease-in both;
+  pointer-events: none;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes page-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ------------------------------------------------------------------ cards */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-head { display: flex; align-items: flex-start; gap: var(--space-s); }
+.card-head .icon { color: var(--accent); margin-top: 1px; }
+.card-head .titles { display: flex; flex-direction: column; gap: 2px; }
+.card-head .subtitle { color: var(--secondary); font-size: 12px; }
+
+.bare { display: flex; flex-direction: column; gap: var(--space-m); }
+
+.hairline { height: 1px; background: var(--hairline); margin: 0; border: 0; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-l);
+}
+
+.row .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.row .words .title { font-size: 13px; color: var(--text); }
+.row .words .detail-text { font-size: 12px; color: var(--secondary); }
+.row .control { flex: none; }
+
+.grid {
+  display: grid;
+  gap: var(--space-m);
+  grid-template-columns: repeat(auto-fit, minmax(var(--min-col, 250px), 1fr));
+}
+
+.collapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows var(--spring-smooth-ms) var(--spring-smooth),
+    opacity var(--spring-smooth-ms) var(--spring-smooth);
+}
+
+.collapsible > * { overflow: hidden; min-height: 0; }
+.collapsible.collapsed { grid-template-rows: 0fr; opacity: 0; }
+
+.footnote { font-size: 11px; color: var(--secondary); line-height: 1.5; }
+.footnote.amber { color: var(--amber); }
+.footnote.danger { color: var(--danger); }
+
+/* ------------------------------------------------------------------ controls */
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline-strong);
+  background: var(--elevated);
+  transition:
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    border-color var(--spring-snappy-ms) var(--spring-snappy);
+  cursor: default;
+  padding: 0;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e8e8ea;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transition:
+    transform var(--spring-snappy-ms) var(--spring-snappy),
+    background var(--spring-snappy-ms) var(--spring-snappy);
+}
+
+.switch[aria-checked='true'] { background: var(--accent); border-color: var(--accent); }
+.switch[aria-checked='true']::after { transform: translateX(16px); background: var(--accent-ink); }
+.switch:disabled { opacity: 0.45; }
+.switch:focus-visible { outline: 2px solid var(--accent-glow); outline-offset: 2px; }
+
+/* The sliding chip picker. The thumb is one element that moves (springs) between chips. */
+.segmented {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  gap: 0;
+  border-radius: 999px;
+  background: var(--raised);
+  border: 1px solid var(--hairline);
+}
+
+.segmented .thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  transition:
+    transform var(--spring-snappy-ms) var(--spring-snappy),
+    width var(--spring-snappy-ms) var(--spring-snappy);
+  pointer-events: none;
+}
+
+.segmented button {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--spring-snappy-ms) var(--spring-snappy);
+  cursor: default;
+}
+
+.segmented button:hover:not(:disabled) { color: var(--text); }
+.segmented button.on { color: var(--accent-ink); font-weight: 600; }
+.segmented button:disabled { opacity: 0.35; }
+.segmented.no-thumb .thumb { opacity: 0; }
+
+.menu-select {
+  appearance: none;
+  background: var(--raised) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="%23ffffff99" stroke-width="1.5"/></svg>') no-repeat right 10px center;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  padding: 5px 28px 5px 10px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.menu-select option { background: var(--raised); }
+
+.slider-row { display: flex; flex-direction: column; gap: 6px; }
+.slider-row .head { display: flex; justify-content: space-between; align-items: baseline; }
+
+input[type='range'] {
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  margin: 0;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) var(--fill, 0%), var(--elevated) var(--fill, 0%));
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: #e8e8ea;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition: transform var(--spring-snappy-ms) var(--spring-snappy);
+}
+
+input[type='range']:active::-webkit-slider-thumb { transform: scale(1.12); }
+
+.btn {
+  border: 1px solid var(--hairline-strong);
+  background: var(--raised);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: default;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    transform var(--spring-snappy-ms) var(--spring-snappy),
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    opacity var(--spring-snappy-ms) var(--spring-snappy);
+}
+
+.btn:hover:not(:disabled) { background: var(--elevated); }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover:not(:disabled) { background: #93f4d3; }
+.btn.ghost { background: transparent; border-color: var(--hairline); color: var(--secondary); }
+.btn.destructive { background: var(--danger-soft); border-color: rgba(255, 110, 110, 0.35); color: var(--danger); }
+.btn.small { padding: 4px 10px; font-size: 11px; }
+.btn.link { border: 0; background: transparent; color: var(--tertiary); padding: 0; font-weight: 500; }
+.btn.link:hover { color: var(--secondary); background: transparent; }
+
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: var(--raised);
+  color: var(--secondary);
+  cursor: default;
+  padding: 0;
+  transition: transform var(--spring-snappy-ms) var(--spring-snappy), color 150ms;
+}
+
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn.danger { color: var(--danger); }
+.icon-btn.accent { color: var(--accent); }
+
+.well {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 150ms;
+  user-select: text;
+}
+
+.well:focus { border-color: var(--accent); }
+.well.mono { font-family: 'Cascadia Mono', Consolas, ui-monospace, monospace; }
+
+.search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.search input { flex: 1; border: 0; background: transparent; outline: none; font-size: 13px; user-select: text; }
+.search .icon { color: var(--tertiary); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--secondary);
+  white-space: nowrap;
+}
+
+.badge.accent { background: var(--accent-soft); color: var(--accent); }
+.badge.filled { background: var(--accent); color: var(--accent-ink); }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.status.warning { color: var(--amber); }
+.status.bad { color: var(--danger); }
+.status.neutral { color: var(--secondary); }
+
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 7px;
+  background: linear-gradient(var(--elevated), var(--raised));
+  border: 1px solid var(--hairline-strong);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 2px 0 rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.keycap.large {
+  min-width: 64px;
+  height: 50px;
+  padding: 0 18px;
+  font-size: 22px;
+  border-radius: 12px;
+  transition:
+    transform var(--spring-pop-ms) var(--spring-pop),
+    border-color var(--spring-pop-ms) var(--spring-pop);
+}
+
+.keycap.pressed { transform: translateY(3px) scale(0.94); border-color: var(--accent); }
+
+/* ------------------------------------------------------------------ stat tiles and charts */
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-l);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tile .label { display: flex; align-items: center; gap: 6px; color: var(--tertiary); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.tile .label .icon { color: var(--accent); }
+.tile .caption { font-size: 12px; color: var(--secondary); }
+
+/* First appearance: the tile fades and rises while its number counts up. */
+.tile.tile-in { animation: tile-in var(--spring-smooth-ms) var(--spring-smooth) both; }
+
+@keyframes tile-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tiles-clickable { cursor: default; }
+.tiles-clickable .tile { transition: border-color var(--spring-snappy-ms) var(--spring-snappy); }
+.tiles-clickable:hover .tile { border-color: var(--hairline-strong); }
+
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart .bar { transform-box: fill-box; transform-origin: bottom; animation: grow var(--spring-smooth-ms) var(--spring-smooth) both; }
+
+@keyframes grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.share { display: flex; flex-direction: column; gap: 5px; }
+.share .head { display: flex; justify-content: space-between; font-size: 12px; }
+.share .head .value { color: var(--secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.share .track { height: 6px; border-radius: 999px; background: var(--raised); overflow: hidden; }
+.share .fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transform-origin: left;
+  animation: grow-x var(--spring-smooth-ms) var(--spring-smooth) both;
+}
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* ------------------------------------------------------------------ home */
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  padding: 6px 0;
+}
+
+.hero .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-s); }
+.hero .how { color: var(--secondary); font-size: 12px; }
+/* A sentence with a key cap in it ("Hold [right Ctrl] …", "[ўнг Ctrl] тугмасини …"): the cap
+   sits in the line as a word, so the sentence wraps around it in any language's word order. */
+.with-key { line-height: 26px; }
+.with-key .keycap { margin: 0 5px; vertical-align: middle; }
+.hero .visual { flex: none; width: 170px; height: 64px; display: grid; place-items: center; }
+
+/* Home's first row: the V19 "Globe" promo (promo-globe.ts). 190 px tall at every width, drawn
+   at the device's pixel ratio; the canvas is the whole card. */
+.promo-globe {
+  position: relative;
+  height: 190px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+.promo-canvas { display: block; width: 100%; height: 100%; }
+
+.hero-wash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 100% 0%, var(--wash, rgba(126, 240, 200, 0.08)), transparent 260px);
+  transition: opacity var(--spring-smooth-ms) var(--spring-smooth);
+}
+
+@container (max-width: 520px) {
+  .hero .visual.decor { display: none; }
+}
+
+/* Notices: something the user has to do, said small and calm (the Mac's NoticeRow). */
+.notices { display: flex; flex-direction: column; gap: var(--space-s); }
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-m);
+  padding: 10px var(--space-m);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  transition:
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    opacity var(--spring-smooth-ms) var(--spring-smooth),
+    transform var(--spring-smooth-ms) var(--spring-smooth);
+  animation: notice-in var(--spring-smooth-ms) var(--spring-smooth) both;
+}
+.notice.settled { animation: none; }
+.notice:hover { background: var(--raised); }
+.notice.leaving { opacity: 0; transform: scale(0.97); }
+.notice .glyph {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 192, 97, 0.9);
+  background: var(--amber-soft);
+}
+.notice .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notice .title { font-size: 12px; font-weight: 600; color: var(--text); }
+.notice .detail {
+  font-size: 11px;
+  color: var(--secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notice .detail.open { display: block; }
+
+@keyframes notice-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.transcript { font-size: 13px; line-height: 1.55; color: var(--text); white-space: pre-wrap; }
+.clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp-6 { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ------------------------------------------------------------------ history */
+
+.history-row {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    opacity var(--spring-smooth-ms) var(--spring-smooth),
+    transform var(--spring-smooth-ms) var(--spring-smooth);
+  animation: row-in var(--spring-smooth-ms) var(--spring-smooth) both;
+}
+
+.history-row:hover { background: var(--raised); }
+.history-row .meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--tertiary); }
+.history-row .actions { margin-left: auto; display: flex; gap: 6px; opacity: 0.35; transition: opacity var(--spring-snappy-ms) var(--spring-snappy); }
+.history-row:hover .actions,
+.history-row .actions.shown { opacity: 1; }
+.history-row.removing { opacity: 0; transform: scale(0.96); }
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+  padding: 60px 0;
+  text-align: center;
+}
+
+.empty .icon { color: var(--tertiary); }
+
+/* ------------------------------------------------------------------ modes, languages */
+
+.mode-card,
+.engine-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  min-height: 176px;
+  transition: border-color var(--spring-snappy-ms) var(--spring-snappy);
+}
+
+.mode-card:hover { border-color: var(--hairline-strong); }
+.mode-card.default { border-color: rgba(126, 240, 200, 0.45); }
+
+.glyph-tile {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--raised);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  transition: background var(--spring-snappy-ms) var(--spring-snappy), color var(--spring-snappy-ms) var(--spring-snappy);
+}
+
+.glyph-tile.on { background: var(--accent); color: var(--accent-ink); }
+.glyph-tile.off { background: var(--elevated); color: var(--accent-ink); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--raised);
+  border: 1px solid var(--hairline);
+  font-size: 12px;
+  animation: row-in var(--spring-pop-ms) var(--spring-pop) both;
+}
+
+.tag button { border: 0; background: transparent; color: var(--tertiary); padding: 0; cursor: default; }
+
+.replacement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  background: var(--raised);
+}
+
+/* ------------------------------------------------------------------ hotkey */
+
+.recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-l);
+  padding: var(--space-xl) 0;
+  text-align: center;
+}
+
+.recorder .caps { display: flex; gap: var(--space-m); }
+
+.preset {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  border: 0;
+  background: transparent;
+  padding: 6px 0;
+  width: 100%;
+  text-align: left;
+  cursor: default;
+}
+
+.preset .check { margin-left: auto; color: var(--accent); }
+
+/* ------------------------------------------------------------------ onboarding */
+
+.onboarding {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background:
+    radial-gradient(ellipse 520px 520px at 50% 0%, rgba(126, 240, 200, 0.1), transparent),
+    var(--bg);
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--titlebar) + 4px) var(--space-xxl) var(--space-xl);
+  animation: page-in var(--spring-smooth-ms) var(--spring-smooth) both;
+}
+
+.onboarding.leaving { animation: onboarding-out var(--spring-smooth-ms) var(--spring-smooth) both; }
+
+@keyframes onboarding-out {
+  to { opacity: 0; transform: scale(1.02); }
+}
+
+.onboarding .head { display: flex; align-items: center; }
+/* Equal widths either side, so the dots are centred whatever the brand and the skip link measure. */
+.onboarding .brand-row { display: flex; align-items: center; gap: 8px; width: 160px; }
+.onboarding .brand-row.end { justify-content: flex-end; }
+.onboarding .steps { display: flex; gap: 5px; }
+.onboarding .steps span {
+  height: 7px;
+  width: 7px;
+  border-radius: 999px;
+  background: var(--elevated);
+  transition: width var(--spring-morph-ms) var(--spring-morph), background var(--spring-morph-ms) var(--spring-morph);
+}
+.onboarding .steps span.done { background: var(--accent); }
+.onboarding .steps span.current { width: 22px; background: var(--accent); }
+.onboarding .stage { flex: 1; display: grid; place-items: center; position: relative; overflow: hidden; }
+.onboarding .step { width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: var(--space-l); }
+.onboarding .step.centred { align-items: center; text-align: center; }
+.onboarding .step.in-forward { animation: step-in-f var(--spring-section-ms) var(--spring-section) both; }
+.onboarding .step.in-back { animation: step-in-b var(--spring-section-ms) var(--spring-section) both; }
+.onboarding .footer { display: flex; align-items: center; width: 100%; max-width: 540px; margin: 0 auto; }
+.onboarding h1 { margin: 0; font-size: 26px; font-weight: 700; }
+.onboarding .hero-title { font-size: 34px; }
+.onboarding p { margin: 0; color: var(--secondary); font-size: 14px; }
+
+@keyframes step-in-f {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes step-in-b {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: none; }
+}
+
+.big-check {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 40px var(--accent-glow);
+  animation: pop-in var(--spring-pop-ms) var(--spring-pop) both;
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.check-path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: draw var(--spring-pop-ms) var(--spring-pop) 80ms forwards; }
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ------------------------------------------------------------------ the pill */
+
+/*
+ * `pointer-events: none` is the second layer of click-through, under the window's own
+ * WS_EX_TRANSPARENT. Both, because a HUD that eats a click is a HUD that can take focus.
+ */
+.pill-body {
+  background: transparent;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* The capsule sits at the bottom of its canvas, with room under it for the shadow. */
+.pill-canvas {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 24px;
+}
+
+/*
+ * Width, height and radius are set as numbers by pill.ts (`fitPillMessage`), so the morph
+ * spring animates the capsule between two known sizes; the radius is always half the height,
+ * so a two-line message is a taller capsule, never a rounded rectangle.
+ */
+.pill {
+  position: relative;
+  min-width: 160px;
+  width: 160px;
+  height: 36px;
+  border-radius: 18px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Up from the bottom edge: it rises out of the space above the taskbar. */
+  transform-origin: bottom center;
+  transform: translateY(10px) scale(0.35);
+  opacity: 0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0);
+  transition:
+    transform var(--spring-pop-ms) var(--spring-pop),
+    opacity var(--spring-pop-ms) var(--spring-pop),
+    box-shadow var(--spring-pop-ms) var(--spring-pop),
+    width var(--spring-morph-ms) var(--spring-morph),
+    height var(--spring-morph-ms) var(--spring-morph),
+    border-radius var(--spring-morph-ms) var(--spring-morph),
+    border-color var(--spring-morph-ms) var(--spring-morph);
+}
+
+.pill.visible {
+  transform: none;
+  opacity: 1;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+}
+
+.pill.listening { border-color: rgba(126, 240, 200, 0.18); }
+.pill.attention { border-color: rgba(255, 192, 97, 0.35); }
+
+.pill .face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity var(--spring-morph-ms) var(--spring-morph),
+    transform var(--spring-morph-ms) var(--spring-morph);
+}
+
+.pill .face.on { opacity: 1; transform: none; position: relative; }
+
+/* The whole capsule is the animation's canvas; the style clips itself to the round ends. */
+.pill .wave-face { width: 160px; height: 36px; }
+.pill canvas { display: block; width: 160px; height: 36px; }
+
+.pill .success-face { width: 160px; gap: 7px; font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.85); font-variant-numeric: tabular-nums; }
+.pill .mini-check { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
+
+/* The numbers here are PILL_MESSAGE in src/main/pill-model.ts: change one, change both. */
+.pill .attention-face { gap: 8px; padding: 9px 14px; max-width: 360px; }
+.pill .attention-face > span:first-child { width: 16px; display: grid; place-items: center; flex: none; }
+.pill .attention-face .icon { color: var(--amber); flex: none; animation: bounce var(--spring-pop-ms) var(--spring-pop); }
+.pill .attention-face .message {
+  flex: none;
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  /* The width is measured (pill.ts) to the narrowest that holds two lines, which balances them;
+     `balance` says the same to the layout engine, and the clamp is the last guard, never hit
+     by a shipped message (test/main/pill-message.test.ts). Words break only at spaces. */
+  text-wrap: balance;
+  overflow-wrap: normal;
+  word-break: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes bounce {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Models (D-W25): the Languages page list and the readiness card -------------- */
+.dl-list { display: flex; flex-direction: column; }
+.dl-row { display: flex; flex-direction: column; gap: 6px; padding: 2px 0; }
+.dl-check-spacer { flex: none; width: 16px; }
+.dl-bar {
+  height: 4px;
+  margin-left: 28px;
+  border-radius: 2px;
+  background: var(--elevated);
+  overflow: hidden;
+}
+.dl-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: width var(--spring-snappy-ms, 240ms) ease-out;
+}
+/* One bar for the whole core, flush with the card's text (no checkbox column to clear). */
+.readiness-card { display: flex; flex-direction: column; gap: 10px; }
+.readiness-card .dl-bar { margin-left: 0; }
+
+/* ------------------------------------------------------- interface language */
+
+/* A flag: drawn SVG in a rounded 3:2 frame, with a hairline so white stripes hold an edge on black. */
+.flag {
+  display: inline-block;
+  flex: none;
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--elevated);
+}
+.flag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+.flag svg { display: block; width: 100%; height: 100%; }
+
+/* Onboarding's first step: four large cards, two by two. */
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-m);
+}
+.lang-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 18px 16px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--spring-snappy-ms) var(--spring-snappy),
+    border-color var(--spring-snappy-ms) var(--spring-snappy),
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    box-shadow var(--spring-smooth-ms) var(--spring-smooth);
+}
+.lang-card:hover { background: var(--raised); border-color: var(--hairline-strong); transform: translateY(-1px); }
+.lang-card:active { transform: scale(0.985); }
+.lang-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-card .names { display: flex; flex-direction: column; gap: 3px; min-width: 0; width: 100%; }
+.lang-card .native { font-size: 18px; font-weight: 600; letter-spacing: -0.005em; white-space: nowrap; }
+.lang-card .subline { font-size: 12px; color: var(--tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lang-card .lang-check {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--accent-ink);
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.4);
+}
+.lang-card.on {
+  border-color: rgba(126, 240, 200, 0.7);
+  background: linear-gradient(180deg, rgba(126, 240, 200, 0.10), rgba(126, 240, 200, 0.03)), var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 8px 28px -12px var(--accent-glow);
+  animation: lang-on var(--spring-pop-ms) var(--spring-pop) both;
+}
+.lang-card.on .names .subline { color: var(--secondary); }
+.lang-card.on .lang-check { opacity: 1; transform: none; animation: lang-check var(--spring-pop-ms) var(--spring-pop) 60ms both; }
+
+@keyframes lang-on {
+  from { box-shadow: 0 0 0 0 rgba(126, 240, 200, 0); transform: scale(0.985); }
+  to { box-shadow: 0 0 0 3px var(--accent-soft), 0 8px 28px -12px var(--accent-glow); transform: none; }
+}
+@keyframes lang-check {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* A language switch re-words the step in place: a quick cross-fade, no slide. */
+.onboarding .step.relang { animation: relang 200ms ease-out both; }
+@keyframes relang {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+/*
+ * Settings › Recording pill: three cards, each a real-size pill moving, always three across —
+ * a card is 160 px of pill and 12 px each side, and even the window's 720 px minimum leaves
+ * each of the three more than that (a 2 + 1 wrap left one card orphaned on its own row).
+ */
+.pill-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s); }
+.pill-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-m);
+  border-radius: calc(var(--radius-control) + 2px);
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  color: var(--secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transform: scale(0.98);
+  transition:
+    transform var(--spring-pop-ms) var(--spring-pop),
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    border-color var(--spring-snappy-ms) var(--spring-snappy),
+    color var(--spring-snappy-ms) var(--spring-snappy);
+}
+.pill-choice:hover { color: var(--text); border-color: var(--hairline-strong); }
+.pill-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pill-choice.on {
+  transform: none;
+  color: var(--text);
+  font-weight: 600;
+  border: 1.5px solid rgba(126, 240, 200, 0.55);
+  background: rgba(126, 240, 200, 0.07);
+}
+.pill-choice-stage { height: 36px; display: grid; place-items: center; }
+.pill-choice-stage .pill { transition: none; }
+.pill-choice .pill.listening { border-color: rgba(126, 240, 200, 0.14); }
+.pill-choice.on .pill.listening { border-color: rgba(126, 240, 200, 0.35); }
+.pill-choice-name { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.radio-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tertiary);
+  display: grid;
+  place-items: center;
+  transition: border-color var(--spring-snappy-ms) var(--spring-snappy);
+}
+.radio-dot::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: scale(0.2);
+  opacity: 0;
+  transition:
+    transform var(--spring-pop-ms) var(--spring-pop),
+    opacity var(--spring-snappy-ms) var(--spring-snappy);
+}
+.pill-choice.on .radio-dot { border-color: var(--accent); }
+.pill-choice.on .radio-dot::after { transform: none; opacity: 1; }
+
+/* Statistics: a period with nothing in it keeps its axes and says so, calmly, over them. */
+.chart-empty {
+  position: absolute;
+  inset: 0 0 24px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--secondary);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+  animation: chart-empty-in var(--spring-smooth-ms) var(--spring-smooth) both;
+}
+@keyframes chart-empty-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.chart-empty .icon { color: var(--tertiary); }
+
+/* Settings › App language: the same four choices as compact chips. */
+.lang-list { display: flex; flex-wrap: wrap; gap: var(--space-s); }
+.lang-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px 7px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--raised);
+  color: var(--secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background var(--spring-snappy-ms) var(--spring-snappy),
+    border-color var(--spring-snappy-ms) var(--spring-snappy),
+    color var(--spring-snappy-ms) var(--spring-snappy);
+}
+.lang-chip .flag { border-radius: 4px; }
+.lang-chip:hover { color: var(--text); border-color: var(--hairline-strong); }
+.lang-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-chip.on {
+  color: var(--text);
+  font-weight: 600;
+  border-color: rgba(126, 240, 200, 0.7);
+  background: var(--accent-soft);
+  animation: lang-chip-on var(--spring-pop-ms) var(--spring-pop) both;
+}
+@keyframes lang-chip-on {
+  from { transform: scale(0.96); }
+  to { transform: none; }
+}
+
+/* The sidebar's small print is as long as its language makes it ("Диктовка учун ўнг Ctrl
+   тугмасини босиб туринг"): it ellipsises inside the column instead of running under the page,
+   and the full sentence is the element's title. */
+.brand .rail-hide,
+.sidebar-footer .rail-hide { overflow: hidden; }
+.brand .rail-hide > span,
+.sidebar-footer .rail-hide > div { overflow: hidden; text-overflow: ellipsis; }

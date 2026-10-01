@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Always-on. Registered by AppLifecycle through SMAppService.agent(plistName:), which requires
+  this file at Contents/Library/LaunchAgents/ inside the app bundle (project.yml copies it there).
+
+  RunAtLoad:  start at login and after reboot.
+  KeepAlive {SuccessfulExit = false}:  relaunch after a crash or a Force Quit (both end in a
+      signal), never after a deliberate quit — Kotiba always leaves with _exit(0). KeepAlive = true
+      would bring it back after "Turn off always-on & quit" too.
+  BundleProgram:  relative to the bundle, so the registration follows the app wherever it lives.
+  Label:  must equal AppLifecycle.agentLabel; the app reads XPC_SERVICE_NAME to know launchd
+      started it.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>uz.kotiba.app.agent</string>
+	<key>BundleProgram</key>
+	<string>Contents/MacOS/KotibaMac</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>ProcessType</key>
+	<string>Interactive</string>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+</dict>
+</plist>
