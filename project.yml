@@ -88,8 +88,8 @@ targets:
         # what `make install` pkills and what make-dmg.sh copies. The bundle id does not move.
         CFBundleName: Kotiba
         NSMicrophoneUsageDescription: "Kotiba transcribes what you dictate, on this Mac."
-        CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "5"
+        CFBundleShortVersionString: "1.0.1"
+        CFBundleVersion: "6"
     entitlements:
       path: Apps/macOS/Kotiba.entitlements
       properties:
@@ -135,8 +135,8 @@ targets:
         NSMicrophoneUsageDescription: "Kotiba transcribes what you dictate, on this device."
         UILaunchScreen: {}
         UIBackgroundModes: [audio]
-        CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "5"
+        CFBundleShortVersionString: "1.0.1"
+        CFBundleVersion: "6"
     entitlements:
       path: Apps/iOS/Kotiba.entitlements
       properties:

@@ -268,10 +268,14 @@ public final class AppSettings {
 
     /// With a Bluetooth headset as the input, record from the Mac's own microphone instead.
     ///
-    /// A headset's microphone in use forces it into the hands-free profile — 16 kHz mono, the
-    /// "phone call" sound — for everything it plays, for as long as the microphone is held. The
-    /// choice is Kotiba's alone (its own input unit); the system default input is never touched.
-    public var preferBuiltInMicWithBluetooth: Bool = true
+    /// **Off by default**: Kotiba records from whatever input is selected in System Settings at
+    /// the moment of the press. On, it trades the headset's microphone for the laptop's so the
+    /// headset is never forced into the hands-free profile — 16 kHz mono, the "phone call"
+    /// sound — for everything it plays. Until 1.0 this was on by default, and a user who had
+    /// chosen their headset got the laptop microphone from across the room; `Snapshot` moves
+    /// every stored value to off once. The choice is Kotiba's alone (its own input unit); the
+    /// system default input is never touched.
+    public var preferBuiltInMicWithBluetooth: Bool = false
 
     // MARK: App lifecycle
 
@@ -503,7 +507,12 @@ public final class AppSettings {
         var hotkey: HotkeySpec?
         var duckingEnabled: Bool?
         var duckLevel: Double?
+        /// Read, never written: the on-by-default value from before 1.0. Nobody chose it — the
+        /// default chose it for them, and it made Kotiba ignore the microphone they had picked —
+        /// so it is dropped, and every user starts from off once. A value stored under the new
+        /// key below is a choice made in the opt-in toggle, and is kept from then on.
         var preferBuiltInMicWithBluetooth: Bool?
+        var builtInMicWithBluetoothOptIn: Bool?
         var alwaysOn: Bool?
         var launchAtLogin: Bool?
         var hasCompletedOnboarding: Bool?
@@ -550,7 +559,7 @@ public final class AppSettings {
             hotkey = settings.hotkey
             duckingEnabled = settings.duckingEnabled
             duckLevel = settings.duckLevel
-            preferBuiltInMicWithBluetooth = settings.preferBuiltInMicWithBluetooth
+            builtInMicWithBluetoothOptIn = settings.preferBuiltInMicWithBluetooth
             alwaysOn = settings.alwaysOn
             launchAtLogin = settings.launchAtLogin
             hasCompletedOnboarding = settings.hasCompletedOnboarding
@@ -614,7 +623,8 @@ public final class AppSettings {
             if let v = hotkey { settings.hotkey = v }
             if let v = duckingEnabled { settings.duckingEnabled = v }
             if let v = duckLevel { settings.duckLevel = min(1, max(0, v)) }
-            if let v = preferBuiltInMicWithBluetooth { settings.preferBuiltInMicWithBluetooth = v }
+            // `preferBuiltInMicWithBluetooth` (the old key) is deliberately not applied.
+            if let v = builtInMicWithBluetoothOptIn { settings.preferBuiltInMicWithBluetooth = v }
             if let v = alwaysOn { settings.alwaysOn = v }
             if let v = launchAtLogin { settings.launchAtLogin = v }
             // Any stored blob predates or completed onboarding; see `hasCompletedOnboarding`.

@@ -130,8 +130,9 @@ public actor MicrophoneSource: AudioSource {
 
     /// Take ids come from here so a take can be made synchronously, from any isolation.
     private nonisolated let takeCounter = Atomic<UInt64>(0)
-    /// `preferBuiltInMicWithBluetooth`, readable without hopping onto the actor.
-    private nonisolated let prefersBuiltInMic = Atomic<Bool>(true)
+    /// `preferBuiltInMicWithBluetooth`, readable without hopping onto the actor. Off until the
+    /// controller says otherwise: the default is whatever input the user selected in the system.
+    private nonisolated let prefersBuiltInMic = Atomic<Bool>(false)
 
     #if os(macOS)
     /// The device the input unit is bound to, when Kotiba chose one. Compared on every start so
@@ -142,6 +143,17 @@ public actor MicrophoneSource: AudioSource {
     /// prepared, which is whenever the route could have changed (`performStart` re-checks it on
     /// every start from idle). Nil off macOS, and when there is no input device at all.
     private var currentInput: InputDeviceInfo?
+    /// Where the routing rule reads the machine's inputs. The HAL in the app and the probe.
+    private let devices: any InputDeviceDirectory
+    /// The system default input, or the set of devices, changed since the graph was bound. Set by
+    /// the HAL listener, cleared when the graph is rebound. Needed on top of comparing device IDs
+    /// at the press because an unplugged-and-replugged device can come back under the same ID
+    /// with a different format, and the engine only posts a configuration change while running.
+    private var inputsMoved = false
+    /// Counted so the listener is observable rather than asserted.
+    public private(set) var inputChangeCount = 0
+    /// Removes itself from the HAL when the source goes away.
+    private var inputListener: HALPropertyListener?
     #endif
     /// The device each open take started on, so a take that outlives a device change still
     /// reports the device it actually heard. Emptied by `stopTake`.
@@ -188,6 +200,9 @@ public actor MicrophoneSource: AudioSource {
 
     /// Counted so the reattachment is observable rather than asserted.
     public private(set) var configurationChangeCount = 0
+    /// The ones that, checked, changed nothing — see `noteConfigurationChange`. Counted so the
+    /// probe shows the filter working rather than a press time merely getting shorter.
+    public private(set) var ignoredConfigurationChangeCount = 0
 
     private var configurationWatcher: (any NSObjectProtocol)?
     /// Which engine is the live one, readable from the notification's posting thread. A replaced
@@ -211,6 +226,9 @@ public actor MicrophoneSource: AudioSource {
     /// test can watch a source hand its engine over without sharing the process-wide one.
     init(ceilingSeconds: Double = 30 * 60, retirement: EngineRetirement) {
         slot = EngineSlot(retirement: retirement)
+        #if os(macOS)
+        devices = HALInputDevices()
+        #endif
         // Deep enough for the fastest hardware rate this will plausibly meet, for as long as the
         // consumer could plausibly stall; 20 s at 48 kHz is 4 MB. The old ring was 32 MB and was
         // the whole recording.
@@ -221,20 +239,68 @@ public actor MicrophoneSource: AudioSource {
 
     // MARK: Input device
 
-    /// Record from the Mac's own microphone instead of a Bluetooth headset's. See `InputRoute`.
-    /// Takes effect at the next warm-up or the next press from idle; never mid-capture.
+    /// Record from the Mac's own microphone instead of a Bluetooth headset's. Opt-in; see
+    /// `InputRoute`. Takes effect at the next warm-up or the next press; never mid-capture.
     public nonisolated func setPrefersBuiltInMicWithBluetooth(_ value: Bool) {
         prefersBuiltInMic.store(value, ordering: .relaxed)
     }
 
     #if os(macOS)
     /// Whether the input the next capture would use differs from the one the graph is built on.
-    /// Cheap — a few HAL property reads — so it runs on every start from idle.
+    /// Cheap — a few HAL property reads and one AudioUnit property read, well under a
+    /// millisecond — so it runs at every arming, the overlapping press included: the device a
+    /// take records from is the one selected *at the moment of the press*.
     private func routeChanged()
         -> (changed: Bool, device: AudioDeviceID?, bluetooth: Bool, overrode: Bool) {
         let route = InputRoute.resolve(
-            preferBuiltInWithBluetooth: prefersBuiltInMic.load(ordering: .relaxed))
-        return (route.device != boundDevice, route.device, route.isBluetooth, route.overrode)
+            preferBuiltInWithBluetooth: prefersBuiltInMic.load(ordering: .relaxed),
+            devices: devices)
+        let changed = InputRoute.needsRebind(target: route.device, bound: boundDevice,
+                                             unitReports: unitDevice(), stale: inputsMoved)
+        return (changed, route.device, route.isBluetooth, route.overrode)
+    }
+
+    /// The device the input unit itself says it is on. Only asked of a built graph: reaching for
+    /// `inputNode` on a released engine would create one — on a Bluetooth default, that alone is
+    /// what holds a headset in HFP.
+    private func unitDevice() -> AudioDeviceID? {
+        guard sink != nil, let unit = engine.inputNode.audioUnit else { return nil }
+        var id = AudioDeviceID(0)
+        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+        guard AudioUnitGetProperty(unit, kAudioOutputUnitProperty_CurrentDevice,
+                                   kAudioUnitScope_Global, 0, &id, &size) == noErr,
+              id != kAudioObjectUnknown else { return nil }
+        return id
+    }
+
+    /// Listen for the user picking another input, and for devices coming and going.
+    ///
+    /// The format comparison in `prepareGraph` cannot see a switch between two microphones that
+    /// happen to share a format (built-in 48 kHz mono → a USB headset at 48 kHz mono), and
+    /// `AVAudioEngineConfigurationChange` is only posted for a *running* engine — between
+    /// dictations it is stopped. So the HAL itself is asked to say when the default input or the
+    /// device list moves. The press re-checks the route anyway (`routeChanged`); this is what
+    /// lets the rebuild happen while idle, off the press's critical path, and what lets go of a
+    /// warm graph the moment the default becomes a Bluetooth headset.
+    private func watchInputDevices() {
+        guard inputListener == nil else { return }
+        inputListener = HALPropertyListener(
+            selectors: [kAudioHardwarePropertyDefaultInputDevice, kAudioHardwarePropertyDevices]
+        ) { [weak self] in
+            Task { await self?.noteInputsMoved() }
+        }
+    }
+
+    /// The default input or the device list changed. Mark the binding stale, and — if nothing is
+    /// recording — rebuild now, so the next press arms on the new device at warm cost. Under a
+    /// running take nothing is touched: the take keeps the device it started on, and the next
+    /// press's `routeChanged` moves to the new one.
+    func noteInputsMoved() async {
+        inputChangeCount += 1
+        inputsMoved = true
+        // Only once the app has warmed up at all: a source nobody has used has nothing to move.
+        guard !isCapturing, warmUpCount > 0 else { return }
+        await warmUp()
     }
 
     /// Point the input unit at `device`, for this process only.
@@ -344,6 +410,7 @@ public actor MicrophoneSource: AudioSource {
                 return
             }
             if route.changed || graphIsStale {
+                inputsMoved = false
                 // A different device is a different graph, and so is one the hardware moved
                 // under. Rebuild from a fresh engine rather than re-pointing a connected one: the
                 // old connection carries the old format, and an AUHAL whose device changed under
@@ -355,6 +422,7 @@ public actor MicrophoneSource: AudioSource {
                 graphIsStale = true
             }
             boundIsBluetooth = route.bluetooth
+            watchInputDevices()
             #endif
             let input = engine.inputNode
             // Read the *hardware* side of the input node, never its output side.
@@ -377,8 +445,8 @@ public actor MicrophoneSource: AudioSource {
             // bound — for every take that starts on it. The hardware's own rate, from the same
             // format the capture resamples from.
             currentInput = route.device.map {
-                AudioDevices.inputInfo($0, sampleRate: format.sampleRate,
-                                       overrodeDefault: route.overrode)
+                devices.inputInfo($0, sampleRate: format.sampleRate,
+                                  overrodeDefault: route.overrode)
             }
             #endif
             // Rebuild the graph when it is stale, not merely when it was never built.
@@ -453,14 +521,40 @@ public actor MicrophoneSource: AudioSource {
         }
     }
 
-    /// The device changed. Mark the graph for rebuilding and say so.
+    /// The device changed. Mark the graph for rebuilding and say so — unless, looked at, nothing
+    /// did.
     ///
     /// Deliberately does NOT clear `hardwareFormat` or `isCapturing`. A change arriving mid-
     /// dictation has already stopped the engine, so the recording is truncated — but the take
     /// still holds everything that arrived, converted at the old rate, and a truncated transcript
     /// beats an empty one. The next warm-up rebuilds against the new device.
+    ///
+    /// **Most of these are our own.** Measured on this Mac (M4 Pro, built-in microphone, nothing
+    /// else touched, 2026-10-02): the engine posts one ~50 ms after the first `start()` of every
+    /// freshly connected graph, with the engine still running, the same device on the unit and
+    /// the same 48 kHz mono format. Believed blindly, that marked the graph stale, the next press
+    /// rebuilt it, its start posted again — a loop in which every press after the first armed in
+    /// 105–135 ms instead of ~34 ms, a first syllable at risk on every dictation but one. So the graph is checked before it is condemned: a change that moved the route,
+    /// changed the hardware format, or stopped an engine a take is running on is news; one that
+    /// left all three alone is not. Not a time window around our own stop/start — the post came
+    /// 50 ms *after* the start returned, and a real change inside any such window would be lost.
     func noteConfigurationChange() {
         configurationChangeCount += 1
+        #if os(macOS)
+        // Only a built graph can be checked. Without a sink there is nothing to keep — and
+        // reaching for `inputNode` on a released engine would create one, which on a Bluetooth
+        // default is exactly what holds a headset in HFP.
+        if sink != nil, let bound = hardwareFormat {
+            let route = routeChanged()
+            let now = engine.inputNode.inputFormat(forBus: 0)
+            if !InputRoute.configurationChangeIsNews(
+                routeChanged: route.changed, formatUnchanged: now.isEqual(bound),
+                takeRunning: isCapturing, engineRunning: engine.isRunning) {
+                ignoredConfigurationChangeCount += 1
+                return
+            }
+        }
+        #endif
         graphIsStale = true
         graphWarm = false
         lastWarmUpError = "the input device changed — the audio graph is rebuilt on the next press"
@@ -583,7 +677,14 @@ public actor MicrophoneSource: AudioSource {
                               onLimit: (@Sendable () -> Void)?) async throws {
         guard currentTake != id else { return }       // "safe to call when already armed"
 
-        if isCapturing, !graphIsStale, let format = hardwareFormat {
+        #if os(macOS)
+        // Asked before the fast path, not only from idle: a press overlapping a dictation used
+        // to reuse the running graph even if the user had picked another microphone since.
+        let moved = routeChanged().changed
+        #else
+        let moved = false
+        #endif
+        if isCapturing, !graphIsStale, !moved, let format = hardwareFormat {
             try pipeline.begin(take: id, sourceRate: format.sampleRate,
                                continuation: continuation, onLimit: onLimit)
             currentTake = id
@@ -597,9 +698,7 @@ public actor MicrophoneSource: AudioSource {
             engine.stop()
             isCapturing = false
         }
-        #if os(macOS)
-        if routeChanged().changed { graphWarm = false; graphIsStale = true }
-        #endif
+        if moved { graphWarm = false; graphIsStale = true }
         if !graphWarm { await prepareGraph(forCapture: true) }
         guard graphWarm, let format = hardwareFormat else {
             // Rethrow what warm-up actually hit, rather than re-wrapping its message. A denied
@@ -686,9 +785,29 @@ public actor MicrophoneSource: AudioSource {
         }
         #if os(macOS)
         // Let go of a headset microphone the moment the dictation is over. See `warmUp`.
-        if boundIsBluetooth { releaseEngine() }
+        if boundIsBluetooth { releaseEngine() } else if wasRunning {
+            // Re-prepare after the release, not during it: measured 15–19 ms, and `stopTake` is
+            // on the release→text path. See `reprepareIfIdle`.
+            Task { await self.reprepareIfIdle() }
+        }
         #endif
         return result
+    }
+
+    /// Put a stopped, healthy graph back into the state warm-up leaves it in.
+    ///
+    /// `engine.stop()` deallocates what `prepare()` allocated, so a press after a stop paid for
+    /// both in its `start()`: measured on this Mac, the first press after warm-up starts in ~34 ms
+    /// and every later one in 43–60 ms; with this, 35–44 ms. It runs on the actor just after the
+    /// release, so it costs only a press that lands in those ~17 ms — which then simply starts on
+    /// a prepared graph. Not on a Bluetooth input (released instead, see `warmUp`), not on a graph
+    /// already condemned (the next press rebuilds it), never under a take.
+    private func reprepareIfIdle() {
+        guard !isCapturing, graphWarm, !graphIsStale, sink != nil else { return }
+        #if os(macOS)
+        guard !boundIsBluetooth else { return }
+        #endif
+        if KotibaCatchObjCException({ engine.prepare() }) != nil { noteStartFailure() }
     }
 
     /// Whether a take's emptiness condemns the graph. A tap shorter than the first render quantum

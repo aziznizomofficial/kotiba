@@ -100,6 +100,14 @@ registerProcessor('kotiba-capture', KotibaCaptureProcessor);
  *   formats, because comparing formats is what had been tried and it kept saying the
  *   graph was healthy.
  *
+ * - THE DEVICE IS THE ONE SELECTED IN WINDOWS AT THE MOMENT OF THE PRESS. `getUserMedia`
+ *   asks for the `default` device, and a `devicechange` (Chromium fires one when the
+ *   default input is switched, as well as when devices come and go) marks the open stream
+ *   stale: an idle one is let go at once, and a press reopens it on whatever is the default
+ *   then. Before this, a stream still held open by the `WARM_HOLD_MS` window was reused by
+ *   the next press even after the user had picked another microphone, and a press that
+ *   overlapped a dictation kept the old device for the whole new take.
+ *
  * - The constraints turn OFF echo cancellation, noise suppression and automatic gain
  *   control. This is the browser's analogue of the iOS `.measurement` mode the macOS app
  *   sets, and it matters more here: Windows APO processing is aggressive, it is tuned for
@@ -123,6 +131,8 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
     source: null,
     // The microphone the open stream is listening to: the track's label and its own rate.
     device: null,
+    // A device change was heard since the stream was opened: the next start reopens it.
+    streamStale: false,
     capturing: false,
     // The segment every arriving block belongs to. Switched by a 'start' while capturing:
     // that is the seam between two takes, at a block boundary, with nothing lost.
@@ -187,6 +197,10 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
     if (watching || !navigator.mediaDevices) return;
     watching = true;
     navigator.mediaDevices.addEventListener('devicechange', () => {
+      state.streamStale = true;
+      // Nothing is recording: let go now, so the indicator goes out and nothing can reuse a
+      // stream on the microphone the user just switched away from.
+      if (!state.capturing) teardownStream();
       send({ kind: 'deviceChanged', why: 'the list of audio devices changed' });
     });
   };
@@ -256,13 +270,17 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
   };
 
   const openStream = async (context) => {
-    if (state.stream && state.stream.getAudioTracks().some((t) => t.readyState === 'live')) return;
+    if (!state.streamStale && state.stream
+        && state.stream.getAudioTracks().some((t) => t.readyState === 'live')) return;
     teardownStream();
+    state.streamStale = false;
     // channelCount 1 asks the browser to downmix; it also resamples to the context rate.
     // Both happen in the browser's own high-quality path, which is the entire point of
     // D-W6 — a hand-written resampler is what destroyed Uzbek sibilants on macOS.
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
+        // The device selected in Windows' sound settings, looked up now, never a cached id.
+        deviceId: { ideal: 'default' },
         channelCount: 1,
         echoCancellation: false,
         noiseSuppression: false,
@@ -335,10 +353,14 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
         case 'start': {
           if (state.capturing) {
             // A new take while the last one is still open: seal the old segment at this
-            // block boundary and carry on under the new tag. The engine keeps running.
+            // block boundary and carry on under the new tag. The engine keeps running —
+            // unless the user switched microphones since the stream opened: then the old
+            // take ends here anyway, and the new one reopens on the current default.
+            if (state.streamStale) teardownStream();
             flush();
             state.segment = command.segment;
             state.totals.set(command.segment, 0);
+            if (!state.stream) await openStream(state.context);
             return { kind: 'ok', device: state.device || undefined };
           }
           const context = await buildContext();

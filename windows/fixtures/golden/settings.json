@@ -166,7 +166,7 @@
     "polishModel": "openai/gpt-oss-120b",
     "polishTimeoutSeconds": 8.000000,
     "polishUzbek": false,
-    "preferBuiltInMicWithBluetooth": true,
+    "preferBuiltInMicWithBluetooth": false,
     "preferOnDeviceModel": true,
     "preloadAllLanguages": false,
     "replacements": [],

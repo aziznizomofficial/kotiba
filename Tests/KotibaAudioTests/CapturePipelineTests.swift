@@ -221,6 +221,160 @@ struct InputRouteTests {
 #endif
 
 #if os(macOS)
+/// A machine with whatever inputs a test says it has. The default input is mutable, as the user's
+/// System Settings choice is.
+final class FakeInputs: InputDeviceDirectory, @unchecked Sendable {
+    struct Device { let name: String; let transport: UInt32 }
+    var table: [AudioDeviceID: Device]
+    var defaultInput: AudioDeviceID?
+    init(_ table: [AudioDeviceID: Device], default: AudioDeviceID?) {
+        self.table = table
+        defaultInput = `default`
+    }
+    var builtInInput: AudioDeviceID? {
+        table.first { $0.value.transport == kAudioDeviceTransportTypeBuiltIn }?.key
+    }
+    func name(_ device: AudioDeviceID) -> String { table[device]?.name ?? "?" }
+    func transportCode(_ device: AudioDeviceID) -> UInt32 { table[device]?.transport ?? 0 }
+
+    static let builtIn: AudioDeviceID = 70, usbHeadset: AudioDeviceID = 80, airPods: AudioDeviceID = 90
+    static func laptop(default: AudioDeviceID) -> FakeInputs {
+        FakeInputs([builtIn: Device(name: "MacBook Pro Microphone",
+                                    transport: kAudioDeviceTransportTypeBuiltIn),
+                    usbHeadset: Device(name: "Gaming Headset", transport: kAudioDeviceTransportTypeUSB),
+                    airPods: Device(name: "AirPods", transport: kAudioDeviceTransportTypeBluetooth)],
+                   default: `default`)
+    }
+}
+
+/// The routing decision `MicrophoneSource` makes at every arming, driven through the same
+/// functions with fake devices, and checked against the diagnostics record a take carries.
+@Suite("The microphone selected in the system is the one recorded")
+struct FollowDefaultInputTests {
+    /// What `MicrophoneSource.routeChanged` + `prepareGraph` do at a press, minus the engine:
+    /// resolve, decide whether to rebind, and write down the take's device.
+    struct Arming {
+        var bound: AudioDeviceID?
+        var stale = false
+        mutating func press(_ devices: FakeInputs, preferBuiltIn: Bool,
+                            unitReports: AudioDeviceID? = nil) -> (rebound: Bool, take: InputDeviceInfo?) {
+            let route = InputRoute.resolve(preferBuiltInWithBluetooth: preferBuiltIn, devices: devices)
+            let rebind = InputRoute.needsRebind(target: route.device, bound: bound,
+                                                unitReports: unitReports ?? bound, stale: stale)
+            if rebind { bound = route.device; stale = false }
+            return (rebind, bound.map { devices.inputInfo($0, sampleRate: 48_000,
+                                                           overrodeDefault: route.overrode) })
+        }
+    }
+
+    @Test("a default changed while idle is the device the next take records from")
+    func defaultChangeWhileIdle() {
+        let machine = FakeInputs.laptop(default: FakeInputs.builtIn)
+        var arming = Arming()
+        let first = arming.press(machine, preferBuiltIn: false)
+        #expect(first.take?.transport == .builtIn)
+        // Idle, same format, warm graph — the user picks the headset in System Settings.
+        machine.defaultInput = FakeInputs.usbHeadset
+        let second = arming.press(machine, preferBuiltIn: false)
+        #expect(second.rebound)
+        #expect(second.take == InputDeviceInfo(name: "Gaming Headset", transport: .usb,
+                                               sampleRate: 48_000, overrodeDefault: false))
+        // And nothing is rebuilt when nothing moved.
+        #expect(!arming.press(machine, preferBuiltIn: false).rebound)
+    }
+
+    @Test("with the switch off (the default), a Bluetooth default input is recorded from")
+    func bluetoothFollowedByDefault() {
+        let machine = FakeInputs.laptop(default: FakeInputs.airPods)
+        var arming = Arming()
+        let take = arming.press(machine, preferBuiltIn: false).take
+        #expect(take?.name == "AirPods")
+        #expect(take?.transport == .bluetooth)
+        #expect(take?.overrodeDefault == false)
+    }
+
+    @Test("with the switch on, a Bluetooth default input is swapped for the built-in mic")
+    func bluetoothSwappedWhenOptedIn() {
+        let machine = FakeInputs.laptop(default: FakeInputs.airPods)
+        var arming = Arming()
+        let take = arming.press(machine, preferBuiltIn: true).take
+        #expect(take?.transport == .builtIn)
+        #expect(take?.overrodeDefault == true)
+        // The switch never touches a non-Bluetooth choice.
+        machine.defaultInput = FakeInputs.usbHeadset
+        #expect(arming.press(machine, preferBuiltIn: true).take?.name == "Gaming Headset")
+    }
+
+    @Test("an input unit that drifted off the bound device, or a heard change, forces a rebind")
+    func driftAndStaleRebind() {
+        #expect(InputRoute.needsRebind(target: 80, bound: 80, unitReports: 70, stale: false))
+        #expect(InputRoute.needsRebind(target: 80, bound: 80, unitReports: 80, stale: true))
+        #expect(!InputRoute.needsRebind(target: 80, bound: 80, unitReports: 80, stale: false))
+        // No graph to ask: the bound ID is all there is.
+        #expect(!InputRoute.needsRebind(target: 80, bound: 80, unitReports: nil, stale: false))
+        #expect(InputRoute.needsRebind(target: 80, bound: nil, unitReports: nil, stale: false))
+    }
+
+    /// What `MicrophoneSource.noteConfigurationChange` decides when the live engine posts, minus
+    /// the engine: re-resolve the route against the (fake) machine, compare the input unit and
+    /// the hardware format with what the graph was built on, and look at whether the engine kept
+    /// running under an open take.
+    struct Graph {
+        var bound: AudioDeviceID?
+        var format = (rate: 48_000.0, channels: 1)
+        var takeRunning = false
+        func isNews(_ devices: FakeInputs, preferBuiltIn: Bool = false,
+                    unitReports: AudioDeviceID? = nil, formatNow: (rate: Double, channels: Int)? = nil,
+                    engineRunning: Bool? = nil, heardHAL: Bool = false) -> Bool {
+            let route = InputRoute.resolve(preferBuiltInWithBluetooth: preferBuiltIn, devices: devices)
+            let moved = InputRoute.needsRebind(target: route.device, bound: bound,
+                                               unitReports: unitReports ?? bound, stale: heardHAL)
+            let now = formatNow ?? format
+            return InputRoute.configurationChangeIsNews(
+                routeChanged: moved, formatUnchanged: now == format,
+                takeRunning: takeRunning, engineRunning: engineRunning ?? takeRunning)
+        }
+    }
+
+    @Test("a configuration change our own start posted — nothing moved — keeps the warm graph")
+    func selfCausedChangeIgnored() {
+        // The measured case: built-in mic, default untouched, the engine posts ~50 ms after its
+        // start and is still running on the same device in the same 48 kHz mono format.
+        let machine = FakeInputs.laptop(default: FakeInputs.builtIn)
+        var graph = Graph(bound: FakeInputs.builtIn, takeRunning: true)
+        #expect(!graph.isNews(machine))
+        // The same post arriving after the release, the engine stopped by us: still nothing.
+        graph.takeRunning = false
+        #expect(!graph.isNews(machine, engineRunning: false))
+        // With the Bluetooth switch on and AirPods as the default, the graph is on the built-in
+        // microphone by Kotiba's own choice — that is not a moved route either.
+        let headset = FakeInputs.laptop(default: FakeInputs.airPods)
+        #expect(!Graph(bound: FakeInputs.builtIn).isNews(headset, preferBuiltIn: true))
+    }
+
+    @Test("a real default-input change, format change or engine stop is still honoured")
+    func realChangeHonoured() {
+        let machine = FakeInputs.laptop(default: FakeInputs.builtIn)
+        let graph = Graph(bound: FakeInputs.builtIn, takeRunning: true)
+        // The user picks the USB headset — same 48 kHz mono, so only the route says so.
+        machine.defaultInput = FakeInputs.usbHeadset
+        #expect(graph.isNews(machine))
+        machine.defaultInput = FakeInputs.builtIn
+        // Same device, the hardware moved to 44.1 kHz stereo under the connection.
+        #expect(graph.isNews(machine, formatNow: (44_100, 2)))
+        // The engine stopped itself under an open take: its I/O is gone.
+        #expect(graph.isNews(machine, engineRunning: false))
+        // The unit drifted off the bound device (VoiceInk #956), or the HAL listener heard the
+        // default move before this post arrived.
+        #expect(graph.isNews(machine, unitReports: FakeInputs.usbHeadset))
+        #expect(graph.isNews(machine, heardHAL: true))
+        // And with nothing moved, the same graph is not news — the two tests agree on the line.
+        #expect(!graph.isNews(machine))
+    }
+}
+#endif
+
+#if os(macOS)
 @Suite("Input device classification (no hardware)")
 struct InputTransportTests {
     @Test("CoreAudio transport codes map to the diagnostics vocabulary")

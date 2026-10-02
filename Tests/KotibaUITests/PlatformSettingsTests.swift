@@ -22,7 +22,7 @@ struct PlatformSettingsTests {
         let settings = AppSettings(store: store(with: #"{"polishEnabled":true}"#), modelBundle: nil)
         #expect(settings.hotkey == .rightCommand)
         #expect(settings.duckingEnabled && settings.duckLevel == 0.25)
-        #expect(settings.preferBuiltInMicWithBluetooth)
+        #expect(!settings.preferBuiltInMicWithBluetooth, "the system's input is the default")
         #expect(!settings.alwaysOn && !settings.launchAtLogin)
     }
 
@@ -57,5 +57,24 @@ struct PlatformSettingsTests {
         #expect(settings.hotkey == .rightCommand)
         #expect(settings.polishEnabled == false, "one bad key must not cost the others")
         #expect(settings.loadFailure?.contains("hotkey") == true)
+    }
+
+    @Test("the old on-by-default built-in-mic value is migrated to off, once")
+    func builtInMicMigration() {
+        // A pre-1.0 blob: the value the default wrote, true, which nobody chose.
+        let defaults = store(with: #"{"preferBuiltInMicWithBluetooth":true,"polishEnabled":true}"#)
+        let migrated = AppSettings(store: defaults, modelBundle: nil)
+        #expect(!migrated.preferBuiltInMicWithBluetooth)
+        #expect(migrated.polishEnabled, "the rest of the blob survives")
+        // Fresh installs start off too.
+        #expect(!AppSettings(store: store(with: nil), modelBundle: nil).preferBuiltInMicWithBluetooth)
+        // Once: a user who then opts in keeps it across a save and a reload — the old key, still
+        // in the blob from before, must not drag it back to off.
+        migrated.preferBuiltInMicWithBluetooth = true
+        migrated.save()
+        #expect(AppSettings(store: defaults, modelBundle: nil).preferBuiltInMicWithBluetooth)
+        migrated.preferBuiltInMicWithBluetooth = false
+        migrated.save()
+        #expect(!AppSettings(store: defaults, modelBundle: nil).preferBuiltInMicWithBluetooth)
     }
 }

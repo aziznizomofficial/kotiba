@@ -139,7 +139,7 @@ struct LocalizationTests {
     static let latinInCyrillic: Set<String> = [
         "Kotiba", "Kotib", "KotibAI", "Kotibai", "Rubai", "Mac", "macOS", "Apple", "Intelligence",
         "Siri", "AirPods", "iPhone", "Continuity", "Bluetooth", "Dock", "Neural", "Engine", "whisper", "Whisper", "cpp",
-        "ggml", "Parakeet", "Ultra", "Qwen3", "Qwen", "GPU", "API", "Markdown", "Slack",
+        "ggml", "Parakeet", "Ultra", "Qwen3", "Qwen", "GPU", "USB", "API", "Markdown", "Slack",
         "Telegram", "Obsidian", "Esc", "F1", "F2", "F13", "F1–F12", "fn", "C", "Return", "Delete",
         "Forward", "Page", "Up", "Down", "Help", "Clear", "NVIDIA", "parakeet", "tdt", "b", "v3",
         "moondream", "Core", "ML", "FluidInference", "CC", "BY", "OpenAI", "Silero", "VAD", "Team",

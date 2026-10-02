@@ -59,7 +59,14 @@ class FakeWorkletNode {
   }
 }
 
-function page(): {
+/** The machine's microphones: which one Windows has as the default, and what was opened. */
+interface FakeInputs {
+  default: string;
+  readonly opened: { label: string; deviceId: unknown; stopped: boolean }[];
+  fireDeviceChange(): void;
+}
+
+function page(inputs?: FakeInputs): {
   readonly events: PageEvent[];
   command(command: Record<string, unknown>): Promise<Record<string, unknown>>;
   node(): FakeWorkletNode;
@@ -67,6 +74,23 @@ function page(): {
   const events: PageEvent[] = [];
   const track = { readyState: 'live', addEventListener: () => undefined, stop: () => undefined };
   const stream = { getAudioTracks: () => [track], getTracks: () => [track] };
+  // With `inputs`, every getUserMedia opens a fresh track on whatever is the default NOW.
+  const open = async (constraints: { audio: { deviceId?: unknown } }) => {
+    if (inputs === undefined) return stream;
+    const record = { label: inputs.default, deviceId: constraints.audio.deviceId, stopped: false };
+    inputs.opened.push(record);
+    const t = {
+      readyState: 'live',
+      label: record.label,
+      getSettings: () => ({ sampleRate: 48_000 }),
+      addEventListener: () => undefined,
+      stop: () => {
+        record.stopped = true;
+        t.readyState = 'ended';
+      },
+    };
+    return { getAudioTracks: () => [t], getTracks: () => [t] };
+  };
   class FakeAudioContext {
     readonly sampleRate: number;
     state = 'running';
@@ -83,9 +107,11 @@ function page(): {
   const sandbox: Record<string, unknown> = {
     navigator: {
       mediaDevices: {
-        getUserMedia: async () => stream,
+        getUserMedia: open,
         enumerateDevices: async () => [{ kind: 'audioinput', label: 'Fake microphone' }],
-        addEventListener: () => undefined,
+        addEventListener: (name: string, listener: () => void) => {
+          if (name === 'devicechange' && inputs !== undefined) inputs.fireDeviceChange = listener;
+        },
       },
       permissions: { query: async () => ({ state: 'granted' }) },
     },
@@ -215,5 +241,65 @@ describe('the capture page, run for real', () => {
     await p.command({ kind: 'stop', segment: 2 });
     expect(Array.from(joined(chunksOf(p.events, 1)))).toEqual(Array.from(block(0, 256)));
     expect(Array.from(joined(chunksOf(p.events, 2)))).toEqual(Array.from(block(256, 128)));
+  });
+
+  describe('follows the input selected in Windows at the moment of the press', () => {
+    const machine = (): FakeInputs => ({
+      default: 'Laptop Microphone',
+      opened: [],
+      fireDeviceChange: () => undefined,
+    });
+
+    it('asks for the default device, not a remembered one', async () => {
+      const inputs = machine();
+      const p = page(inputs);
+      await p.command({ kind: 'warmUp' });
+      await p.command({ kind: 'start', segment: 1 });
+      expect(inputs.opened[0]?.deviceId).toEqual({ ideal: 'default' });
+    });
+
+    it('a switch during the warm hold: the idle stream is let go and the next press opens the new default', async () => {
+      const inputs = machine();
+      const p = page(inputs);
+      await p.command({ kind: 'warmUp' });
+      const first = await p.command({ kind: 'start', segment: 1 });
+      await p.command({ kind: 'stop', segment: 1 });
+      expect(first['device']).toMatchObject({ label: 'Laptop Microphone' });
+      // Still inside WARM_HOLD_MS — no release yet — the user picks the headset.
+      inputs.default = 'Gaming Headset';
+      inputs.fireDeviceChange();
+      expect(inputs.opened[0]?.stopped).toBe(true);
+      await p.command({ kind: 'warmUp' });
+      const second = await p.command({ kind: 'start', segment: 2 });
+      expect(second['device']).toMatchObject({ label: 'Gaming Headset' });
+      expect(inputs.opened).toHaveLength(2);
+    });
+
+    it('no switch: the warm-held stream is reused, not reopened', async () => {
+      const inputs = machine();
+      const p = page(inputs);
+      await p.command({ kind: 'warmUp' });
+      await p.command({ kind: 'start', segment: 1 });
+      await p.command({ kind: 'stop', segment: 1 });
+      await p.command({ kind: 'start', segment: 2 });
+      expect(inputs.opened).toHaveLength(1);
+    });
+
+    it('a press overlapping a dictation after a switch records the new take from the new default', async () => {
+      const inputs = machine();
+      const p = page(inputs);
+      await p.command({ kind: 'warmUp' });
+      await p.command({ kind: 'start', segment: 1 });
+      p.node().render(block(0, 1_600));
+      inputs.default = 'USB Microphone';
+      inputs.fireDeviceChange();
+      // Mid-capture nothing is torn down: the running take keeps its device.
+      expect(inputs.opened[0]?.stopped).toBe(false);
+      const second = await p.command({ kind: 'start', segment: 2 });
+      expect(second['device']).toMatchObject({ label: 'USB Microphone' });
+      expect(inputs.opened[0]?.stopped).toBe(true);
+      const first = await p.command({ kind: 'stop', segment: 1 });
+      expect(first['totalSamples']).toBe(1_600);
+    });
   });
 });

@@ -102,16 +102,6 @@ public enum AudioDevices {
         return InputTransport.classify(reported, name: name)
     }
 
-    /// What the diagnostics record says about `device` as an input. `sampleRate` is the
-    /// hardware's own (the input node's, not the 16 kHz it is resampled to).
-    public static func inputInfo(_ device: AudioDeviceID, sampleRate: Double?,
-                                 overrodeDefault: Bool?) -> InputDeviceInfo {
-        let name = name(device)
-        return InputDeviceInfo(name: name,
-                               transport: inputTransport(code: transport(device), name: name),
-                               sampleRate: sampleRate, overrodeDefault: overrodeDefault)
-    }
-
     public static func inputChannels(_ device: AudioDeviceID) -> Int {
         channelCount(device, scope: kAudioObjectPropertyScopeInput)
     }
@@ -261,16 +251,88 @@ public enum AudioDevices {
     }
 }
 
-// MARK: - The Bluetooth trap
+// MARK: - Listening to the HAL
 
-/// Which microphone Kotiba should record from. Pure, so the rule is tested without hardware.
+/// A block listener on system-object properties, removed when this is released. The block runs
+/// on a private serial queue and must only hand the news on (it does: one `Task`).
+public final class HALPropertyListener: @unchecked Sendable {
+    private let addresses: [AudioObjectPropertyAddress]
+    private let queue = DispatchQueue(label: "kotiba.hal-listener")
+    private let block: AudioObjectPropertyListenerBlock
+
+    public init(selectors: [AudioObjectPropertySelector], onChange: @escaping @Sendable () -> Void) {
+        addresses = selectors.map { AudioDevices.address($0) }
+        block = { _, _ in onChange() }
+        let system = AudioObjectID(kAudioObjectSystemObject)
+        for var address in addresses {
+            AudioObjectAddPropertyListenerBlock(system, &address, queue, block)
+        }
+    }
+
+    deinit {
+        let system = AudioObjectID(kAudioObjectSystemObject)
+        for var address in addresses {
+            AudioObjectRemovePropertyListenerBlock(system, &address, queue, block)
+        }
+    }
+}
+
+// MARK: - Which microphone
+
+/// The handful of facts about the machine's inputs that the routing rule reads. A protocol so the
+/// rule — and the diagnostics record each take carries — can be driven by fake devices in tests;
+/// the app and the probe read the HAL (`HALInputDevices`).
+public protocol InputDeviceDirectory: Sendable {
+    /// The input selected in System Settings › Sound › Input, right now.
+    var defaultInput: AudioDeviceID? { get }
+    /// The Mac's own microphone, if it has one.
+    var builtInInput: AudioDeviceID? { get }
+    func name(_ device: AudioDeviceID) -> String
+    /// The Core Audio transport code (`kAudioDeviceTransportType…`).
+    func transportCode(_ device: AudioDeviceID) -> UInt32
+}
+
+extension InputDeviceDirectory {
+    public func isBluetooth(_ device: AudioDeviceID) -> Bool {
+        let t = transportCode(device)
+        return t == kAudioDeviceTransportTypeBluetooth || t == kAudioDeviceTransportTypeBluetoothLE
+    }
+
+    /// What the diagnostics record says about `device` as an input.
+    public func inputInfo(_ device: AudioDeviceID, sampleRate: Double?,
+                          overrodeDefault: Bool?) -> InputDeviceInfo {
+        let name = name(device)
+        return InputDeviceInfo(name: name,
+                               transport: AudioDevices.inputTransport(code: transportCode(device),
+                                                                      name: name),
+                               sampleRate: sampleRate, overrodeDefault: overrodeDefault)
+    }
+}
+
+/// The live answers, read from the HAL on every call — never cached, because the whole point is
+/// to follow what the user selected *at the moment of the press*.
+public struct HALInputDevices: InputDeviceDirectory {
+    public init() {}
+    public var defaultInput: AudioDeviceID? { AudioDevices.defaultInput }
+    public var builtInInput: AudioDeviceID? { AudioDevices.builtInInput }
+    public func name(_ device: AudioDeviceID) -> String { AudioDevices.name(device) }
+    public func transportCode(_ device: AudioDeviceID) -> UInt32 { AudioDevices.transport(device) }
+}
+
+/// Which microphone Kotiba records from. Pure over an `InputDeviceDirectory`, so the rule is
+/// tested without hardware.
 ///
-/// macOS moves a Bluetooth headset into the hands-free profile (HFP/SCO — 16 kHz mono, the
-/// "phone call" sound) the moment its microphone is in use, and it stays there for as long as
-/// anything holds that input. Measured on this Mac with WH-1000XM4 and AirPods: output drops from
-/// 44.1/48 kHz stereo to 16 or 24 kHz, and music sounds like a bad call for as long as Kotiba's
-/// engine is warm. The built-in microphone is better for dictation anyway than a headset mic
-/// transmitting over SCO at 16 kHz.
+/// **The default is the system's choice, whatever it is** — built-in, wired, USB, a gaming
+/// headset, Bluetooth, an iPhone over Continuity. Until 1.0 the Bluetooth exception below was on
+/// by default, so anyone who picked their headset in System Settings got the laptop's microphone
+/// from across the room instead, with nothing on screen saying so (the owner's report,
+/// 2026-10-02). It is now an opt-in.
+///
+/// The exception, when switched on: macOS moves a Bluetooth headset into the hands-free profile
+/// (HFP/SCO — 16 kHz mono, the "phone call" sound) the moment its microphone is in use. Measured
+/// on this Mac with WH-1000XM4 and AirPods: output drops from 44.1/48 kHz stereo to 16 or 24 kHz
+/// for as long as anything holds that input. With the switch on Kotiba records from the built-in
+/// microphone instead and the music keeps its quality.
 ///
 /// The choice is per-app — the input unit's own `CurrentDevice` — and never the system default,
 /// which belongs to the user and to Zoom.
@@ -285,20 +347,56 @@ public enum InputRoute {
         return builtIn
     }
 
-    /// The live answer: the device Kotiba will record from, and whether it is a Bluetooth one.
-    /// `overrode` is true when that device is not the system default — Kotiba chose it, because
-    /// the default is a Bluetooth headset.
-    public static func resolve(preferBuiltInWithBluetooth: Bool)
+    /// The device Kotiba will record from, and whether it is a Bluetooth one. `overrode` is true
+    /// when that device is not the system default — Kotiba chose it, because the default is a
+    /// Bluetooth headset and the user asked for the built-in microphone in that case.
+    public static func resolve(preferBuiltInWithBluetooth: Bool,
+                               devices: some InputDeviceDirectory = HALInputDevices())
         -> (device: AudioDeviceID?, isBluetooth: Bool, overrode: Bool) {
-        let defaultInput = AudioDevices.defaultInput
-        let defaultIsBluetooth = defaultInput.map(AudioDevices.isBluetooth) ?? false
+        let defaultInput = devices.defaultInput
+        let defaultIsBluetooth = defaultInput.map(devices.isBluetooth) ?? false
         let chosen = preferredDevice(defaultInput: defaultInput,
                                      defaultIsBluetooth: defaultIsBluetooth,
-                                     builtIn: AudioDevices.builtInInput,
+                                     builtIn: devices.builtInInput,
                                      preferBuiltInWithBluetooth: preferBuiltInWithBluetooth)
         let effective = chosen ?? defaultInput
-        return (effective, effective.map(AudioDevices.isBluetooth) ?? false,
+        return (effective, effective.map(devices.isBluetooth) ?? false,
                 chosen != nil && chosen != defaultInput)
+    }
+
+    /// Whether the graph must be rebuilt before the next capture, checked at every arming.
+    ///
+    /// - `target`: what `resolve` says the press should record from, read just now.
+    /// - `bound`: what Kotiba last bound the input unit to.
+    /// - `unitReports`: what the input unit itself says it is on, when a graph exists to ask.
+    ///   An AUHAL whose device changed under it can silently revert `CurrentDevice` (VoiceInk
+    ///   #956 is the same bug in another app), so trusting `bound` alone could keep recording the
+    ///   old microphone while every record here claimed the new one.
+    /// - `stale`: a default-input or device-list change, or a configuration change, was heard.
+    public static func needsRebind(target: AudioDeviceID?, bound: AudioDeviceID?,
+                                   unitReports: AudioDeviceID?, stale: Bool) -> Bool {
+        if stale || target != bound { return true }
+        if let unitReports, let target, unitReports != target { return true }
+        return false
+    }
+
+    /// Whether an `AVAudioEngineConfigurationChange` from the live engine means the graph is gone.
+    ///
+    /// The engine posts one shortly after every `start()` on this Mac with nothing having moved
+    /// (see `MicrophoneSource.noteConfigurationChange`), so the notification alone is not news.
+    /// It is when, checked on arrival:
+    /// - `routeChanged`: the press would now record from another device, or the unit drifted off
+    ///   the bound one, or the HAL listener already heard the default move (`needsRebind`);
+    /// - `!formatUnchanged`: the hardware side of the input node no longer matches the format the
+    ///   sink was connected with — `start()` would raise "Input HW format and tap format not
+    ///   matching" on it;
+    /// - `takeRunning && !engineRunning`: a take is open and the engine stopped itself, which is
+    ///   what AVAudioEngine does to a graph whose I/O it has torn down.
+    /// Any one rebuilds. None of them: the graph is the one we built, still on the device we
+    /// chose, and rebuilding it would only cost the next press ~100 ms.
+    public static func configurationChangeIsNews(routeChanged: Bool, formatUnchanged: Bool,
+                                                 takeRunning: Bool, engineRunning: Bool) -> Bool {
+        routeChanged || !formatUnchanged || (takeRunning && !engineRunning)
     }
 }
 #endif

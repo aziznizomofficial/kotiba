@@ -10945,25 +10945,25 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use the built-in microphone with Bluetooth headphones"
+            "value": "Use the laptop mic when Bluetooth headphones are connected"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Использовать встроенный микрофон с Bluetooth-наушниками"
+            "value": "Использовать микрофон ноутбука, когда подключены Bluetooth-наушники"
           }
         },
         "uz-Latn": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bluetooth quloqchinlar bilan ichki mikrofondan foydalanish"
+            "value": "Bluetooth quloqchinlar ulanganda noutbuk mikrofonidan foydalanish"
           }
         },
         "uz-Cyrl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bluetooth қулоқчинлар билан ички микрофондан фойдаланиш"
+            "value": "Bluetooth қулоқчинлар уланганда ноутбук микрофонидан фойдаланиш"
           }
         }
       }
@@ -10974,25 +10974,25 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recording through AirPods switches them to phone-call mode and your music to mono. Kotiba records from the Mac instead, so what you are listening to stays as it was."
+            "value": "Keeps music in high quality. Off: Kotiba records from the input selected in System Settings — headset, USB or wired mic, AirPods."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Запись через AirPods переводит их в режим телефонного звонка, а музыку — в моно. Вместо этого Kotiba записывает через Mac, и то, что вы слушаете, звучит как прежде."
+            "value": "Музыка остаётся в высоком качестве. Выключено: Kotiba записывает с устройства ввода, выбранного в Системных настройках, — гарнитуры, USB- или проводного микрофона, AirPods."
           }
         },
         "uz-Latn": {
           "stringUnit": {
             "state": "translated",
-            "value": "AirPods orqali yozish ularni telefon qoʻngʻirogʻi rejimiga, musiqani esa mono rejimga oʻtkazadi. Buning oʻrniga Kotiba Mac orqali yozadi va siz tinglayotgan narsa avvalgidek eshitiladi."
+            "value": "Musiqa yuqori sifatda qoladi. Oʻchiq boʻlsa: Kotiba Tizim sozlamalarida tanlangan kirish qurilmasidan yozadi — garnitura, USB yoki simli mikrofon, AirPods."
           }
         },
         "uz-Cyrl": {
           "stringUnit": {
             "state": "translated",
-            "value": "AirPods орқали ёзиш уларни телефон қўнғироғи режимига, мусиқани эса моно режимга ўтказади. Бунинг ўрнига Kotiba Mac орқали ёзади ва сиз тинглаётган нарса аввалгидек эшитилади."
+            "value": "Мусиқа юқори сифатда қолади. Ўчиқ бўлса: Kotiba Тизим созламаларида танланган кириш қурилмасидан ёзади — гарнитура, USB ёки симли микрофон, AirPods."
           }
         }
       }

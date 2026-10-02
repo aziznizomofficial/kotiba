@@ -12,8 +12,10 @@ import KotibaCore
 //   swift run kotiba-probe duck [--level 0.25] [--hold 0.5] [--force]
 //                                              duck the default output and restore it, printing
 //                                              the level before, at the bottom, and after
-//   swift run kotiba-probe capture [--seconds 3] record through MicrophoneSource's take API and
-//                                              count what the live stream and the take delivered
+//   swift run kotiba-probe capture [--seconds 3] [--cold] [--prefer-builtin] [--repeat N] [--gap MS]
+//                                              record through MicrophoneSource's take API, count
+//                                              what the live stream and the take delivered, and
+//                                              name the microphone the take actually used
 
 extension Probe {
 
@@ -25,8 +27,14 @@ extension Probe {
                                               lower the default output, hold, restore; prints
                                               before / ducked / after (≤ ~1.5 s). --force ducks
                                               even when nothing is playing
-          capture [--seconds S]               record S seconds (default 3) through the take
-                                              API; never asks for microphone access
+          capture [--seconds S] [--cold] [--prefer-builtin] [--repeat N] [--gap MS]
+                                              record S seconds (default 3) through the take
+                                              API and name the microphone used; --cold skips
+                                              warm-up (what a Bluetooth input pays at every
+                                              press); then N more 200 ms takes (default 2),
+                                              each after MS idle (the first press too),
+                                              printing each one's arming time;
+                                              never asks for microphone access
         """
     }
 
@@ -137,8 +145,19 @@ extension Probe {
             return
         }
         let mic = MicrophoneSource()
-        await mic.warmUp()
-        print("warm:", await mic.isWarm, await mic.lastWarmUpError ?? "")
+        mic.setPrefersBuiltInMicWithBluetooth(args.contains("--prefer-builtin"))
+        if !args.contains("--cold") {
+            await mic.warmUp()
+            print("warm:", await mic.isWarm, await mic.lastWarmUpError ?? "")
+        } else {
+            print("cold: no warm-up, the press builds the graph")
+        }
+        // `--gap` is the idle time before each press, the first one included: a press straight
+        // after `prepare()` arms in ~34 ms on this Mac, one 600 ms later in ~48–52 ms, and no
+        // real press follows warm-up by nothing.
+        var gap = 0
+        if let i = args.firstIndex(of: "--gap") { gap = min(5_000, max(0, Int(args[safe: i + 1] ?? "") ?? 0)) }
+        if gap > 0 { try? await Task.sleep(for: .milliseconds(gap)) }
         let take = mic.take()
         let t0 = ContinuousClock.now
         try await take.start()
@@ -155,6 +174,40 @@ extension Probe {
         let (chunks, streamed) = await counter.value
         print(String(format: "take: %.3f s, %d samples, dropped %d, peak %.4f",
                      buffer.duration, buffer.samples.count, buffer.droppedSamples, buffer.peakAmplitude))
+        print("system default input:", AudioDevices.defaultInput.map(AudioDevices.name) ?? "none",
+              "→ take recorded from:", buffer.device.map {
+                  "\($0.name) (\($0.transport.rawValue), overrode default: "
+                      + "\($0.overrodeDefault.map(String.init) ?? "?"))"
+              } ?? "unknown")
+        // More takes, so a feedback loop — our own engine's start/stop moving the HAL device list
+        // and the listener rebuilding on it — would show up as a climbing count, and so would a
+        // press that pays a graph rebuild it did not need.
+        var repeats = 2
+        if let i = args.firstIndex(of: "--repeat") { repeats = min(50, max(0, Int(args[safe: i + 1] ?? "") ?? 2)) }
+        var arming: [Double] = []
+        for n in 0..<repeats {
+            if gap > 0 { try? await Task.sleep(for: .milliseconds(gap)) }
+            let again = mic.take()
+            let armed = ContinuousClock.now
+            try await again.start()
+            let armedIn = armed.duration(to: .now)
+            let ms = msValue(armedIn)
+            arming.append(ms)
+            try? await Task.sleep(for: .milliseconds(200))
+            _ = try await again.stop()
+            print(String(format: "  press %d armed in %.1f ms;", n + 2, ms),
+                  "warm-ups \(await mic.warmUpCount),",
+                  "configuration changes \(await mic.configurationChangeCount)",
+                  "(\(await mic.ignoredConfigurationChangeCount) checked and ignored)")
+        }
+        if !arming.isEmpty {
+            let sorted = arming.sorted()
+            print(String(format: "arming over %d presses: median %.1f ms, max %.1f ms",
+                         sorted.count, sorted[sorted.count / 2], sorted.last ?? 0))
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+        print("HAL input changes heard: \(await mic.inputChangeCount),",
+              "warm-ups: \(await mic.warmUpCount)")
         print("stream: \(chunks) chunks, \(streamed) samples —",
               streamed == buffer.samples.count ? "identical count" : "MISMATCH")
     }

@@ -344,7 +344,7 @@ class MicrophoneCapture implements AudioCapture {
         name: label === '' ? 'unnamed input' : label,
         transport: classifyTransport(label),
         ...(sampleRate === null ? {} : { sampleRate }),
-        // No device id is ever requested, so this is always the system default.
+        // Only the `default` device is ever requested, so this is always the system default.
         overrodeDefault: false,
       };
     }
