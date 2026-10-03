@@ -116,9 +116,10 @@ const SUPPLEMENT: ReadonlySet<string> = new Set([
 /**
  * Hesitation sounds, which every language makes. Evidence of nothing when there are words
  * beside them — `Um, yeah.` is English — and counted as not English only when they are all
- * there is, which is what the unified engine makes of some Uzbek (`Uh.`).
+ * there is, which is what the unified engine makes of some Uzbek (`Uh.`). Exported for the
+ * language decision's `readTranscriptEvidence`, which counts them by the same rule.
  */
-const HESITATIONS: ReadonlySet<string> = new Set(['uh', 'um', 'hmm', 'mhm', 'er', 'erm', 'mm', 'ah']);
+export const HESITATIONS: ReadonlySet<string> = new Set(['uh', 'um', 'hmm', 'mhm', 'er', 'erm', 'mm', 'ah']);
 
 /** Whether a lowercase word (apostrophes folded to ') is an English word. */
 export function isEnglishWord(word: string): boolean {

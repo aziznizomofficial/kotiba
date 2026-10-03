@@ -74,7 +74,7 @@ DMG="$OUT/Kotiba-$VERSION$SUFFIX.dmg"
 # Turkish and Arabic, which download it when they are switched on.
 WANTED=(
   "ggml-uzbek-stt-v1-q5_0.bin"        # Uzbek — Kotib STT, D-08
-  "ggml-base-q5_1.bin"                # language detector
+  "ecapa-voxlingua107-lid-f16.mlmodel" # language ID (P4, D-14) — replaces whisper base
   "ggml-silero-v6.2.0.bin"            # pause detector for both streaming engines (C2 §4)
 )
 if [ "$WITH_MODELS" -eq 1 ]; then

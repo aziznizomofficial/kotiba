@@ -113,6 +113,14 @@ export interface Settings {
 
   readonly detectorModelPath: string;
 
+  /**
+   * The language-ID model (P4, D-14): `ecapa-voxlingua107-lid.onnx`. Empty means "find it" — in
+   * the installer's resources or the models directory (`resolveLanguageIDPath`). When it is
+   * there it is the router's classifier and key-up decides the language after reading the
+   * transcripts (session step 4L); whisper base (`detectorModelPath`) is the fallback without it.
+   */
+  readonly languageIDModelPath: string;
+
   /** Turkic cluster mass at or above which a recording routes to the Uzbek engine. */
   readonly turkicThreshold: number;
 
@@ -258,6 +266,18 @@ export interface Settings {
   readonly arabicDictations: number;
 
   /**
+   * Uzbek, English and Russian dictations delivered so far, counted the same way: with the two
+   * above, the user's own history the language decision's prior reads (`languageLogPrior`, P4).
+   * Seeded once from History on the first launch of a build that has them
+   * (`languageCountsSeeded`), so an existing user does not start from nothing.
+   */
+  readonly uzbekDictations: number;
+  readonly englishDictations: number;
+  readonly russianDictations: number;
+  /** Whether the five counts were seeded from History (once per install; the Mac's same key). */
+  readonly languageCountsSeeded: boolean;
+
+  /**
    * WINDOWS-ONLY. Which engine Arabic runs on: `auto` = Cohere unless the first-run speed
    * check found this PC too slow for it, then FastConformer (src/engines/arabic.ts); or the
    * user's own pick from the Languages page.
@@ -285,6 +305,7 @@ export const DEFAULT_SETTINGS: Settings = {
   whisperBeamSize: 5,
   preloadAllLanguages: false,
   detectorModelPath: '',
+  languageIDModelPath: '',
   turkicThreshold: 0.05,
   silenceThreshold: 0.012,
   soundFeedback: false,
@@ -318,6 +339,10 @@ export const DEFAULT_SETTINGS: Settings = {
   enabledLanguages: ['en', 'ru', 'uz'],
   turkishDictations: 0,
   arabicDictations: 0,
+  uzbekDictations: 0,
+  englishDictations: 0,
+  russianDictations: 0,
+  languageCountsSeeded: false,
   arabicEngine: 'auto',
 };
 

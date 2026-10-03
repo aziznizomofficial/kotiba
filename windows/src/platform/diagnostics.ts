@@ -23,6 +23,7 @@ import {
   DIAGNOSTICS_MAX_BYTES,
   DIAGNOSTICS_SUMMARY_EMPTY,
   DIAGNOSTICS_SUMMARY_LIMIT,
+  uzbekEvidence,
   type DiagnosticsEnvironment,
   type DiagnosticsSink,
   type DictationRecord,
@@ -69,6 +70,16 @@ function encodeRoute(route: DictationRecord['route']): unknown {
   if (route === undefined) return undefined;
   const { turkicMass, ...rest } = route;
   return turkicMass === null ? rest : { ...rest, turkicMass };
+}
+
+/**
+ * How Uzbek the audio sounded, as the summary line says it (`uzbekEvidence`): the language
+ * decision's p(uz) when the language-ID model routed (P4), whisper base's Turkic mass otherwise.
+ */
+function routeEvidence(route: NonNullable<DictationRecord['route']>): string {
+  const evidence = uzbekEvidence(route);
+  if (evidence === null) return '';
+  return (route.probabilities ?? null) !== null ? ` p(uz) ${evidence.toFixed(3)}` : ` mass ${evidence.toFixed(3)}`;
 }
 
 /** One line, without its newline. */
@@ -203,10 +214,7 @@ export function createFileDiagnosticsSink(options: FileDiagnosticsSinkOptions): 
         const route =
           record.route === undefined
             ? '—'
-            : `${record.route.language}/${record.route.source}` +
-              (record.route.turkicMass === null
-                ? ''
-                : ` mass ${record.route.turkicMass.toFixed(3)}`);
+            : `${record.route.language}/${record.route.source}` + routeEvidence(record.route);
 
         lines.push(
           [

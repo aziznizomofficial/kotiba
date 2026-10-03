@@ -895,6 +895,8 @@ async function defaultEnvironment(options: CheckOptions): Promise<CheckEnvironme
           const directory = await bundles.locate('silero_vad');
           return directory === null ? null : `${directory}/ggml-silero-v6.2.0.bin`;
         },
+        // P4: the language-ID model routes here exactly as in the app when it is installed.
+        bundles,
       });
     },
     makeRouter(manager, settings) {
@@ -911,7 +913,19 @@ async function defaultEnvironment(options: CheckOptions): Promise<CheckEnvironme
 function createRouter(manager: EngineManager, settings: Settings): LanguageRouter {
   return {
     async route(audio, pin) {
-      const { createTieredRouter, languageSubset, optionalLanguageRules } = await import('../core/routing/index.js');
+      const { createLanguageIDRouter, createTieredRouter, languagePolicy, languageSubset, optionalLanguageRules } = await import(
+        '../core/routing/index.js'
+      );
+      // The language-ID model routes when it loaded (P4), as in the app — through the same policy
+      // over the enabled languages, with a flat prior: a smoke test has no history of its own.
+      const identifier = manager.languageIdentifier?.() ?? null;
+      if (identifier !== null) {
+        return createLanguageIDRouter({
+          classifier: identifier,
+          policy: languagePolicy({ enabled: settings.enabledLanguages }),
+          fallback: settings.defaultLanguage,
+        }).route(audio, pin);
+      }
       return createTieredRouter({
         classifier: manager.detector(),
         threshold: settings.turkicThreshold,

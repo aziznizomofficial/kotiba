@@ -251,6 +251,10 @@ extension Probe {
                             line["route"] = record.route?.language.rawValue ?? ""
                             line["route_source"] = record.route?.source.rawValue ?? ""
                             line["unified_doubt"] = record.unifiedDoubt ?? ""
+                            // P4: whether the language-ID model routed (its posterior is
+                            // recorded), and which engine the decision asked after the route.
+                            line["lid"] = record.route?.probabilities != nil
+                            line["second_opinion"] = record.secondOpinion?.rawValue ?? ""
                             line["mass"] = record.route?.turkicMass ?? -1
                             line["early_route"] = record.earlyRoute?.language.rawValue ?? ""
                             line["early_s"] = record.earlyRouteSeconds ?? 0

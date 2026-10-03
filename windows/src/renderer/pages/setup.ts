@@ -445,8 +445,10 @@ export function languagesPage(): Page {
               ? t('lang.pin.automatic')
               : t('lang.pin.pinned', { language: speechPickerName(pinned) });
         });
-        // The detector is the half Kotiba CAN fetch — 57 MB, public, and what makes
-        // automatic detection work at all.
+        // The detector is the half Kotiba CAN fetch — public, and what makes automatic detection
+        // work at all. Since P4 it is the language-ID model (86 MB, `ecapa_lid`): the installer
+        // carries it, so this shows only for a tree or an install without it (whisper base, if
+        // present, routes meanwhile and the row does not show).
         scope.watch(['models', 'settings', 'app'], () => {
           const report = store.models;
           const needs = detectionWanted(store.settings) && report !== null && !report.autoDetectReady;
@@ -455,7 +457,7 @@ export function languagesPage(): Page {
           const detectorSlot = slot('detector');
           const busy = store.app.downloading !== null;
           const fetch = button(busy ? t('dl.downloading') : t('lang.downloadDetector'), 'primary', () => {
-            void invoke(IPC_INVOKE.modelsDownload, 'base_detector').finally(() => store.reloadModels());
+            void invoke(IPC_INVOKE.onDeviceDownload, 'ecapa_lid').finally(() => store.reloadModels());
           });
           fetch.disabled = busy;
           detector.replaceChildren(

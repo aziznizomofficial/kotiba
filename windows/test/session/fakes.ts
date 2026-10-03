@@ -237,6 +237,13 @@ export class FakeEngineManager implements EngineManager {
     return this.classifier;
   }
 
+  /** P4: the language-ID model, when a test loads one. */
+  identifier: AcousticClassifier | null = null;
+
+  languageIdentifier(): AcousticClassifier | null {
+    return this.identifier;
+  }
+
   async prepare(): Promise<void> {
     this.prepareCalls += 1;
     if (this.prepareGate !== null) await this.prepareGate;
@@ -417,6 +424,12 @@ export class FakeHistory implements HistoryStore {
   }
   async count(): Promise<number> {
     return this.entries.length;
+  }
+  /** P4: what History counts per language, for the prior's one-time seed. */
+  async countsByLanguage(): Promise<Partial<Record<Language, number>>> {
+    const counts: Partial<Record<Language, number>> = {};
+    for (const entry of this.entries) counts[entry.language] = (counts[entry.language] ?? 0) + 1;
+    return counts;
   }
   async recent(limit = 50): Promise<readonly HistoryEntry[]> {
     return this.entries.slice(-limit);

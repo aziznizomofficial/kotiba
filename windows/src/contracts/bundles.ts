@@ -16,7 +16,9 @@
 // whisper turbo), and every mode runs its deterministic half until the GGUF lands. This is the Mac's arrangement
 // (`ModelCatalogue.parakeetUltra` / `.polishModel`, fetched through `ModelStore`).
 
-export const BUNDLE_IDS = ['parakeet_ultra', 'qwen3_1_7b', 'silero_vad', 'cohere_arabic', 'fastconformer_ar', 'gemma4_e2b_ar'] as const;
+import { PUBLIC_MODELS_BASE } from './models.js';
+
+export const BUNDLE_IDS = ['parakeet_ultra', 'qwen3_1_7b', 'silero_vad', 'cohere_arabic', 'fastconformer_ar', 'gemma4_e2b_ar', 'ecapa_lid'] as const;
 export type BundleId = (typeof BUNDLE_IDS)[number];
 
 /** One file of a bundle: where it is in the upstream repo, and what it must be. */
@@ -222,6 +224,36 @@ export const GEMMA4_E2B_AR: ModelBundleSpec = {
   licence: 'Apache-2.0 (Google Gemma 4 E2B, GGUF by unsloth)',
 };
 
+/**
+ * The language-ID model (P4, D-14): SpeechBrain's VoxLingua107 ECAPA-TDNN, exported by
+ * `Scripts/export-ecapa.py` as one ONNX graph (opset 17, Float32) from the waveform to 107
+ * log-posteriors — byte-reproducible from the pinned Hugging Face revision, and published with
+ * this project's own model builds (`PUBLIC_MODELS_BASE`; `Scripts/Manifest.json` role
+ * `language-id-windows`). The Mac runs the same graph as Core ML.
+ *
+ * SHIPPED IN THE INSTALLER, like whisper base, the detector it replaces: routing is what makes
+ * Uzbek reachable at all, and Uzbek works offline from the first launch (D-W3). 86 MB is over
+ * `SHIPPED_HASH_LIMIT_BYTES`, so `fetch-models.mjs` stages it WITH its verification stamp. A dev
+ * tree without it — or an install that lost it — routes on whisper base, and the Languages page
+ * offers it as a download (`lang.downloadDetector`).
+ */
+export const ECAPA_LID: ModelBundleSpec = {
+  id: 'ecapa_lid',
+  name: 'VoxLingua107 language ID',
+  directory: 'ecapa-voxlingua107-lid',
+  baseUrl: PUBLIC_MODELS_BASE,
+  files: [
+    {
+      remotePath: 'ecapa-voxlingua107-lid.onnx',
+      localName: 'ecapa-voxlingua107-lid.onnx',
+      bytes: 86_031_971,
+      sha256: '63e67bbfd406512158325dd8453014216f24d02f121d32d8a8c2ddcf85083cb6',
+    },
+  ],
+  licence: 'Apache-2.0 (SpeechBrain lang-id-voxlingua107-ecapa); trained on VoxLingua107, CC BY 4.0',
+  shipped: true,
+};
+
 export const BUNDLE_CATALOGUE: Readonly<Record<BundleId, ModelBundleSpec>> = {
   parakeet_ultra: PARAKEET_ULTRA,
   qwen3_1_7b: QWEN3_1_7B,
@@ -229,6 +261,7 @@ export const BUNDLE_CATALOGUE: Readonly<Record<BundleId, ModelBundleSpec>> = {
   cohere_arabic: COHERE_ARABIC,
   fastconformer_ar: FASTCONFORMER_AR,
   gemma4_e2b_ar: GEMMA4_E2B_AR,
+  ecapa_lid: ECAPA_LID,
 };
 
 /** The bundles the installer carries. Their absence is a broken install, not a download. */

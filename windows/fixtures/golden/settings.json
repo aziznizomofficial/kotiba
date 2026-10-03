@@ -147,6 +147,7 @@
       "ru",
       "uz"
     ],
+    "englishDictations": 0,
     "hasCompletedOnboarding": false,
     "historyLimit": 0,
     "hotkey": {
@@ -154,6 +155,8 @@
       "kind": "modifier"
     },
     "keepHistory": true,
+    "languageCountsSeeded": false,
+    "languageIDModelPath": "",
     "launchAtLogin": false,
     "modeFollowsApp": false,
     "modelIdleUnloadMinutes": 5.000000,
@@ -170,12 +173,14 @@
     "preferOnDeviceModel": true,
     "preloadAllLanguages": false,
     "replacements": [],
+    "russianDictations": 0,
     "russianModelPath": "",
     "silenceThreshold": 0.012000,
     "soundFeedback": false,
     "statsPeriod": "week",
     "turkicThreshold": 0.050000,
     "turkishDictations": 0,
+    "uzbekDictations": 0,
     "uzbekModelPath": "",
     "vocabulary": {},
     "whisperBeamSize": 5,

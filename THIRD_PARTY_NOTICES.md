@@ -44,6 +44,18 @@ by FluidInference and an ONNX int8 export by Olicorne. Changes were made to the 
 model by those parties; Kotiba makes none. No endorsement by NVIDIA, moondream, FluidInference or
 Olicorne is implied.* The same line is shown in the app under Settings, About.
 
+### 1.1a Language identification: SpeechBrain VoxLingua107 ECAPA-TDNN (Apache-2.0, modified)
+
+| | |
+|---|---|
+| What | `speechbrain/lang-id-voxlingua107-ecapa`, an ECAPA-TDNN spoken-language classifier over 107 languages, by the SpeechBrain project (Jörgen Valk and Tanel Alumäe's VoxLingua107 recipe) |
+| Source | <https://huggingface.co/speechbrain/lang-id-voxlingua107-ecapa>, revision `0253049ae131d6a4be1c4f0d8b0ff483a0f8c8e9` |
+| Licence | **Apache License 2.0** (card: `apache-2.0`); text in [`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt) |
+| Training data | VoxLingua107 (Valk & Alumäe, 2021), **CC BY 4.0**, <https://bark.phon.ioc.ee/voxlingua107/> |
+| Used for | Which language a dictation is in (P4, D-14), both platforms |
+| Shipped / downloaded | `ecapa-voxlingua107-lid-f16.mlmodel` (macOS, in the DMG) and `ecapa-voxlingua107-lid.onnx` (Windows), both from this project's model release |
+| **Modified** | **Yes.** Exported by `Scripts/export-ecapa.py` into one graph from waveform to log-posteriors: SpeechBrain's STFT rewritten as a convolution with the same window and DFT basis, attentive pooling without its (all-ones) length mask, the classifier ending in log-softmax; the macOS file stores its weights as Float16. Outputs agree with SpeechBrain's own to 1e-4 (ONNX) and 2e-3 (Core ML) in probability. |
+
 ### 1.2 Uzbek: Kotib/uzbek_stt_v1 (Apache-2.0, modified)
 
 | | |
@@ -234,6 +246,14 @@ notice appear in supporting documentation"). Levels 10–35 are built from Moby 
 Brian Kelk's UK word list (both public domain), 12dicts (public domain) and WordNet 1.6
 (Princeton's notice, which requires its copyright and disclaimer on all copies) — all reproduced
 in full in [`LICENSES/SCOWL.txt`](LICENSES/SCOWL.txt).
+
+**Common Voice sentence collector** (Mozilla Common Voice), <https://github.com/common-voice/common-voice>,
+`server/data/{uz,tr,ru,ar}/sentence-collector.txt` at commit `ff32a0e4ce70`, every sentence
+contributed under **CC0 1.0** (public-domain dedication). Shipped in the app (both platforms) as
+the Uzbek, Turkish, Russian and Arabic word lists the language decision reads transcripts against:
+`Sources/KotibaCore/{Uzbek,Turkish,Russian,Arabic}Words.swift` and
+`windows/src/core/routing/{uzbek,turkish,russian,arabic}-words.ts`. **Modified:** every word form,
+folded (`Scripts/lexicons.py`); no sentence is shipped. No notice is required; this is a courtesy.
 
 **FLEURS** (Google), <https://huggingface.co/datasets/google/fleurs>, **CC BY 4.0**. The Windows
 installer carries a 3 s cut of one `ar_eg` test utterance, `windows/fixtures/speed-check/

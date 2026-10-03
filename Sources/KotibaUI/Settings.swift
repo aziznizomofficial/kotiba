@@ -65,6 +65,33 @@ public final class AppSettings {
     /// (`ArabicCheck.verifiedFromUnfamiliar`, C4 §14.1).
     public var arabicDictations: Int = 0
 
+    /// Uzbek, English and Russian dictations delivered so far, counted the same way: with the
+    /// two above, the user's own history the language decision's prior reads (`LanguagePrior`,
+    /// P4). Seeded once from History on the first launch of a build that has them
+    /// (`languageCountsSeeded`), so an existing user does not start from nothing.
+    public var uzbekDictations: Int = 0
+    public var englishDictations: Int = 0
+    public var russianDictations: Int = 0
+    public var languageCountsSeeded: Bool = false
+
+    /// The history as the language decision reads it.
+    public var languagePrior: LanguagePrior {
+        LanguagePrior(counts: [.uzbek: uzbekDictations, .english: englishDictations,
+                               .russian: russianDictations, .turkish: turkishDictations,
+                               .arabic: arabicDictations])
+    }
+
+    /// One more delivered dictation in `language`.
+    public func countDictation(in language: Language) {
+        switch language {
+        case .uzbek: uzbekDictations += 1
+        case .english: englishDictations += 1
+        case .russian: russianDictations += 1
+        case .turkish: turkishDictations += 1
+        case .arabic: arabicDictations += 1
+        }
+    }
+
     /// Where whisper's Uzbek model lives. Empty means "not set up yet", and the settings pane
     /// says so rather than the app failing at the first Uzbek dictation.
     public var uzbekModelPath: String = ""
@@ -145,6 +172,11 @@ public final class AppSettings {
     /// answers in 565 ms for 1.7 percentage points more recall. On a path where 117 ms is the
     /// whole English budget, that is not a trade worth making.
     public var detectorModelPath: String = ""
+
+    /// The language-ID model (P4, D-14): `ecapa-voxlingua107-lid-f16.mlmodel`. When it is here
+    /// it is the detector, and the language decision reads transcripts after it; whisper base
+    /// (`detectorModelPath`) is the fallback until it has downloaded.
+    public var languageIDModelPath: String = ""
 
     /// Turkic cluster mass above which a recording is treated as Uzbek (`ClusterMass`): on 120
     /// clips of the GAP-01 Uzbek set, English and Russian scored 0.000–0.012, Uzbek a median of
@@ -473,6 +505,10 @@ public final class AppSettings {
         var optionalLanguages: [String]?
         var turkishDictations: Int?
         var arabicDictations: Int?
+        var uzbekDictations: Int?
+        var englishDictations: Int?
+        var russianDictations: Int?
+        var languageCountsSeeded: Bool?
         var uzbekModelPath: String?
         var russianModelPath: String?
         var whisperUseGPU: Bool?
@@ -484,6 +520,7 @@ public final class AppSettings {
         /// its default language, which is what off meant.
         var autoDetectLanguage: Bool?
         var detectorModelPath: String?
+        var languageIDModelPath: String?
         var turkicThreshold: Double?
         var silenceThreshold: Float?
         var soundFeedback: Bool?
@@ -529,6 +566,10 @@ public final class AppSettings {
             enabledLanguages = settings.enabledLanguages.map(\.rawValue)
             turkishDictations = settings.turkishDictations
             arabicDictations = settings.arabicDictations
+            uzbekDictations = settings.uzbekDictations
+            englishDictations = settings.englishDictations
+            russianDictations = settings.russianDictations
+            languageCountsSeeded = settings.languageCountsSeeded
             uzbekModelPath = settings.uzbekModelPath
             russianModelPath = settings.russianModelPath
             whisperUseGPU = settings.whisperUseGPU
@@ -536,6 +577,7 @@ public final class AppSettings {
             preloadAllLanguages = settings.preloadAllLanguages
             modelIdleUnloadMinutes = settings.modelIdleUnloadMinutes
             detectorModelPath = settings.detectorModelPath
+            languageIDModelPath = settings.languageIDModelPath
             turkicThreshold = settings.turkicThreshold
             silenceThreshold = settings.silenceThreshold
             soundFeedback = settings.soundFeedback
@@ -582,6 +624,10 @@ public final class AppSettings {
             }
             if let v = turkishDictations { settings.turkishDictations = max(0, v) }
             if let v = arabicDictations { settings.arabicDictations = max(0, v) }
+            if let v = uzbekDictations { settings.uzbekDictations = max(0, v) }
+            if let v = englishDictations { settings.englishDictations = max(0, v) }
+            if let v = russianDictations { settings.russianDictations = max(0, v) }
+            if let v = languageCountsSeeded { settings.languageCountsSeeded = v }
             if let v = uzbekModelPath { settings.uzbekModelPath = v }
             if let v = russianModelPath { settings.russianModelPath = v }
             if let v = whisperUseGPU { settings.whisperUseGPU = v }
@@ -596,6 +642,7 @@ public final class AppSettings {
             if let pin = settings.pinnedLanguage, !on.contains(pin) { settings.pinnedLanguage = nil }
             settings.defaultLanguage = on.fallback(preferring: settings.defaultLanguage)
             if let v = detectorModelPath { settings.detectorModelPath = v }
+            if let v = languageIDModelPath { settings.languageIDModelPath = v }
             if let v = turkicThreshold { settings.turkicThreshold = v }
             if let v = silenceThreshold { settings.silenceThreshold = v }
             if let v = soundFeedback { settings.soundFeedback = v }
@@ -693,6 +740,7 @@ public final class AppSettings {
     static let knownUzbekModels = ["ggml-uzbek-stt-v1-q5_0.bin", "ggml-navoi-medium-q5_0.bin"]
     static let knownRussianModels = ["ggml-large-v3-turbo-q5_0.bin"]
     static let knownDetectorModels = ["ggml-base-q5_1.bin"]
+    static let knownLanguageIDModels = ["ecapa-voxlingua107-lid-f16.mlmodel"]
 
     /// Where a model with one of `names` actually is, or nil if none of them are anywhere.
     func locate(_ explicit: String, _ names: [String]) -> String? {
@@ -718,10 +766,33 @@ public final class AppSettings {
         locate(detectorModelPath, Self.knownDetectorModels)
     }
 
+    /// The language-ID model, when it is anywhere — by size, not by the ggml magic
+    /// `modelExists` asks for (it is a Core ML file).
+    public var resolvedLanguageIDPath: String? {
+        let fm = FileManager.default
+        func usable(_ path: String) -> Bool {
+            // Through a symlink to the file itself: a models directory of links (the probe's,
+            // a developer's) is a directory of 60-byte files otherwise.
+            let resolved = (path as NSString).resolvingSymlinksInPath
+            guard !path.isEmpty, let size = (try? fm.attributesOfItem(atPath: resolved))?[.size]
+                    as? Int else { return false }
+            return size >= 40_000_000
+        }
+        if usable(languageIDModelPath) { return languageIDModelPath }
+        for name in Self.knownLanguageIDModels {
+            let candidate = modelDirectory.appendingPathComponent(name).path
+            if usable(candidate) { return candidate }
+            if let bundled = modelBundle?.path(forResource: name, ofType: nil, inDirectory: "models"),
+               usable(bundled) { return bundled }
+        }
+        return nil
+    }
+
     /// Detection needs a detector model, more than one engine family to choose between, and —
     /// while Uzbek is on — somewhere for Uzbek to go once it is detected.
     public var autoDetectReady: Bool {
-        resolvedDetectorPath != nil && languageSubset.families.count > 1
+        (resolvedLanguageIDPath != nil || resolvedDetectorPath != nil)
+            && languageSubset.families.count > 1
             && (uzbekReady || !languageSubset.contains(.uzbek))
     }
 

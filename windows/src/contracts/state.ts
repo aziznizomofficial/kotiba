@@ -52,6 +52,8 @@ export const STAGE_NAMES = [
   'loading',
   'transcribing',
   'rerouting',
+  /** The language decision's second Parakeet pass, held to the decided script (P4, step 4L). */
+  'respelling',
   'polishing',
   'inserting',
 ] as const;

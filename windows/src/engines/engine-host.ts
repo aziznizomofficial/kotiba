@@ -1,5 +1,6 @@
-// The engine process: `engine-host.js parakeet`, `engine-host.js llama` or `engine-host.js arabic`
-// (D-W22; Arabic is C4's Cohere / FastConformer — `arabic-runtime.ts`).
+// The engine process: `engine-host.js parakeet`, `engine-host.js llama`, `engine-host.js arabic`
+// (D-W22; Arabic is C4's Cohere / FastConformer — `arabic-runtime.ts`) or `engine-host.js lid` (the
+// language-ID model, P4 — `language-id-runtime.ts`).
 //
 // Started by main through an `EngineLauncher` — an Electron utility process in the app,
 // `child_process.fork` under plain Node — and nothing else. It says hello first, before any
@@ -64,6 +65,16 @@ async function serve(): Promise<void> {
     case 'arabic': {
       const { serveArabic } = await import('./arabic-runtime.js');
       serveArabic({
+        onMessage: (listener) => listen((message) => listener(message as never)),
+        postMessage: (reply) => port.postMessage(reply),
+        close,
+      });
+      return;
+    }
+    case 'lid': {
+      // The language-ID model (P4): ONNX Runtime and nothing else.
+      const { serveLanguageID } = await import('./language-id-runtime.js');
+      serveLanguageID({
         onMessage: (listener) => listen((message) => listener(message as never)),
         postMessage: (reply) => port.postMessage(reply),
         close,

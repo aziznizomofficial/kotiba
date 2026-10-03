@@ -66,7 +66,7 @@ export function startParakeetProcess(
     });
 
     const runtime: ParakeetRuntime = {
-      transcribeSamples(samples) {
+      transcribeSamples(samples, script = null) {
         if (dead !== null) return Promise.reject(dead);
         const id = nextId;
         nextId += 1;
@@ -74,7 +74,7 @@ export function startParakeetProcess(
           pending.set(id, { resolve, reject });
           // Structured-cloned: the caller keeps its buffer, and 64 KB per second of audio
           // crosses in well under a millisecond (03-ENGINE-PARITY.md §13).
-          channel.postMessage({ kind: 'transcribe', id, samples } satisfies WorkerRequest);
+          channel.postMessage({ kind: 'transcribe', id, samples, script } satisfies WorkerRequest);
         });
       },
       alive: () => dead === null,

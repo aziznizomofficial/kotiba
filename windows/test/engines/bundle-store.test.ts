@@ -9,7 +9,16 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe as suite, expect, test } from 'vitest';
 
 import type { BundleId, ModelBundleSpec } from '../../src/contracts/index.js';
-import { BUNDLE_CATALOGUE, PARAKEET_ULTRA, QWEN3_1_7B, SHIPPED_BUNDLE_IDS, SILERO_VAD } from '../../src/contracts/index.js';
+import {
+  BUNDLE_CATALOGUE,
+  ECAPA_LID,
+  PARAKEET_ULTRA,
+  QWEN3_1_7B,
+  SHIPPED_BUNDLE_IDS,
+  SHIPPED_HASH_LIMIT_BYTES,
+  SILERO_VAD,
+  bundleBytes,
+} from '../../src/contracts/index.js';
 import { createBundleStore } from '../../src/engines/bundle-store.js';
 
 let root = '';
@@ -44,6 +53,7 @@ const CATALOGUE: Record<BundleId, ModelBundleSpec> = {
   cohere_arabic: { ...TINY, directory: 'cohere' },
   fastconformer_ar: { ...TINY, directory: 'fastconformer' },
   gemma4_e2b_ar: { ...TINY, directory: 'gemma' },
+  ecapa_lid: { ...TINY, directory: 'lid' },
 };
 
 function fakeFetch(files: Record<string, Buffer>, requests: string[]) {
@@ -285,10 +295,14 @@ suite('resuming', () => {
 });
 
 suite('shipped bundles (Silero, in the installer)', () => {
-  test('only Silero ships, and it is small enough to hash at launch', () => {
-    expect(SHIPPED_BUNDLE_IDS).toEqual(['silero_vad']);
+  test('Silero and the language-ID model ship; only Silero is small enough to hash at launch', () => {
+    expect(SHIPPED_BUNDLE_IDS).toEqual(['silero_vad', 'ecapa_lid']);
     expect(SILERO_VAD.files.map((file) => file.localName)).toEqual(['ggml-silero-v6.2.0.bin']);
     expect(SILERO_VAD.files[0]!.bytes).toBe(885_098);
+    expect(bundleBytes(SILERO_VAD)).toBeLessThanOrEqual(SHIPPED_HASH_LIMIT_BYTES);
+    // 86 MB: fetch-models.mjs stages it with its stamp, which is what the store checks instead.
+    expect(bundleBytes(ECAPA_LID)).toBeGreaterThan(SHIPPED_HASH_LIMIT_BYTES);
+    expect(ECAPA_LID.files.map((file) => file.localName)).toEqual(['ecapa-voxlingua107-lid.onnx']);
   });
 
   test('an installer copy with no stamp is found by its hash, and nothing is fetched', async () => {

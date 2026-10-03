@@ -736,6 +736,13 @@ export const SETTINGS_WITHOUT_CONTROLS: readonly (keyof Settings)[] = [
   'acceptedDownloads', // written by onboarding's Download models step and the Download buttons
   'turkishDictations', // a count the controller keeps for the Turkish check, not a choice
   'arabicDictations', // the same for the Arabic check
+  // P4: the language decision's prior — counts the controller keeps, seeded once from History.
+  'uzbekDictations',
+  'englishDictations',
+  'russianDictations',
+  'languageCountsSeeded',
+  // P4: written by the language-ID model's download; found in the resources otherwise.
+  'languageIDModelPath',
 ];
 
 /** Handy for the renderer: the shipped value of a key. */

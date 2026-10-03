@@ -25,12 +25,15 @@ import { Worker } from 'node:worker_threads';
 
 import type { InferenceSession, Tensor } from 'onnxruntime-node';
 
-import { greedyTdt, parseVocabulary, piecesToText, type Vocabulary } from '../core/stt/tdt.js';
+import { greedyTdt, parseVocabulary, piecesToText, scriptSuppression, type Vocabulary, type WrittenLanguage } from '../core/stt/tdt.js';
 
 /** What the engine needs from ONNX Runtime. Injectable, so the engine's logic is testable. */
 export interface ParakeetRuntime {
-  /** 16 kHz mono in, text out (trimmed). */
-  transcribeSamples(samples: Float32Array): Promise<string>;
+  /**
+   * 16 kHz mono in, text out (trimmed). `script`: hold the decoder to that language's letters
+   * (the language decision's respelling, P4 — `scriptSuppression`); absent, the free choice.
+   */
+  transcribeSamples(samples: Float32Array, script?: WrittenLanguage | null): Promise<string>;
   /** `false` once the runtime can never answer again — a worker that died. */
   alive?(): boolean;
   dispose(): Promise<void>;
@@ -87,8 +90,18 @@ export async function loadParakeetRuntime(directory: string, options: ParakeetRu
   ]);
   const vocabulary: Vocabulary = parseVocabulary(vocabText);
   const stateShape = decoderStateShape(decoder);
+  /** Built once per script, on the first respelling that needs it. */
+  const suppressions = new Map<WrittenLanguage, Uint8Array>();
+  const suppressionFor = (script: WrittenLanguage): Uint8Array => {
+    let mask = suppressions.get(script);
+    if (mask === undefined) {
+      mask = scriptSuppression(vocabulary, script);
+      suppressions.set(script, mask);
+    }
+    return mask;
+  };
 
-  async function transcribeSamples(input: Float32Array): Promise<string> {
+  async function transcribeSamples(input: Float32Array, script: WrittenLanguage | null = null): Promise<string> {
     const n = input.length;
     const features = await preprocessor.run({
       waveforms: new ort.Tensor('float32', input, [1, n]),
@@ -128,7 +141,7 @@ export async function loadParakeetRuntime(directory: string, options: ParakeetRu
           state: { s1: result.output_states_1!, s2: result.output_states_2! },
         };
       },
-    });
+    }, undefined, script === null ? null : suppressionFor(script));
     return piecesToText(tokens, vocabulary).trim();
   }
 
@@ -156,7 +169,7 @@ function decoderStateShape(session: InferenceSession): readonly [number, 1, numb
 /** Main → worker. */
 export type WorkerRequest =
   | { readonly kind: 'load'; readonly directory: string; readonly options: ParakeetRuntimeOptions }
-  | { readonly kind: 'transcribe'; readonly id: number; readonly samples: Float32Array }
+  | { readonly kind: 'transcribe'; readonly id: number; readonly samples: Float32Array; readonly script?: WrittenLanguage | null }
   | { readonly kind: 'dispose' };
 
 /** Worker → main. */
@@ -196,7 +209,7 @@ export function serveParakeet(port: {
           return;
         }
         try {
-          port.postMessage({ kind: 'text', id: request.id, text: await runtime.transcribeSamples(request.samples) });
+          port.postMessage({ kind: 'text', id: request.id, text: await runtime.transcribeSamples(request.samples, request.script ?? null) });
         } catch (error: unknown) {
           port.postMessage({ kind: 'error', id: request.id, message: describeError(error) });
         }
@@ -265,7 +278,7 @@ export function startParakeetWorker(
     });
 
     const runtime: ParakeetRuntime = {
-      transcribeSamples(samples) {
+      transcribeSamples(samples, script = null) {
         if (dead !== null) return Promise.reject(new Error(`the Parakeet worker stopped: ${dead}`));
         const id = nextId;
         nextId += 1;
@@ -273,7 +286,7 @@ export function startParakeetWorker(
         const copy = samples.slice();
         return new Promise<string>((resolve, reject) => {
           pending.set(id, { resolve, reject });
-          worker.postMessage({ kind: 'transcribe', id, samples: copy } satisfies WorkerRequest, [copy.buffer]);
+          worker.postMessage({ kind: 'transcribe', id, samples: copy, script } satisfies WorkerRequest, [copy.buffer]);
         });
       },
       alive: () => dead === null,

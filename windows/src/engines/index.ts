@@ -146,3 +146,22 @@ export {
   type ArabicRuntime,
   type ArabicRuntimeOptions,
 } from './arabic-runtime.js';
+
+// P4 (D-14): the language-ID model — VoxLingua107 ECAPA on ONNX Runtime, in its own process. The
+// router's classifier when it is installed; whisper base (`createAcousticClassifier`) otherwise.
+export {
+  ECAPA_LABELS,
+  LANGUAGE_ID_MINIMUM_BYTES,
+  LANGUAGE_ID_MODEL_FILE,
+  LANGUAGE_ID_THREADS,
+  createLanguageIdentifier,
+  resolveLanguageIDPath,
+  ecapaInput,
+  loadLanguageIDRuntime,
+  posteriorFromLogp,
+  startLanguageIDProcess,
+  type LanguageIdentifier,
+  type LanguageIdentifierOptions,
+  type LanguageIDRuntime,
+} from './language-id.js';
+export { serveLanguageID } from './language-id-runtime.js';

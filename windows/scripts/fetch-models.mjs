@@ -16,10 +16,15 @@
 //                                   falling back to private release `models-v2` via `gh`
 //   ggml-base-q5_1.bin            — public Hugging Face URL (also in Scripts/Manifest.json)
 //   silero-vad-v6.2.0/ggml-silero-v6.2.0.bin
+//   ecapa-voxlingua107-lid/ecapa-voxlingua107-lid.onnx
 //                                 — every `SHIPPED_BUNDLE_IDS` bundle from BUNDLE_CATALOGUE
-//                                   (src/contracts/bundles.ts), pinned Hugging Face commit;
+//                                   (src/contracts/bundles.ts): Silero from a pinned Hugging Face
+//                                   commit, the language-ID model (P4) from PUBLIC_MODELS_BASE
+//                                   (private release via `gh` meanwhile, like the Uzbek model);
 //                                   staged in its bundle directory, which is where the app's
-//                                   bundle store looks under resources/models
+//                                   bundle store looks under resources/models — and, for a bundle
+//                                   too big to hash at every launch (SHIPPED_HASH_LIMIT_BYTES),
+//                                   with the `.kotiba-verified.json` stamp the store reads instead
 //
 // Every sha256 is verified before the file is trusted, and a mismatch is a hard failure
 // (D-W10's whole point: a 0-byte or truncated model must never quietly ship). Downloads
@@ -65,8 +70,10 @@ const DIST_CATALOGUE = path.join(WINDOWS_ROOT, 'dist', 'src', 'contracts', 'mode
 let PUBLIC_MODELS_BASE = '';
 let PRIVATE_MODELS_RELEASE = { repo: '', tag: '' };
 
-/** The shipped first-use bundles (Silero), read with the catalogue. */
+/** The shipped first-use bundles (Silero, the language-ID model), read with the catalogue. */
 let SHIPPED_BUNDLES = [];
+/** The shipped bundles over SHIPPED_HASH_LIMIT_BYTES: staged with a verification stamp. */
+let STAMPED_BUNDLES = [];
 
 /** @returns {Promise<Record<string, {id:string,name:string,fileName:string,sha256:string,bytes:number|null,url:string|null,bundled:boolean}>>} */
 async function loadCatalogue() {
@@ -87,6 +94,9 @@ async function loadCatalogue() {
   // the app's bundle store looks for under `resources/models`. Each file becomes one spec in
   // the same shape as a model, so it goes through the same fetch, resume and hash.
   const bundles = await import(pathToFileURL(path.join(path.dirname(DIST_CATALOGUE), 'bundles.js')).href);
+  STAMPED_BUNDLES = bundles.SHIPPED_BUNDLE_IDS.map((id) => bundles.BUNDLE_CATALOGUE[id]).filter(
+    (bundle) => bundles.bundleBytes(bundle) > bundles.SHIPPED_HASH_LIMIT_BYTES,
+  );
   SHIPPED_BUNDLES = bundles.SHIPPED_BUNDLE_IDS.flatMap((id) => {
     const bundle = bundles.BUNDLE_CATALOGUE[id];
     return bundle.files.map((file) => ({
@@ -229,7 +239,22 @@ async function fetchOne(spec, dest, destDir) {
       await fs.rm(dest, { force: true });
     }
   }
-  await downloadFromPrivateRelease(PRIVATE_MODELS_RELEASE, spec.fileName, destDir);
+  // The asset is named by the file alone; a bundle's file lands in its bundle directory.
+  await downloadFromPrivateRelease(PRIVATE_MODELS_RELEASE, path.basename(spec.fileName), path.dirname(dest));
+}
+
+/**
+ * The stamp the app's bundle store reads for a shipped bundle too big to hash at launch
+ * (`.kotiba-verified.json`, src/engines/bundle-store.ts): written only after every one of its
+ * files was staged AND verified above, in the store's own format.
+ */
+async function stampBundle(bundle, destDir) {
+  const stamp = {
+    verified: new Date().toISOString(),
+    files: bundle.files.map(({ localName, bytes, sha256 }) => ({ localName, bytes, sha256 })),
+  };
+  await fs.writeFile(path.join(destDir, bundle.directory, '.kotiba-verified.json'), JSON.stringify(stamp, null, 2));
+  console.log(`ok    ${bundle.directory}/.kotiba-verified.json — stamped`);
 }
 
 function parseArgs(argv) {
@@ -305,6 +330,8 @@ async function main() {
     console.error(`fetch-models: ${failures} of ${bundled.length} model(s) failed verification. Not packaging.`);
     process.exit(1);
   }
+
+  for (const bundle of STAMPED_BUNDLES) await stampBundle(bundle, destDir);
 
   console.log(`fetch-models: all ${bundled.length} bundled model files staged and verified.`);
 }

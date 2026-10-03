@@ -92,6 +92,16 @@ export interface EngineManagerDeps {
   readonly createClassifier?: (options: {
     readonly modelPath: string;
   }) => AcousticClassifier & { dispose: () => Promise<void> };
+  /**
+   * The language-ID model (P4, D-14): where it is (`resolveLanguageIDPath`, from the setting and
+   * the bundle store), and how to build it (`createLanguageIdentifier`). Both given and the file
+   * there: it is loaded with the engines and is `languageIdentifier()`; whisper base is then not
+   * built at all (the Mac: `languageID == nil` before the detector). Absent: whisper base routes.
+   */
+  readonly languageIDPath?: (settings: Settings) => Promise<string | null>;
+  readonly createLanguageIdentifier?: (options: {
+    readonly modelPath: string;
+  }) => AcousticClassifier & { prepare: () => Promise<void>; dispose: () => Promise<void> };
   /** Logical processors. See `resolveDecodeCores` for why this is not fed raw. */
   readonly cpuCount?: number;
   readonly idleUnload?: IdleUnloadPolicy;
@@ -369,6 +379,20 @@ function createFamilyEngine(
     },
 
     /**
+     * The language decision's respelling (P4) goes to the first member that holds `language` and
+     * can be held to a script — Parakeet; a slot with none (whisper writes English in Latin
+     * anyway) transcribes as usual. The Mac's `CompositeEngine: ScriptRespelling`.
+     */
+    transcribeWrittenIn: async (audio: AudioBuffer, language: Language): Promise<TranscriptResult> => {
+      for (const member of members) {
+        if (!member.languages.includes(language) || member.engine.transcribeWrittenIn === undefined) continue;
+        member.lastUsedAt = now();
+        return member.engine.transcribeWrittenIn(audio, language);
+      }
+      return family_.transcribe(audio, language);
+    },
+
+    /**
      * Stream through the first member that can, for the languages it claims; otherwise, or
      * when that fails, the family's ordinary member-by-member `transcribe` runs on the
      * finalised recording — so a stream never narrows what the slot could have done in
@@ -424,6 +448,9 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
   let families = new Map<EngineFamily, { members: Member[]; engine: SttEngine }>();
   let classifier: (AcousticClassifier & { dispose: () => Promise<void> }) | null = null;
   let classifierPath: string | null = null;
+  /** The language-ID model, LOADED — never one that failed to (then whisper base routes). */
+  let identifier: (AcousticClassifier & { prepare: () => Promise<void>; dispose: () => Promise<void> }) | null = null;
+  let identifierPath: string | null = null;
   /** What the current build was built from, so `reconfigure` knows if anything moved. */
   let builtFrom = '';
   /** The build chain. Never null: builds are serialised, not deduplicated. */
@@ -432,9 +459,10 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
   let disposed = false;
 
   /** Everything a rebuild would have to notice. */
-  function fingerprint(current: Settings, paths: ReadonlyMap<ModelRole, string | null>): string {
+  function fingerprint(current: Settings, paths: ReadonlyMap<ModelRole, string | null>, languageID: string | null): string {
     return JSON.stringify({
       paths: [...paths.entries()].sort(),
+      languageID,
       useGpu: current.whisperUseGPU,
       beam: current.whisperBeamSize,
       fastEnglish: current.fastEnglish,
@@ -485,7 +513,11 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
     if (disposed) return;
     const current = settings;
     const paths = await resolvePaths(current);
-    const next = fingerprint(current, paths);
+    const languageIDPath =
+      detectionWanted(current) && deps.createLanguageIdentifier !== undefined && deps.languageIDPath !== undefined
+        ? await deps.languageIDPath(current).catch(() => null)
+        : null;
+    const next = fingerprint(current, paths, languageIDPath);
     if (next === builtFrom && families.size > 0) return;
 
     const previous = families;
@@ -550,9 +582,30 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
       );
     }
 
+    // The language-ID model first (P4): loaded here, off the key-up path — ~60 ms and 86 MB in
+    // its own process. A model that will not load is said and dropped, and whisper base routes.
+    if (languageIDPath === null || deps.createLanguageIdentifier === undefined) {
+      if (identifier !== null) await identifier.dispose();
+      identifier = null;
+      identifierPath = null;
+    } else if (languageIDPath !== identifierPath) {
+      if (identifier !== null) await identifier.dispose();
+      const built = deps.createLanguageIdentifier({ modelPath: languageIDPath });
+      try {
+        await built.prepare();
+        identifier = built;
+        identifierPath = languageIDPath;
+      } catch (error: unknown) {
+        note(`language ID: ${languageIDPath} would not load — ${error instanceof Error ? error.message : String(error)}; whisper base routes`);
+        await built.dispose().catch(() => undefined);
+        identifier = null;
+        identifierPath = null;
+      }
+    }
+
     // The detector is separate: a different model with an independent lifecycle, and it
-    // is never asked to transcribe.
-    const detectorPath = paths.get('detector') ?? null;
+    // is never asked to transcribe. Not built beside a loaded language-ID model.
+    const detectorPath = identifier === null ? (paths.get('detector') ?? null) : null;
     if (
       !detectionWanted(current) ||
       detectorPath === null ||
@@ -702,7 +755,8 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
      * which is the failure this app exists to prevent, so each cause says which it is.
      */
     detector(): AcousticClassifier | null {
-      if (classifier === null) {
+      // Beside a loaded language-ID model whisper base is not built on purpose: nothing to say.
+      if (classifier === null && identifier === null) {
         if (deps.createClassifier === undefined) {
           note('detector: no classifier factory was wired in — routing cannot be acoustic');
         } else if (!detectionWanted(settings)) {
@@ -714,6 +768,10 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
         }
       }
       return classifier;
+    },
+
+    languageIdentifier(): AcousticClassifier | null {
+      return identifier;
     },
 
     languageHead(): AcousticClassifier | null {
@@ -821,7 +879,8 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
       const leadStatus = deps.unifiedLead === undefined ? 'notInstalled' : await deps.unifiedLead.status().catch(() => 'notInstalled' as const);
       const russian: ModelStatus = leadStatus === 'ready' ? 'ready' : whisperUnified;
       const fastEnglish = await statusOf('fastEnglish');
-      const detector = detectionWanted(settings) ? await statusOf('detector') : 'notInstalled';
+      // Either model detects: the language-ID model when it loaded (P4), whisper base otherwise.
+      const detector = !detectionWanted(settings) ? 'notInstalled' : identifier !== null ? 'ready' : await statusOf('detector');
 
       const availableLanguages = new Set<Language>();
       if (uzbek === 'ready') availableLanguages.add('uz');
@@ -877,6 +936,8 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
       families = new Map();
       if (classifier !== null) await classifier.dispose();
       classifier = null;
+      if (identifier !== null) await identifier.dispose();
+      identifier = null;
     },
   };
 }

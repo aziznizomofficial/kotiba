@@ -760,7 +760,8 @@ enum RoutingFixtures {
                 // The sources both ports produce, in the Swift declaration order. `lexicalCheck` (step 4c)
                 // is Mac-only until Windows has that step.
                 "routeSources": arr([RouteSource.pin, .acoustic, .scriptCheck, .transcriptCheck,
-                                     .fallback, .turkishCheck, .arabicCheck, .only].map { str($0.rawValue) }),
+                                     .fallback, .turkishCheck, .arabicCheck, .only, .languageID]
+                                    .map { str($0.rawValue) }),
                 "engineFamilies": arr(EngineFamily.allCases.map { str($0.rawValue) }),
                 "familyForLanguage": obj(Dictionary(uniqueKeysWithValues:
                     Language.allCases.map { ($0.rawValue, str(EngineFamily(for: $0).rawValue)) })),

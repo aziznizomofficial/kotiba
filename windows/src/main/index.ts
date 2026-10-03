@@ -45,6 +45,7 @@ import type {
 } from '../contracts/index.js';
 import {
   BUNDLE_CATALOGUE,
+  ECAPA_LID,
   BUNDLE_IDS,
   LANGUAGES,
   bundleBytes,
@@ -285,6 +286,7 @@ function newShell(): Shell {
       cohere_arabic: { kind: 'notDownloaded' },
       fastconformer_ar: { kind: 'notDownloaded' },
       gemma4_e2b_ar: { kind: 'notDownloaded' },
+      ecapa_lid: { kind: 'notDownloaded' },
     },
     uzbekDownload: { kind: 'included' },
     turboDownload: { kind: 'notDownloaded' },
@@ -975,10 +977,17 @@ async function downloadBundle(state: Shell, id: BundleId): Promise<void> {
   const total = bundleBytes(BUNDLE_CATALOGUE[id]);
   setBundleState(state, id, { kind: 'downloading', receivedBytes: 0, totalBytes: total });
   try {
-    await onDevice.bundles.ensure(id, (progress) =>
+    const directory = await onDevice.bundles.ensure(id, (progress) =>
       setBundleState(state, id, { kind: 'downloading', receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes }),
     );
     setBundleState(state, id, { kind: 'downloaded' });
+    if (id === 'ecapa_lid') {
+      // The language-ID model (P4): written into its setting, as a whisper download is, so the
+      // engines rebuild with it as the router's classifier from the next press.
+      const path = join(directory, ECAPA_LID.files[0]!.localName);
+      state.settings = (await state.settingsWriter?.({ languageIDModelPath: path })) ?? { ...state.settings, languageIDModelPath: path };
+      await state.controller?.settingsChanged();
+    }
   } catch (error: unknown) {
     setBundleState(state, id, { kind: 'failed', reason: error instanceof Error ? error.message : String(error) });
     throw error;
@@ -1508,12 +1517,15 @@ function registerIpc(deps: {
     // its own answer here and assign it, which made a pane that happened to be open the
     // only thing that ever refreshed the tray's language list.
     await refreshReadiness(state);
+    // Either model detects (P4): the language-ID model when it is installed, whisper base otherwise.
+    const { resolveLanguageIDPath } = await import('../engines/language-id.js');
+    const languageIDPath = await resolveLanguageIDPath(state.settings, state.onDevice?.bundles ?? null);
     return {
       slots,
       statuses,
       autoDetectReady: autoDetectReady({
         settings: state.settings,
-        detectorPath: detector?.inspection.status === 'ready' ? detector.inspection.path : null,
+        detectorPath: languageIDPath ?? (detector?.inspection.status === 'ready' ? detector.inspection.path : null),
         uzbekPath: uzbek?.inspection.status === 'ready' ? uzbek.inspection.path : null,
       }),
       availableLanguages: state.availableLanguages,

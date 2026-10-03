@@ -221,7 +221,7 @@ export const uzLatn: Catalog = {
   "lang.ar.reason.slow": "Bu kompyuterga Cohere bilan 3 soniyalik parcha uchun {ms} ms kerak boʻldi, {device} (chegara {threshold} ms), shuning uchun arab tili tezroq FastConformer da ishlaydi.",
   "lang.ar.reason.switching": "{engine} ga oʻtilmoqda — u tayyor boʻlguncha arab tilini joriy dvigatel yozadi.",
   "lang.ar.reason.whisper": "Arab modeli yuklab olinguncha arab tilini sekinroq model yozadi.",
-  "lang.downloadDetector": "Tilni aniqlash modelini yuklab olish (57 MB)",
+  "lang.downloadDetector": "Tilni aniqlash modelini yuklab olish (86 MB)",
   "lang.downloadParakeet": "Parakeetni yuklab olish",
   "lang.fallback": "Ishonchsiz boʻlsa",
   "lang.fastEnglish": "Tez ingliz tili",

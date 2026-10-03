@@ -190,6 +190,15 @@ export interface EngineWiringOptions {
    * the energy gate while the file is absent.
    */
   readonly speechDetectorPath?: () => Promise<string | null>;
+  /**
+   * Where the language-ID model is looked for (P4): the bundle store the installer's copy and a
+   * download live in, read through `resolveLanguageIDPath` with the setting. Given, and the module
+   * has `createLanguageIdentifier`, the manager loads the model and the controller routes through
+   * the language decision; absent, whisper base routes as before.
+   */
+  readonly bundles?: import('../engines/index.js').BundleStore;
+  /** Runs the language-ID model in its own process (D-W22). Absent: in this one. */
+  readonly engineLauncher?: import('../engines/index.js').EngineLauncher;
 }
 
 /**
@@ -204,7 +213,9 @@ export type EnginesModule = Pick<
   typeof import('../engines/index.js'),
   'createEngineManagerWith' | 'bindSttEngineFactory' | 'createAcousticClassifier'
 > &
-  Partial<Pick<typeof import('../engines/index.js'), 'createStreamingWhisperEngine'>>;
+  Partial<
+    Pick<typeof import('../engines/index.js'), 'createStreamingWhisperEngine' | 'createLanguageIdentifier' | 'resolveLanguageIDPath'>
+  >;
 
 /**
  * Build the engine manager. The app and `--check` both call exactly this.
@@ -271,6 +282,19 @@ export function createEngines(engines: EnginesModule, options: EngineWiringOptio
           options.onNote(`classifier: ${note}`);
         },
       }),
+    ...(options.bundles === undefined || engines.createLanguageIdentifier === undefined || engines.resolveLanguageIDPath === undefined
+      ? {}
+      : {
+          languageIDPath: (current: Settings) => engines.resolveLanguageIDPath!(current, options.bundles ?? null),
+          createLanguageIdentifier: ({ modelPath }: { readonly modelPath: string }) =>
+            engines.createLanguageIdentifier!({
+              modelPath,
+              ...(options.engineLauncher === undefined ? {} : { launcher: options.engineLauncher }),
+              onNote: (note) => {
+                options.onNote(`classifier: ${note}`);
+              },
+            }),
+        }),
     cpuCount: options.cpuCount ?? logicalProcessorCount(),
     onNote: (note) => {
       options.onNote(`engines: ${note}`);

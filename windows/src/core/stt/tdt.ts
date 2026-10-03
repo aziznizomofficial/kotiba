@@ -49,8 +49,34 @@ export function argmax(values: ArrayLike<number>, start = 0, end = values.length
   return best - start;
 }
 
-/** Greedy TDT over one utterance. Returns token ids, blank never among them. */
-export async function greedyTdt<S>(decoder: TdtDecoder<S>, maxSymbolsPerFrame = MAX_SYMBOLS_PER_FRAME): Promise<number[]> {
+/** `argmax` over `[0, end)` skipping every index `suppressed` marks (1). */
+function argmaxAllowed(values: ArrayLike<number>, end: number, suppressed: Uint8Array): number {
+  let best = -1;
+  let bestValue = -Infinity;
+  for (let i = 0; i < end; i += 1) {
+    if (suppressed[i] === 1) continue;
+    const value = values[i]!;
+    if (best < 0 || value > bestValue) {
+      bestValue = value;
+      best = i;
+    }
+  }
+  return best < 0 ? 0 : best;
+}
+
+/**
+ * Greedy TDT over one utterance. Returns token ids, blank never among them.
+ *
+ * `suppressed` (one byte per vocabulary id, 1 = never emit) holds the decoder to one script —
+ * the language decision's respelling (P4, `scriptSuppression`). The duration head is untouched,
+ * and so is the blank: a frame the model would have spent on a forbidden piece is spent on the
+ * best allowed one, which is how the same audio comes back in the decided language's letters.
+ */
+export async function greedyTdt<S>(
+  decoder: TdtDecoder<S>,
+  maxSymbolsPerFrame = MAX_SYMBOLS_PER_FRAME,
+  suppressed: Uint8Array | null = null,
+): Promise<number[]> {
   let state = decoder.initialState();
   const tokens: number[] = [];
   let t = 0;
@@ -58,7 +84,7 @@ export async function greedyTdt<S>(decoder: TdtDecoder<S>, maxSymbolsPerFrame = 
   while (t < decoder.frames) {
     const previous = tokens.length > 0 ? tokens[tokens.length - 1]! : decoder.blank;
     const { output, state: next } = await decoder.step(t, previous, state);
-    const token = argmax(output, 0, decoder.vocabSize);
+    const token = suppressed === null ? argmax(output, 0, decoder.vocabSize) : argmaxAllowed(output, decoder.vocabSize, suppressed);
     const duration = argmax(output, decoder.vocabSize, output.length);
 
     if (token !== decoder.blank) {
@@ -168,4 +194,29 @@ export function writtenLanguage<L extends string>(text: string, requested: L): L
   }
   if (latin === 0 && cyrillic === 0) return requested;
   return cyrillic > latin ? 'ru' : 'en';
+}
+
+/**
+ * The vocabulary pieces a decode held to `language`'s script may not emit (P4's respelling, the
+ * Windows twin of FluidAudio's token-language filter): for English every piece holding a Cyrillic
+ * letter (U+0400–04FF), for Russian every piece holding a Latin one (A–Z a–z) — the same two
+ * classes `writtenLanguage` and the policy's `needsRespelling` count. Punctuation, digits, the
+ * word-boundary piece and the blank stay allowed in both. One byte per id, 1 = suppressed.
+ */
+export function scriptSuppression(vocabulary: Vocabulary, language: WrittenLanguage): Uint8Array {
+  const out = new Uint8Array(vocabulary.size);
+  for (let id = 0; id < vocabulary.size; id += 1) {
+    if (id === vocabulary.blank) continue;
+    const piece = vocabulary.pieces[id] ?? '';
+    for (const character of piece) {
+      const scalar = character.codePointAt(0) ?? 0;
+      const latin = (scalar >= 0x41 && scalar <= 0x5a) || (scalar >= 0x61 && scalar <= 0x7a);
+      const cyrillic = scalar >= 0x0400 && scalar <= 0x04ff;
+      if ((language === 'en' && cyrillic) || (language === 'ru' && latin)) {
+        out[id] = 1;
+        break;
+      }
+    }
+  }
+  return out;
 }

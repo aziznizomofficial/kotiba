@@ -46,6 +46,42 @@
       "licence": "MIT (whisper.cpp) / MIT (OpenAI Whisper weights)"
     },
     {
+      "name": "VoxLingua107 ECAPA language ID (Core ML, f16)",
+      "role": "language-id",
+      "dest": "ecapa-voxlingua107-lid-f16.mlmodel",
+      "public_asset": "ecapa-voxlingua107-lid-f16.mlmodel",
+      "release": {
+        "repo": "aziznizomofficial/kotiba",
+        "tag": "models-v2",
+        "asset": "ecapa-voxlingua107-lid-f16.mlmodel"
+      },
+      "sha256": "1f6bcbadd1514375669e1f99a9c520c564de719c98410fb5b2cdf2aa3e346052",
+      "bytes": 42940194,
+      "status": "public-asset (to be uploaded with 1.1), with the same release through gh as the fallback",
+      "source": "https://huggingface.co/speechbrain/lang-id-voxlingua107-ecapa",
+      "revision": "0253049ae131d6a4be1c4f0d8b0ff483a0f8c8e9",
+      "note": "The Mac's language-ID model from 1.1 (P4, D-14): Scripts/export-ecapa.py, waveform to 107 log-posteriors, Float16, run on the CPU (~48 ms for 5-10 s). Replaces whisper base as the detector; base stays the fallback while this downloads.",
+      "licence": "Apache-2.0 (SpeechBrain model); trained on VoxLingua107, CC BY 4.0"
+    },
+    {
+      "name": "VoxLingua107 ECAPA language ID (ONNX)",
+      "role": "language-id-windows",
+      "dest": "ecapa-voxlingua107-lid.onnx",
+      "public_asset": "ecapa-voxlingua107-lid.onnx",
+      "release": {
+        "repo": "aziznizomofficial/kotiba",
+        "tag": "models-v2",
+        "asset": "ecapa-voxlingua107-lid.onnx"
+      },
+      "sha256": "63e67bbfd406512158325dd8453014216f24d02f121d32d8a8c2ddcf85083cb6",
+      "bytes": 86031971,
+      "status": "public-asset (to be uploaded with 1.1), Windows only",
+      "source": "https://huggingface.co/speechbrain/lang-id-voxlingua107-ecapa",
+      "revision": "0253049ae131d6a4be1c4f0d8b0ff483a0f8c8e9",
+      "note": "The same graph as ONNX opset 17, Float32, for onnxruntime on Windows; byte-reproducible by Scripts/export-ecapa.py.",
+      "licence": "Apache-2.0 (SpeechBrain model); trained on VoxLingua107, CC BY 4.0"
+    },
+    {
       "name": "whisper base q5_1",
       "role": "language-detector",
       "dest": "ggml-base-q5_1.bin",

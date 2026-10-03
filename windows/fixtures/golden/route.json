@@ -508,7 +508,8 @@
       "fallback",
       "turkishCheck",
       "arabicCheck",
-      "only"
+      "only",
+      "languageID"
     ],
     "sampleRate": 16000,
     "silenceComparison": "peakAmplitude >= silenceThreshold",

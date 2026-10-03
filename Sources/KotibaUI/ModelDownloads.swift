@@ -109,7 +109,7 @@ public final class ModelDownloads {
             case .parakeet: return "Parakeet Ultra (Neural Engine)"
             case .uzbek: return "Kotib STT · uzbek_stt_v1"
             case .speechDetector: return "Silero VAD v6.2"
-            case .languageDetector: return "whisper base"
+            case .languageDetector: return "VoxLingua107 ECAPA"
             case .modes: return "Qwen3 1.7B"
             case .turkish: return "whisper large-v3-turbo"
             case .arabic: return "Cohere Transcribe Arabic + whisper turbo"
@@ -122,7 +122,7 @@ public final class ModelDownloads {
             case .parakeet: return Int64(ModelCatalogue.parakeetUltra.totalBytes)
             case .uzbek: return Int64(ModelCatalogue.uzbekEngine.expectedBytes ?? 0)
             case .speechDetector: return Int64(ModelCatalogue.speechDetector.expectedBytes ?? 0)
-            case .languageDetector: return Int64(ModelCatalogue.detector.expectedBytes ?? 0)
+            case .languageDetector: return Int64(ModelCatalogue.languageID.expectedBytes ?? 0)
             case .modes: return Int64(ModelCatalogue.polishModel.expectedBytes ?? 0)
             case .turkish: return Int64(ModelCatalogue.russianEngine.expectedBytes ?? 0)
             // Cohere, and turbo with it (C4 §14.1): turbo's language head is what finds the

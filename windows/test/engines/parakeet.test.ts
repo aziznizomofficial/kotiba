@@ -7,7 +7,7 @@ import { describe as suite, expect, test } from 'vitest';
 
 import { EngineFailure, SAMPLE_RATE, type AudioBuffer, type BundleState } from '../../src/contracts/index.js';
 import { DEFAULT_SEGMENTER, segmentCut } from '../../src/core/stt/segmenter.js';
-import { argmax, greedyTdt, parseVocabulary, piecesToText, writtenLanguage } from '../../src/core/stt/tdt.js';
+import { argmax, greedyTdt, parseVocabulary, piecesToText, scriptSuppression, writtenLanguage } from '../../src/core/stt/tdt.js';
 import type { BundleStore } from '../../src/engines/bundle-store.js';
 import { ParakeetEngine, resolveOrtThreads, type ParakeetRuntime } from '../../src/engines/parakeet.js';
 
@@ -101,6 +101,28 @@ suite('the TDT decoder (onnx-asr NemoConformerTdt)', () => {
     expect(calls.map((call) => call.previous)).toEqual([4, 2, 3]);
     // The state advances only when a token is kept: blank keeps the old one.
     expect(calls.map((call) => call.state)).toEqual([0, 1, 2]);
+  });
+
+  test('P4 respelling: held to one script, the best ALLOWED piece wins and the blank stays allowed', async () => {
+    const vocabulary = parseVocabulary(['▁the 0', '▁зе 1', '. 2', 'ин 3', '<blk> 4'].join('\n'));
+    const english = scriptSuppression(vocabulary, 'en');
+    const russian = scriptSuppression(vocabulary, 'ru');
+    expect([...english]).toEqual([0, 1, 0, 1, 0]);
+    expect([...russian]).toEqual([1, 0, 0, 0, 0]);
+    // A decoder-joint whose first choice is always the Cyrillic piece (1), then the Latin one (0).
+    const decoder = {
+      frames: 2,
+      vocabSize: 5,
+      blank: 4,
+      initialState: () => 0,
+      step: async (_frame: number, _previous: number, state: number) => ({
+        output: [0.5, 0.9, 0.1, 0.2, 0.3, 0, 1, 0, 0, 0],
+        state,
+      }),
+    };
+    expect(await greedyTdt(decoder)).toEqual([1, 1]);
+    expect(await greedyTdt(decoder, 10, english)).toEqual([0, 0]);
+    expect(await greedyTdt(decoder, 10, russian)).toEqual([1, 1]);
   });
 
   test('the per-frame cap stops a duration-0 loop', async () => {
@@ -216,6 +238,26 @@ function engineWith(options: {
 }
 
 suite('ParakeetEngine', () => {
+  test('P4 respelling: transcribeWrittenIn decodes again held to the language’s script', async () => {
+    const scripts: (string | null | undefined)[] = [];
+    const runtime = new FakeRuntime();
+    runtime.transcribeSamples = async (_samples: Float32Array, script?: string | null) => {
+      scripts.push(script);
+      return script === 'en' ? 'Inside the content folder.' : 'Инсайд зе контент фоль.';
+    };
+    const store = new FakeStore();
+    store.installed = true;
+    const { engine } = engineWith({ store, runtime });
+    const audio: AudioBuffer = { samples: new Float32Array(SAMPLE_RATE), droppedSamples: 0 };
+    // Not loaded yet: it loads, as the Mac's does.
+    const again = await engine.transcribeWrittenIn(audio, 'en');
+    expect(again).toMatchObject({ raw: 'Inside the content folder.', language: 'en' });
+    expect((await engine.transcribe(audio, 'en')).raw).toBe('Инсайд зе контент фоль.');
+    // After the load's own warm-up pass (no script): the respelling, then an ordinary decode.
+    expect(scripts.slice(-2)).toEqual(['en', null]);
+    await expect(engine.transcribeWrittenIn(audio, 'uz')).rejects.toBeInstanceOf(EngineFailure);
+  });
+
   test('not downloaded: prepare THROWS notReady and starts the one download', async () => {
     const states: BundleState[] = [];
     const { engine, store } = engineWith({ states });

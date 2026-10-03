@@ -47,6 +47,7 @@ export const SETTINGS_FIELD_SCHEMAS = {
   whisperBeamSize: z.number().int(),
   preloadAllLanguages: z.boolean(),
   detectorModelPath: z.string(),
+  languageIDModelPath: z.string(),
   turkicThreshold: z.number().finite(),
   silenceThreshold: z.number().finite(),
   soundFeedback: z.boolean(),
@@ -89,6 +90,10 @@ export const SETTINGS_FIELD_SCHEMAS = {
   enabledLanguages: z.array(language).min(1),
   turkishDictations: z.number().int().min(0),
   arabicDictations: z.number().int().min(0),
+  uzbekDictations: z.number().int().min(0),
+  englishDictations: z.number().int().min(0),
+  russianDictations: z.number().int().min(0),
+  languageCountsSeeded: z.boolean(),
   arabicEngine: z.enum(ARABIC_ENGINE_CHOICES),
 } as const satisfies { [K in keyof Settings]: z.ZodType<Settings[K]> };
 

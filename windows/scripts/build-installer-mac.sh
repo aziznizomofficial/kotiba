@@ -79,6 +79,12 @@ rm -f fixtures/models/ggml-large-v3-turbo-q5_0.bin
 for f in ggml-uzbek-stt-v1-q5_0.bin ggml-base-q5_1.bin; do
   [ -e "fixtures/models/$f" ] || [ ! -f "$models_dir/$f" ] || ln -s "$models_dir/$f" "fixtures/models/$f"
 done
+# The language-ID model (P4) — the Mac runs the Core ML build, so the ONNX is fetched (and stamped)
+# by fetch-models.mjs below unless a local copy sits in the models directory.
+lid=ecapa-voxlingua107-lid.onnx
+mkdir -p fixtures/models/ecapa-voxlingua107-lid
+[ -e "fixtures/models/ecapa-voxlingua107-lid/$lid" ] || [ ! -f "$models_dir/$lid" ] \
+  || ln -s "$models_dir/$lid" "fixtures/models/ecapa-voxlingua107-lid/$lid"
 node scripts/fetch-models.mjs --dest fixtures/models
 
 echo "== 5. Electron for win32-x64, from a local mirror"

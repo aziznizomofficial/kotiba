@@ -1,5 +1,6 @@
 # windows/electron-builder.yml — D-W3, D-W9, D-W25: one installer, ~0.67 GB, carrying what
-# Uzbek needs (Kotib STT, the whisper-base detector, Silero); English/Russian (Parakeet) and the
+# Uzbek needs (Kotib STT, the whisper-base detector, Silero, and since P4 the 86 MB language-ID
+# model that routes to it); English/Russian (Parakeet) and the
 # modes (Qwen) download after setup, Turkish/Arabic when turned on. Built and verified on
 # windows-latest; delivered as a GitHub release asset.
 #
@@ -187,6 +188,16 @@ extraResources:
     to: models/silero-vad-v6.2.0
     filter:
       - 'ggml-silero-v6.2.0.bin'
+
+  # The language-ID model (P4, D-14; 86 MB, Apache-2.0) — the router's classifier, SHIPPED like the
+  # whisper-base detector it replaces (`ECAPA_LID.shipped`). Too big to hash at every launch, so
+  # `fetch-models.mjs` stages it WITH its verification stamp, and the stamp must ship beside it:
+  # the bundle store reads `resources/models/ecapa-voxlingua107-lid/.kotiba-verified.json`.
+  - from: fixtures/models/ecapa-voxlingua107-lid
+    to: models/ecapa-voxlingua107-lid
+    filter:
+      - 'ecapa-voxlingua107-lid.onnx'
+      - '.kotiba-verified.json'
 
   # Installed by t06 (kotiba-stt) and t07 (kotiba-hook, kotiba-input) via
   # `cmake --install --prefix resources/native` in t12's CI — each CMakeLists installs

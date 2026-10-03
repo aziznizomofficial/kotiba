@@ -218,17 +218,18 @@ struct LanguagesPane: View {
                     // Names only what is actually missing: with the detector installed it used
                     // to ask for it anyway, beside no button to get it.
                     StatusDot(text: settings.resolvedDetectorPath == nil
+                                      && settings.resolvedLanguageIDPath == nil
                                   ? (settings.uzbekReady ? L("languages.needs.detector")
                                      : L("languages.needs.both"))
                                   : L("languages.needs.uzbek"),
                               tone: .warning)
                     Spacer()
-                    // The detector is the half Kotiba *can* fetch — 57 MB, public, and the thing
-                    // that makes auto-detect work at all.
-                    if settings.resolvedDetectorPath == nil {
+                    // The detector is the half Kotiba *can* fetch — the language-ID model (P4),
+                    // 43 MB, public, and the thing that makes auto-detect work at all.
+                    if settings.resolvedDetectorPath == nil, settings.resolvedLanguageIDPath == nil {
                         Button(controller.downloading != nil ? L("common.downloading")
                                : L("languages.detector.download")) {
-                            Task { downloadError = await controller.download(ModelCatalogue.detector) }
+                            Task { downloadError = await controller.download(ModelCatalogue.languageID) }
                         }
                         .buttonStyle(.kotibaPrimary)
                         .disabled(controller.downloading != nil)

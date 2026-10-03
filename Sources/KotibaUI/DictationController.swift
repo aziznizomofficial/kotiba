@@ -277,6 +277,10 @@ public final class DictationController {
     /// The turbo engine `arabicDecoder` was built around, to notice when it is replaced.
     private var arabicDecoderTurbo: WhisperEngine?
     private var detector: WhisperLanguageDetector?
+    /// The language-ID model (P4, D-14). When it is loaded it is the router's classifier and the
+    /// session decides the language after transcription (`DictationSession.Config.languageID`);
+    /// `detector` (whisper base) is the fallback until it has downloaded.
+    private var languageID: EcapaLanguageIdentifier?
     private var historyStore: HistoryStore?
     private var diagnostics: DiagnosticsStore?
 
@@ -396,7 +400,8 @@ public final class DictationController {
         // The 39k-word English list key-up reads Parakeet's transcript against
         // (`TranscriptCheck`, session step 4a′) is built here, off the main actor, rather than
         // on the first unpinned key-up.
-        Task.detached(priority: .utility) { _ = TranscriptCheck.lexiconCount }
+        // …and the other four word lists the language decision reads (P4), ~0.1 s.
+        Task.detached(priority: .utility) { Lexicon.warmUp() }
 
         readiness = .preparing(Self.modelName(of: .english))
         try? await appleEngine.prepare()
@@ -430,6 +435,7 @@ public final class DictationController {
             do {
                 historyStore = try HistoryStore(
                     path: directory.appendingPathComponent("history.sqlite").path)
+                Task { await seedLanguageCounts() }
             } catch {
                 historyOpenError = (error as? HistoryError)?.reason ?? "\(error)"
             }
@@ -472,7 +478,20 @@ public final class DictationController {
         // The detector is small enough to keep resident unconditionally — 59 MB against the
         // 539 MB the transcribing model costs — and it has to be warm, because it sits on the
         // critical path at key-release where a cold load would be seconds.
-        if settings.autoDetectReady, let path = settings.resolvedDetectorPath {
+        // The language-ID model first (P4): ~43 MB on the CPU, resident like the detector.
+        if settings.autoDetectReady, let path = settings.resolvedLanguageIDPath {
+            if languageID?.modelURL.path != path {
+                languageID = EcapaLanguageIdentifier(modelURL: URL(fileURLWithPath: path))
+            }
+            do {
+                try await languageID?.prepare()
+            } catch {
+                languageID = nil
+            }
+        } else {
+            languageID = nil
+        }
+        if settings.autoDetectReady, languageID == nil, let path = settings.resolvedDetectorPath {
             if detector?.modelURL.path != path {
                 detector = WhisperLanguageDetector(modelURL: URL(fileURLWithPath: path))
             }
@@ -767,6 +786,7 @@ public final class DictationController {
                 await self.releaseModels()
                 await self.parakeetEngine.unload()
                 await self.detector?.unload()
+                await self.languageID?.unload()
             }
         }
         source.resume()
@@ -918,6 +938,7 @@ public final class DictationController {
             switch ModelCatalogue.settingKey(for: entry) {
             case .russianModel: settings.russianModelPath = url.path
             case .detectorModel: settings.detectorModelPath = url.path
+            case .languageIDModel: settings.languageIDModelPath = url.path
             case .uzbekModel: settings.uzbekModelPath = url.path
             // Found by its file name in the models directory; see `polishModelPath` and
             // `AppSettings.resolvedArabicPath`.
@@ -1039,7 +1060,7 @@ public final class DictationController {
             return SileroSpeechDetector.locate(in: Self.modelDirectories(settings)) != nil
                 ? .installed : .missing
         case .languageDetector:
-            return settings.resolvedDetectorPath != nil ? .installed : .missing
+            return settings.resolvedLanguageIDPath != nil ? .installed : .missing
         case .modes:
             return polishModelInstalled ? .installed : .missing
         case .turkish:
@@ -1074,8 +1095,8 @@ public final class DictationController {
             await parakeetEngine.setSpeechDetectorURL(
                 SileroSpeechDetector.locate(in: Self.modelDirectories(settings)))
         case .languageDetector:
-            let url = try await store.ensure(ModelCatalogue.detector, progress: progress)
-            settings.detectorModelPath = url.path
+            let url = try await store.ensure(ModelCatalogue.languageID, progress: progress)
+            settings.languageIDModelPath = url.path
             await settingsChanged()
         case .modes:
             try await store.ensure(ModelCatalogue.polishModel, progress: progress)
@@ -1663,6 +1684,22 @@ public final class DictationController {
     /// Restore the output now, without a ramp. The terminate path.
     public func restoreDuckingImmediately() { ducker.restoreImmediately() }
 
+    /// Once per install: the per-language counts the language decision's prior reads start
+    /// from the user's History, where there is one (P4). Turkish's and Arabic's counts existed
+    /// already and are kept when larger.
+    private func seedLanguageCounts() async {
+        guard !settings.languageCountsSeeded, let historyStore else { return }
+        if let counts = try? await historyStore.countsByLanguage() {
+            settings.uzbekDictations = max(settings.uzbekDictations, counts[.uzbek] ?? 0)
+            settings.englishDictations = max(settings.englishDictations, counts[.english] ?? 0)
+            settings.russianDictations = max(settings.russianDictations, counts[.russian] ?? 0)
+            settings.turkishDictations = max(settings.turkishDictations, counts[.turkish] ?? 0)
+            settings.arabicDictations = max(settings.arabicDictations, counts[.arabic] ?? 0)
+        }
+        settings.languageCountsSeeded = true
+        settings.save()
+    }
+
     /// A pin only when the user asked for one.
     ///
     /// `nil` is what lets the router actually decide. Returning `settings.defaultLanguage`
@@ -1693,7 +1730,8 @@ public final class DictationController {
         // routes there for free (`LanguageSubset.soleRoute`) — not as a pin, so Parakeet's own
         // English/Russian label still stands.
         if on.soleRoute() != nil { return nil }
-        return detector == nil ? on.fallback(preferring: settings.defaultLanguage) : nil
+        return detector == nil && languageID == nil
+            ? on.fallback(preferring: settings.defaultLanguage) : nil
     }
 
     /// The pin for a dictation in `mode`: the mode's own language when it is on — a mode pinned to
@@ -1721,13 +1759,10 @@ public final class DictationController {
         if let routed = record.route?.language, record.outcome == "done" { lastRouted = routed }
         noteQuietMic(record, ownsHUD: ownsHUD)
         // Counted for `TurkishCheck`'s threshold — a delivered Turkish dictation, pinned or not.
-        if record.route?.language == .turkish, record.outcome == "done" {
-            settings.turkishDictations += 1
-            settings.save()
-        }
-        // …and for `ArabicCheck`'s (C4 §14.1).
-        if record.route?.language == .arabic, record.outcome == "done" {
-            settings.arabicDictations += 1
+        // …and `ArabicCheck`'s (C4 §14.1), and every language's for the language decision's
+        // prior (`LanguagePrior`, P4).
+        if let language = record.route?.language, record.outcome == "done" {
+            settings.countDictation(in: language)
             settings.save()
         }
         switch await session.state {
@@ -1888,7 +1923,9 @@ public final class DictationController {
         // turbo's language head settles a Turkish candidate (`TurkishCheck`) and an Arabic one
         // (`ArabicCheck`, C4 §14.1) — one head for both, on turbo's own context.
         var languageHead: (any AcousticClassifier)?
-        if !optional.isEmpty, let turbo = russianEngine {
+        // Not with the language-ID model (P4): Turkish and Arabic are classes of its own there,
+        // decided with the transcripts, and turbo's head is not asked.
+        if !optional.isEmpty, languageID == nil, let turbo = russianEngine {
             languageHead = WhisperLanguageHead(engine: turbo)
         }
         if optional.contains(.turkish), let turbo = russianEngine {
@@ -1913,6 +1950,11 @@ public final class DictationController {
         // The user's own history (D-11): a first Turkish dictation needs stronger evidence.
         config.turkishFamiliar = settings.turkishDictations > 0
         config.arabicFamiliar = settings.arabicDictations > 0
+        // The language decision (P4, D-14), over the languages that have an engine here.
+        let routable = LanguageSubset(languages.languages.filter {
+            !$0.isOptional || engines[EngineFamily(for: $0)] != nil })
+        let policy = LanguagePolicy(prior: settings.languagePrior, enabled: routable.languages)
+        if languageID != nil { config.languageID = policy }
         sessionTuning?(&config)
 
         // Captured by value so the closure stays Sendable and cannot reach back into the
@@ -1932,12 +1974,15 @@ public final class DictationController {
 
         return DictationSession(
             audio: audio,
-            router: TieredRouter(classifier: detector,
-                                 clusterMass: ClusterMass(threshold: settings.turkicThreshold),
-                                 fallback: settings.defaultLanguage,
-                                 optional: OptionalLanguageRules(
-                                    enabled: Set(optional.filter { engines[EngineFamily(for: $0)] != nil })),
-                                 languages: languages),
+            router: languageID.map { lid -> any LanguageRouter in
+                LanguageIDRouter(classifier: lid, policy: config.languageID ?? policy,
+                                 fallback: settings.defaultLanguage)
+            } ?? TieredRouter(classifier: detector,
+                              clusterMass: ClusterMass(threshold: settings.turkicThreshold),
+                              fallback: settings.defaultLanguage,
+                              optional: OptionalLanguageRules(
+                                enabled: Set(optional.filter { engines[EngineFamily(for: $0)] != nil })),
+                              languages: languages),
             engines: engines,
             sink: turn.ordered(ClipboardFallbackSink(
                 makeSink(), fallback: noTextTarget,

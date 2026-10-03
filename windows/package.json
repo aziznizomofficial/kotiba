@@ -1,6 +1,6 @@
 {
   "name": "kotiba-win",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "license": "MIT",
   "description": "Kotiba for Windows — a 1:1 functional port of the macOS dictation app",

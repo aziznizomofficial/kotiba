@@ -21,7 +21,7 @@ public enum ModelCatalogue {
     /// `uzbekEngineIsPublic`. Until then it is fetched by `make bootstrap` (through `gh`) or
     /// arrives inside the app bundle, and the settings pane says so instead of offering a 404.
     public static let downloadable: [ModelEntry] =
-        [russianEngine, detector, polishModel, arabicEngine, arabicModesModel]
+        [russianEngine, languageID, detector, polishModel, arabicEngine, arabicModesModel]
         + (uzbekEngineIsPublic ? [uzbekEngine] : [])
 
     /// Kotib STT — `Kotib/uzbek_stt_v1`, Whisper-medium fine-tuned on Uzbek, Apache-2.0 — as the
@@ -109,6 +109,18 @@ public enum ModelCatalogue {
         sha256: "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8",
         destination: "gemma-4-E2B-it-Q4_K_M.gguf",
         expectedBytes: 3_106_738_272)
+
+    /// The language-ID model (P4, D-14): SpeechBrain's VoxLingua107 ECAPA-TDNN (Apache-2.0),
+    /// exported by `Scripts/export-ecapa.py` as one Core ML file — waveform in, 107 languages'
+    /// log-posteriors out, Float16 weights. The detector from 1.1 on: it has an Uzbek class where
+    /// whisper base has only Turkish to hear Uzbek as, and every dialect of Arabic. Published with
+    /// the project's own builds (`publicModelsBase`); the ONNX twin is Windows'.
+    public static let languageID = ModelEntry(
+        name: "VoxLingua107 ECAPA language ID (Core ML, f16)",
+        url: publicModelsBase.appendingPathComponent("ecapa-voxlingua107-lid-f16.mlmodel"),
+        sha256: "1f6bcbadd1514375669e1f99a9c520c564de719c98410fb5b2cdf2aa3e346052",
+        destination: "ecapa-voxlingua107-lid-f16.mlmodel",
+        expectedBytes: 42_940_194)
 
     /// whisper base, q5_1. Language detection only — 59 MB and 34 ms, and it is never asked to
     /// transcribe anything.
@@ -315,6 +327,7 @@ public enum ModelCatalogue {
         switch entry.destination {
         case russianEngine.destination: return .russianModel
         case detector.destination: return .detectorModel
+        case languageID.destination: return .languageIDModel
         case uzbekEngine.destination: return .uzbekModel
         case polishModel.destination: return .polishModel
         case arabicEngine.destination: return .arabicModel
@@ -326,6 +339,8 @@ public enum ModelCatalogue {
     public enum Purpose: Sendable, Equatable {
         case russianModel
         case detectorModel
+        /// `AppSettings.languageIDModelPath` (P4).
+        case languageIDModel
         case uzbekModel
         /// Not a setting: the app finds it by its destination in the models directory.
         case polishModel

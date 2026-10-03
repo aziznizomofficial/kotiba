@@ -94,6 +94,7 @@ extension Probe {
     }
 
     static func routeEval(_ args: [String]) throws {
+        if args.contains("--lid") { return try routeEvalLID(args) }
         guard let path = args.first(where: { !$0.hasPrefix("--") && Double($0) == nil
                                              && !$0.contains(",") }) else {
             throw ProbeError.usage("route-eval <rows.jsonl> [--misses] [--optional tr,ar] …")

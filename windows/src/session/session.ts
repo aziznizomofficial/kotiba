@@ -52,7 +52,21 @@ import type {
   TranscriptionStream,
   TranscriptResult,
 } from '../contracts/index.js';
-import { isCandidateVerified, posteriorShare, reroutedDecision } from '../core/routing/index.js';
+import {
+  decisionCodes,
+  decisionConfidence,
+  decisionLanguage,
+  isCandidateVerified,
+  isUsableTranscript,
+  needsRespelling,
+  policyChoose,
+  policyConsider,
+  posteriorShare,
+  readTranscriptEvidence,
+  reroutedDecision,
+  type LanguagePolicy,
+  type ReadTranscript,
+} from '../core/routing/index.js';
 import { untilSpeechEnds } from '../core/stt/segmenter.js';
 import { writtenLanguage } from '../core/stt/tdt.js';
 import { quoteSpoken } from '../core/text/index.js';
@@ -111,6 +125,10 @@ interface RecordDraft {
   errors: string[];
   unifiedDoubt: TranscriptDoubt | null;
   turkishCheckWaitMillis: number | null;
+  /** Step 4L's posterior after the routed engine's transcript (P4). */
+  languageAfterTranscript: Readonly<Record<string, number>> | null;
+  /** The language whose engine step 4L asked for a second opinion (P4). */
+  secondOpinion: Language | null;
   /** The microphone the take came from (`AudioBuffer.device`); null when the source did not say. */
   inputDevice: InputDeviceInfo | null;
 }
@@ -295,6 +313,13 @@ export interface SessionDeps {
    * otherwise. Absent = not familiar.
    */
   readonly arabicFamiliar?: boolean;
+  /**
+   * The language decision (P4, D-14): set when the router is the language-ID model's
+   * (`createLanguageIDRouter`, the same policy). Then key-up reads the routed transcript and may
+   * ask a second engine (step 4L) instead of the chain of one-way checks — 4a, 4a′, 4b and 4b′ —
+   * which stays for the whisper-base router of a PC without the model. Absent or `null`: that chain.
+   */
+  readonly languageID?: LanguagePolicy | null;
   /** The optional languages that are on. Arabic's script reroute (step 4b′) runs only for Arabic. */
   readonly optionalLanguages?: readonly Language[];
   /**
@@ -455,6 +480,8 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     if (draft.route !== null) out.route = draft.route;
     if (draft.unifiedDoubt !== null) out.unifiedDoubt = draft.unifiedDoubt;
     if (draft.turkishCheckWaitMillis !== null) out.turkishCheckWaitMillis = draft.turkishCheckWaitMillis;
+    if (draft.languageAfterTranscript !== null) out.languageAfterTranscript = { ...draft.languageAfterTranscript };
+    if (draft.secondOpinion !== null) out.secondOpinion = draft.secondOpinion;
     if (draft.inputDevice !== null) out.inputDevice = draft.inputDevice;
     return out;
   }
@@ -593,6 +620,8 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       errors: [],
       unifiedDoubt: null,
       turkishCheckWaitMillis: null,
+      languageAfterTranscript: null,
+      secondOpinion: null,
       inputDevice: null,
     };
     transition({ kind: 'arming' });
@@ -615,6 +644,140 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
   // -------------------------------------------------------------------------------
   // Key up
   // -------------------------------------------------------------------------------
+
+  /**
+   * Step 4L, the language decision after transcription (P4, D-14) — the Mac's `decideLanguage`.
+   *
+   * The routed engine's transcript is read against every language's word list and added to what
+   * the audio said (`policyConsider`). While the languages of engines NOT YET HEARD FROM hold
+   * `askFrom` or more, the most likely of them is asked: its engine transcribes the same audio —
+   * the stream this press speculated on, when it is that family's, or a batch pass — under the
+   * reroute deadline, and its transcript is read too (at most `maxEngines` engines in all). An
+   * unusable answer is read as an empty transcript — the engine could not read this audio, which
+   * is evidence — and a timeout or a refusal stops asking that engine. Then `policyChoose` decides
+   * among the engines that wrote something usable (the routed one always), and that engine's
+   * transcript is delivered. Inside Parakeet's family the decided English or Russian beats the
+   * script Parakeet happened to write, and a transcript in the other script is decoded again held
+   * to the decided one (`transcribeWrittenIn`).
+   *
+   * Symmetric by construction: the same function sends Parakeet's text to Arabic, the Uzbek
+   * engine's to Turkish or English, Cohere's to Uzbek. Never a pin (the caller checks). A stream
+   * it did not deliver from is cancelled here; the speculative one it never touched, by
+   * `discardLive` on the way out of `finish`.
+   *
+   * WHERE WINDOWS DIFFERS FROM THE MAC: one stream per press (CPU), so an engine asked is usually
+   * a batch decode of the whole recording, bounded by the deadline. Unlike 4a′, a cold engine IS
+   * loaded for it, as on the Mac: the asked language may be one this press never touched (a cold
+   * Turkish turbo is the case that matters), and a load that outlives the deadline still leaves
+   * the first transcript standing, said in the record.
+   */
+  async function decideLanguageAfterTranscript(
+    first: TranscriptResult,
+    routedIn: RouteDecision,
+    buffer: AudioBuffer,
+    policy: LanguagePolicy,
+    rerouteMs: number,
+    streamed: { readonly family: EngineFamily } | null,
+  ): Promise<{ transcribed: TranscriptResult; routed: RouteDecision }> {
+    let routed = routedIn;
+    const acoustic = routed.acoustic ?? null;
+    const written = new Map<EngineFamily, TranscriptResult>([[routed.family, first]]);
+    const evidence: ReadTranscript[] = [[routed.language, readTranscriptEvidence(first.raw)]];
+    const considered = policyConsider(policy, acoustic, evidence);
+    note((draft) => {
+      draft.languageAfterTranscript = decisionCodes(considered.decision);
+    });
+    /** The streams finished as an opinion, kept until the choice is made. */
+    const finished = new Map<EngineFamily, TranscriptionStream>();
+    let ask = considered.ask;
+    while (ask !== null && on(ask)) {
+      const next: Language = ask;
+      const family = engineFamilyFor(next);
+      note((draft) => {
+        draft.secondOpinion ??= next;
+      });
+      const stream = streamed?.family === family ? takeParked() : null;
+      const engine = deps.engineFor(family);
+      const giveUp = new AbortController();
+      const answer = await measure('rerouting', () =>
+        withDeadline(clock, rerouteMs, async () => {
+          if (stream !== null) return stream.finish(buffer, next);
+          if (engine === null) throw new Error(`no ${PROMPT_NAMES[next]} engine is installed`);
+          if (!(await engine.isReady())) await engine.prepare();
+          return engine.transcribe(buffer, next, giveUp.signal);
+        }),
+      );
+      if (answer.kind === 'value' && isUsableTranscript(answer.value.raw)) {
+        written.set(family, answer.value);
+        evidence.push([next, readTranscriptEvidence(answer.value.raw)]);
+        if (stream !== null) finished.set(family, stream);
+      } else if (answer.kind === 'value') {
+        // An engine with nothing usable to say still said something: it could not read this
+        // audio. That is evidence, and the next engine may be asked.
+        evidence.push([next, readTranscriptEvidence('')]);
+        stream?.cancel();
+        note((draft) => {
+          draft.errors.push(`the ${next} engine's opinion was not usable.`);
+        });
+      } else if (answer.kind === 'timedOut') {
+        // Abandoned at the deadline: stopped on the host too, as 4a′ does — and not asked again.
+        giveUp.abort();
+        stream?.cancel();
+        note((draft) => {
+          draft.errors.push(`the ${next} engine did not answer within ${secondsText(rerouteMs)}.`);
+        });
+        break;
+      } else {
+        stream?.cancel();
+        note((draft) => {
+          draft.errors.push(`the ${next} engine refused a second opinion: ${answer.message}.`);
+        });
+        break;
+      }
+      ask = policyConsider(policy, acoustic, evidence).ask;
+    }
+    // Delivered only from an engine that wrote something usable — the routed one always.
+    const final = policyChoose(policy, acoustic, evidence, new Set(written.keys()));
+    const decided = decisionLanguage(final);
+    const chosenFamily = engineFamilyFor(decided);
+    let transcribed = first;
+    const chosen = written.get(chosenFamily);
+    if (chosenFamily !== routed.family && chosen !== undefined && on(decided)) {
+      const was = routed;
+      transcribed = chosen;
+      routed = reroutedDecision(was, decided, 'languageID', null, null, decisionCodes(final));
+      const settled = routed;
+      const heard = evidence.map(([language]) => language).join(', ');
+      const confidence = decisionConfidence(final).toFixed(2);
+      note((draft) => {
+        draft.route = settled;
+        draft.errors.push(`route said ${was.language}; the transcripts of ${heard} read as ${decided} (${confidence}) — that one stands.`);
+      });
+    } else if (routed.family === 'unified' && chosenFamily === 'unified' && decided !== routed.language && on(decided)) {
+      // English or Russian, inside Parakeet's family: the decision's, not the script's.
+      routed = reroutedDecision(routed, decided, 'languageID', null, null, decisionCodes(final));
+      const relabelled = routed;
+      note((draft) => {
+        draft.route = relabelled;
+      });
+    }
+    for (const [family, stream] of finished) if (family !== routed.family) stream.cancel();
+    // Parakeet wrote the other script for the decided language: decode again, held to its letters.
+    const unified = routed.family === 'unified' ? deps.engineFor('unified') : null;
+    if (unified?.transcribeWrittenIn !== undefined && needsRespelling(transcribed.raw, routed.language)) {
+      const language = routed.language;
+      const respelling = unified.transcribeWrittenIn.bind(unified);
+      const again = await measure('respelling', () => withDeadline(clock, rerouteMs, () => respelling(buffer, language)));
+      if (again.kind === 'value' && isUsableTranscript(again.value.raw) && !needsRespelling(again.value.raw, language)) {
+        const engineId = transcribed.engineId;
+        note((draft) => {
+          draft.errors.push(`${engineId} wrote ${language} speech in the other script; decoded again in ${language}'s.`);
+        });
+        transcribed = { raw: again.value.raw, language, engineId: again.value.engineId };
+      }
+    }
+    return { transcribed, routed };
+  }
 
   async function finish(options: FinishOptions): Promise<DictationRecord> {
     try {
@@ -762,6 +925,12 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       draft.route = routed;
     });
 
+    // Step 4L decides the language after transcription when the language-ID model routed — never
+    // on a pin. Every stream is then kept until it has decided: the one speculated on another
+    // family may be exactly the second opinion it asks for.
+    const policy = deps.languageID ?? null;
+    const decidesLanguage = policy !== null && options.pin === null && routed.source !== 'pin';
+
     // An engine still downloading is "getting ready, 42 %" (D-W25); anything else, "not ready".
     const notReady = (family: EngineFamily, language: Language): DictationError => {
       const percent = deps.gettingReady?.(language) ?? null;
@@ -828,7 +997,8 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     }
 
     // Whether step 4a′ will read the unified engine's transcript: unpinned, and routed there.
-    const checksTranscript = options.pin === null && routed.family === 'unified' && routed.source !== 'pin' && on('uz');
+    const checksTranscript =
+      !decidesLanguage && options.pin === null && routed.family === 'unified' && routed.source !== 'pin' && on('uz');
 
     transition({ kind: 'transcribing' });
     let transcribed: TranscriptResult;
@@ -841,7 +1011,7 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       // ask for, and it has usually decoded all but the tail already.
       const usesStream = streamed !== null && streamed.family === routed.family;
       const stream = usesStream ? takeParked() : null;
-      if (!usesStream && !(checksTranscript && streamed?.family === 'uzbek')) takeParked()?.cancel();
+      if (!usesStream && !(checksTranscript && streamed?.family === 'uzbek') && !decidesLanguage) takeParked()?.cancel();
       transcribed = await measure('transcribing', () =>
         stream === null ? engine.transcribe(buffer, language) : stream.finish(buffer, language),
       );
@@ -849,6 +1019,12 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       const why = describe(error);
       fail(dictationError.transcriptionFailed(why), why);
       return snapshot();
+    }
+
+    // 4L. The language decision (P4, D-14) — in place of 4a, 4a′, 4b and 4b′ below, whenever the
+    //     language-ID model routed. See `decideLanguageAfterTranscript`.
+    if (decidesLanguage && policy !== null) {
+      ({ transcribed, routed } = await decideLanguageAfterTranscript(transcribed, routed, buffer, policy, rerouteMs, streamed));
     }
 
     // 4a. The unified engine names the language itself.
@@ -859,6 +1035,7 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     // `verifyRoute` reads as a mis-route toward Uzbek, and the step below would then hand
     // good English to the Uzbek engine. A pin still wins, as it does everywhere.
     if (
+      !decidesLanguage &&
       routed.family === 'unified' &&
       routed.source !== 'pin' &&
       transcribed.language !== routed.language &&
@@ -995,7 +1172,11 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     //   * IT ONLY EVER MOVES TOWARD UZBEK, so a retry cannot itself be re-routed.
     //   * THE REPLACEMENT HAS TO BE PLAUSIBLE, not merely non-empty.
     //   * IT IS BOUNDED, and on the deadline the first transcript stands.
-    const verdict = deps.routing.verifyRoute(routed, transcribed.raw);
+    // Not after step 4L: it has read the transcript in every direction already, and this check
+    // only ever points at Uzbek (or, in 4b′, Arabic).
+    const verdict: ReturnType<RoutingPort['verifyRoute']> = decidesLanguage
+      ? { kind: 'consistent' }
+      : deps.routing.verifyRoute(routed, transcribed.raw);
     if (verdict.kind === 'suspect' && verdict.suggests === 'uz' && routed.language !== 'uz' && on('uz')) {
       const letters = deps.routing.nonRussianCyrillicCount(transcribed.raw);
       const was = routed;

@@ -752,6 +752,50 @@ suite('what is persisted', () => {
     expect(r.settings.current().turkishDictations).toBe(1);
   });
 
+  test('P4: with the language-ID model loaded it routes, and every delivered language is counted', async () => {
+    const r = rig();
+    let asked = 0;
+    r.engines.identifier = {
+      posterior: async () => {
+        asked += 1;
+        return { en: 0.97, ru: 0.01, _: 0.02 };
+      },
+    };
+    await r.dictate();
+    expect(asked).toBe(1);
+    const route = r.diagnostics.appended[0]?.route;
+    // The language-ID router's decision: the posterior and the acoustic evidence are on it.
+    expect(route).toMatchObject({ language: 'en', source: 'acoustic' });
+    expect(Object.keys(route?.probabilities ?? {}).sort()).toEqual(['en', 'ru', 'uz']);
+    expect(r.diagnostics.appended[0]?.languageAfterTranscript).toBeDefined();
+    expect(r.settings.current().englishDictations).toBe(1);
+    expect(r.settings.current().uzbekDictations).toBe(0);
+  });
+
+  test('P4: without it, whisper base routes as before and no decision is recorded', async () => {
+    const r = rig();
+    await r.dictate();
+    expect(r.diagnostics.appended[0]?.route?.probabilities).toBeUndefined();
+    expect(r.diagnostics.appended[0]?.languageAfterTranscript).toBeUndefined();
+  });
+
+  test('P4: the counts are seeded once from History, never lowered', async () => {
+    const r = rig({ settings: { turkishDictations: 9 } });
+    const entry = (id: string, language: Language) =>
+      ({ id, startedAt: '2026-10-01T10:00:00Z', language, engineID: 'x', raw: 'r', result: 'r', polished: null, audioSeconds: 1, audioPath: null }) as const;
+    r.history.entries.push(entry('a', 'uz'), entry('b', 'uz'), entry('c', 'ru'), entry('d', 'tr'));
+    await r.controller.start();
+    await flush();
+    const seeded = r.settings.current();
+    expect([seeded.uzbekDictations, seeded.russianDictations, seeded.englishDictations, seeded.turkishDictations]).toEqual([2, 1, 0, 9]);
+    expect(seeded.languageCountsSeeded).toBe(true);
+    r.history.entries.push(entry('e', 'uz'));
+    await r.controller.start();
+    await flush();
+    expect(r.settings.current().uzbekDictations).toBe(2);
+    await r.controller.dispose();
+  });
+
   test('a heardNothing dictation is recorded in diagnostics but NOT in history', async () => {
     const r = rig();
     r.audio.buffer = SILENCE_7_4;

@@ -37,6 +37,9 @@ struct Probe {
             case "capture": try await capture(args)
             case "e2e": try await e2e(args)
             case "route-eval": try routeEval(args)
+            case "lid-features": try lidFeatures(args)
+            case "ecapa": try await ecapa(args)
+            case "vad": try vad(args)
             case "-h", "--help", "help": usage()
             default:
                 FileHandle.standardError.write(Data("unknown command: \(command)\n".utf8))

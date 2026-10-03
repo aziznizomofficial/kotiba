@@ -221,7 +221,7 @@ export const uzCyrl: Catalog = {
   "lang.ar.reason.slow": "Бу компютерга Cohere билан 3 сониялик парча учун {ms} мс керак бўлди, {device} (чегара {threshold} мс), шунинг учун араб тили тезроқ FastConformer да ишлайди.",
   "lang.ar.reason.switching": "{engine} га ўтилмоқда — у тайёр бўлгунча араб тилини жорий двигател ёзади.",
   "lang.ar.reason.whisper": "Араб модели юклаб олингунча араб тилини секинроқ модел ёзади.",
-  "lang.downloadDetector": "Тилни аниқлаш моделини юклаб олиш (57 МБ)",
+  "lang.downloadDetector": "Тилни аниқлаш моделини юклаб олиш (86 МБ)",
   "lang.downloadParakeet": "Parakeet моделини юклаб олиш",
   "lang.fallback": "Ишончсиз бўлса",
   "lang.fastEnglish": "Тез инглиз тили",

@@ -914,6 +914,68 @@ describe('the two nulls that lied', () => {
     await subject.dispose();
   });
 
+  it('P4: loads the language-ID model when it is there, and then does not build whisper base', async () => {
+    await writeModel(UZBEK);
+    await writeModel(TURBO);
+    await writeModel(BASE);
+    let prepared = 0;
+    let disposed = 0;
+    let basesBuilt = 0;
+    const identifier = {
+      posterior: async () => ({ uz: 1 }),
+      prepare: async () => {
+        prepared += 1;
+      },
+      dispose: async () => {
+        disposed += 1;
+      },
+    };
+    const { manager: subject } = manager(settings(), fakeEngineFactory(), {
+      createClassifier: () => {
+        basesBuilt += 1;
+        return { posterior: async () => ({}), dispose: async () => undefined };
+      },
+      languageIDPath: async () => '/models/ecapa-voxlingua107-lid/ecapa-voxlingua107-lid.onnx',
+      createLanguageIdentifier: () => identifier,
+    });
+    await subject.prepare({ eagerly: true });
+    expect(subject.languageIdentifier?.()).toBe(identifier);
+    expect(prepared).toBe(1);
+    expect(subject.detector()).toBeNull();
+    expect(basesBuilt).toBe(0);
+    expect((await subject.readiness()).detector).toBe('ready');
+    await subject.dispose();
+    expect(disposed).toBe(1);
+  });
+
+  it('P4: a language-ID model that will not load is dropped, and whisper base routes', async () => {
+    await writeModel(UZBEK);
+    await writeModel(TURBO);
+    await writeModel(BASE);
+    const notes: string[] = [];
+    let disposed = 0;
+    const { manager: subject } = manager(settings(), fakeEngineFactory(), {
+      onNote: (note: string) => notes.push(note),
+      createClassifier: () => ({ posterior: async () => ({}), dispose: async () => undefined }),
+      languageIDPath: async () => '/models/broken.onnx',
+      createLanguageIdentifier: () => ({
+        posterior: async () => ({}),
+        prepare: async () => {
+          throw new Error('not an ONNX model');
+        },
+        dispose: async () => {
+          disposed += 1;
+        },
+      }),
+    });
+    await subject.prepare({ eagerly: true });
+    expect(subject.languageIdentifier?.()).toBeNull();
+    expect(subject.detector()).not.toBeNull();
+    expect(disposed).toBe(1);
+    expect(notes.join('\n')).toContain('would not load — not an ONNX model; whisper base routes');
+    await subject.dispose();
+  });
+
   it('builds the detector when one IS wired, so routing can be acoustic', async () => {
     await writeModel(UZBEK);
     await writeModel(TURBO);

@@ -17,6 +17,7 @@ import {
   keepsEverything,
   type HistoryEntry,
   type HistoryStore,
+  type Language,
 } from '../contracts/index.js';
 import { stableStringify } from '../core/settings/index.js';
 
@@ -228,6 +229,12 @@ export function createFileHistoryStore(options: FileHistoryStoreOptions): FileHi
 
     async count(): Promise<number> {
       return entries.size;
+    },
+
+    async countsByLanguage(): Promise<Partial<Record<Language, number>>> {
+      const counts: Partial<Record<Language, number>> = {};
+      for (const entry of entries.values()) counts[entry.language] = (counts[entry.language] ?? 0) + 1;
+      return counts;
     },
 
     async recent(limit: number = HISTORY_DEFAULT_LIMIT): Promise<readonly HistoryEntry[]> {

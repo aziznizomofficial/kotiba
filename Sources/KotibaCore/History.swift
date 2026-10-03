@@ -230,6 +230,22 @@ public actor HistoryStore {
         return Int(sqlite3_column_int64(stmt, 0))
     }
 
+    /// Dictations per language — what seeds the language decision's prior for a user who had a
+    /// history before the counts existed (P4).
+    public func countsByLanguage() throws -> [Language: Int] {
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "SELECT language, count(*) FROM entries GROUP BY language;",
+                                 -1, &stmt, nil) == SQLITE_OK else { throw lastError() }
+        defer { sqlite3_finalize(stmt) }
+        var counts: [Language: Int] = [:]
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let raw = sqlite3_column_text(stmt, 0),
+                  let language = Language(rawValue: String(cString: raw)) else { continue }
+            counts[language, default: 0] += Int(sqlite3_column_int64(stmt, 1))
+        }
+        return counts
+    }
+
     public func recent(limit: Int = 50) throws -> [HistoryEntry] {
         try query("""
             SELECT id, startedAt, language, engineID, raw, result, polished, audioSeconds, audioPath

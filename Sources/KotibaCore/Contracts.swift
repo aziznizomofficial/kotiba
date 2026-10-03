@@ -219,6 +219,16 @@ public protocol TranscriptionEngine: Sendable {
     func transcribe(_ audio: AudioBuffer, language: Language) async throws -> Transcript
 }
 
+/// An engine that writes more than one script and can be held to one: Parakeet, whose decoder
+/// chooses Latin or Cyrillic per token. The language decision (P4) uses it when it has decided
+/// English for a transcript Parakeet wrote in Cyrillic — English with an accent, transliterated
+/// (`Инсайд зе контент фоль.` for "Inside the content folder") — and decodes the same audio again
+/// in the decided language's script. Never used on the ordinary path: there the free choice is
+/// what keeps an English word inside Russian speech in Latin (C1 §4).
+public protocol ScriptRespelling: Sendable {
+    func transcribe(_ audio: AudioBuffer, writtenIn language: Language) async throws -> Transcript
+}
+
 /// An engine that can start work while the user is still speaking.
 ///
 /// Why it exists: a batch engine's cost grows with the recording, and the recording is exactly
@@ -339,6 +349,9 @@ public enum RouteSource: String, Sendable, Codable, Equatable {
     /// Free like a pin, but not a pin: a recovery may still move it within the languages that
     /// are on.
     case only
+    /// The language decision (P4, D-14) moved the route after reading the transcripts — the
+    /// routed engine's, and the second engine's it then asked. See `LanguagePolicy`.
+    case languageID
 }
 
 public struct RouteDecision: Sendable, Codable, Equatable {
@@ -360,11 +373,18 @@ public struct RouteDecision: Sendable, Codable, Equatable {
     public let turkishVerified: Double?
     /// turbo's `ar` share, when `ArabicCheck` was asked. For the record.
     public let arabicVerified: Double?
+    /// What the language-ID model heard (P4) — the acoustic evidence the decision after
+    /// transcription starts from. Nil on the whisper-base router and on pins.
+    public let acoustic: AcousticEvidence?
+    /// The language decision's posterior over the enabled languages when it routed (P4): from
+    /// the audio alone at the route, from the transcripts too once a recovery moved it.
+    public let probabilities: [String: Double]?
 
     public init(language: Language, source: RouteSource, turkicMass: Double? = nil,
                 turkishShare: Double? = nil, arabicShare: Double? = nil,
                 candidate: Language? = nil, turkishVerified: Double? = nil,
-                arabicVerified: Double? = nil) {
+                arabicVerified: Double? = nil, acoustic: AcousticEvidence? = nil,
+                probabilities: [String: Double]? = nil) {
         self.language = language
         self.family = EngineFamily(for: language)
         self.source = source
@@ -374,16 +394,31 @@ public struct RouteDecision: Sendable, Codable, Equatable {
         self.candidate = candidate
         self.turkishVerified = turkishVerified
         self.arabicVerified = arabicVerified
+        self.acoustic = acoustic
+        self.probabilities = probabilities
+    }
+
+    /// How Uzbek the audio sounded, for the hold's stream decisions: the language decision's
+    /// probability of Uzbek when the LID router made this, else whisper base's Turkic mass.
+    public var uzbekEvidence: Double? { probabilities.map { $0["uz"] ?? 0 } ?? turkicMass }
+
+    /// `probabilities` by language, for `LanguageDecision`.
+    public var decisionPosterior: [Language: Double] {
+        var out: [Language: Double] = [:]
+        for (code, p) in probabilities ?? [:] { if let l = Language(rawValue: code) { out[l] = p } }
+        return out
     }
 
     /// The same decision routed to `language` by `source`, keeping what the detector heard.
     public func rerouted(to language: Language, by source: RouteSource,
                          turkishVerified: Double? = nil,
-                         arabicVerified: Double? = nil) -> RouteDecision {
+                         arabicVerified: Double? = nil,
+                         probabilities: [String: Double]? = nil) -> RouteDecision {
         RouteDecision(language: language, source: source, turkicMass: turkicMass,
                       turkishShare: turkishShare, arabicShare: arabicShare, candidate: nil,
                       turkishVerified: turkishVerified ?? self.turkishVerified,
-                      arabicVerified: arabicVerified ?? self.arabicVerified)
+                      arabicVerified: arabicVerified ?? self.arabicVerified,
+                      acoustic: acoustic, probabilities: probabilities ?? self.probabilities)
     }
 }
 

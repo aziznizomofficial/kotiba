@@ -564,7 +564,10 @@ export async function composePipeline(deps: CompositionDeps): Promise<Compositio
                 const directory = await bundles.locate('silero_vad');
                 return directory === null ? null : join(directory, SILERO_VAD.files[0]!.localName);
               },
+              // P4: the language-ID model, from the installer or a download, routes when present.
+              bundles,
             }),
+        ...(deps.engineLauncher === undefined ? {} : { engineLauncher: deps.engineLauncher }),
       }),
     record,
   );

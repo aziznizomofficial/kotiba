@@ -285,13 +285,18 @@ public actor ParakeetEngine: StreamingTranscriptionEngine {
 
     public func transcribe(_ audio: KotibaCore.AudioBuffer,
                            language: KotibaCore.Language) async throws -> Transcript {
+        try await transcribe(audio, language: language, scriptHint: languageHint)
+    }
+
+    private func transcribe(_ audio: KotibaCore.AudioBuffer, language: KotibaCore.Language,
+                            scriptHint: Bool) async throws -> Transcript {
         guard supportedLanguages.contains(language) else {
             throw EngineFailure.languageUnsupported(language, engineID: engineID)
         }
         guard !audio.samples.isEmpty else {
             throw EngineFailure.transcriptionFailed("no audio")
         }
-        let text = try await decode(audio.samples, language: language)
+        let text = try await decode(audio.samples, language: language, scriptHint: scriptHint)
         return Transcript(raw: text, language: Self.writtenLanguage(of: text, else: language),
                           engineID: engineID)
     }
@@ -337,6 +342,11 @@ public actor ParakeetEngine: StreamingTranscriptionEngine {
     /// racing the key-up decode would interleave two passes over the same Core ML models and
     /// scratch buffers. Nothing in FluidAudio promises that is safe, so it never happens.
     func decode(_ samples: [Float], language: KotibaCore.Language?) async throws -> String {
+        try await decode(samples, language: language, scriptHint: languageHint)
+    }
+
+    func decode(_ samples: [Float], language: KotibaCore.Language?,
+                scriptHint: Bool) async throws -> String {
         guard let manager else {
             throw EngineFailure.notReady(lastError ?? "prepare() has not run")
         }
@@ -346,7 +356,7 @@ public actor ParakeetEngine: StreamingTranscriptionEngine {
         if input.count < 16_000 {
             input += [Float](repeating: 0, count: 16_000 - input.count)
         }
-        let hint = languageHint ? language.flatMap(Self.hint(for:)) : nil
+        let hint = scriptHint ? language.flatMap(Self.hint(for:)) : nil
         let job = input
         return try await serialised {
             var state = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
@@ -398,6 +408,16 @@ protocol WindowDecoding: Sendable {
 }
 
 extension ParakeetEngine: WindowDecoding {}
+
+/// The language decision's respelling (P4): the same audio, the decoder held to the decided
+/// language's script by FluidAudio's token filter.
+extension ParakeetEngine: ScriptRespelling {
+    public func transcribe(_ audio: KotibaCore.AudioBuffer,
+                           writtenIn language: KotibaCore.Language) async throws -> Transcript {
+        if manager == nil { try await prepare() }
+        return try await transcribe(audio, language: language, scriptHint: true)
+    }
+}
 
 /// A dictation in progress. Commits whole Parakeet windows while the key is held, so key-up is
 /// left with at most one — and decodes what is pending at each pause, so key-up is usually left

@@ -36,7 +36,8 @@ export interface EngineChannel {
 /** Starts `engine-host.js` for one role. */
 export type EngineLauncher = (role: EngineRole) => EngineChannel;
 
-export type EngineRole = 'parakeet' | 'llama' | 'arabic';
+/** `lid`: the language-ID model (P4, `language-id.ts`) — ONNX Runtime like Parakeet, its own process. */
+export type EngineRole = 'parakeet' | 'llama' | 'arabic' | 'lid';
 
 /**
  * The host script's path. NOT redirected to `app.asar.unpacked`: the host imports

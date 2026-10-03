@@ -15,6 +15,7 @@ const SERVICE_NAMES = {
   parakeet: 'Kotiba speech engine',
   llama: 'Kotiba modes engine',
   arabic: 'Kotiba Arabic engine',
+  lid: 'Kotiba language detection',
 } as const;
 
 export function utilityLauncher(scriptPath: string = engineHostPath()): EngineLauncher {

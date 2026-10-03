@@ -221,7 +221,7 @@ export const en = {
   "lang.ar.reason.slow": "This PC took {ms} ms for a 3-second clip with Cohere on {device} (limit {threshold} ms), so Arabic uses the faster FastConformer.",
   "lang.ar.reason.switching": "Switching to {engine} — the current engine types Arabic until it is ready.",
   "lang.ar.reason.whisper": "A slower model types Arabic until the Arabic model is downloaded.",
-  "lang.downloadDetector": "Download the detector (57 MB)",
+  "lang.downloadDetector": "Download the detector (86 MB)",
   "lang.downloadParakeet": "Download Parakeet",
   "lang.fallback": "When unsure, use",
   "lang.fastEnglish": "Fast English",

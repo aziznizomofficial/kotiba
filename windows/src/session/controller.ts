@@ -63,7 +63,14 @@ import { detectionWanted } from '../core/settings/models.js';
 
 import { createQuietMicLimiter, quietMicSuspect } from '../core/input-device/index.js';
 import { modeBehaviour } from '../core/modes/index.js';
-import { optionalLanguageRules } from '../core/routing/index.js';
+import {
+  createLanguageIDRouter,
+  languagePolicy,
+  optionalLanguageRules,
+  warmLexicons,
+  type LanguageCounts,
+  type LanguagePolicy,
+} from '../core/routing/index.js';
 import type { Clock, PlaybackDucking, PolishChain, SessionPorts } from './ports.js';
 import { INERT_DUCKING, NO_POLISH, isIncrementalPolisher, systemClock } from './ports.js';
 import { InsertionTurns, type TurnTimer } from './turns.js';
@@ -116,6 +123,26 @@ export function polishPolicyFor(mode: Mode): {
     insertAfterPolish: mode.restructures || modeBehaviour(mode) !== null,
   };
 }
+
+/** The history the language decision's prior reads (`LanguagePrior`, P4): the five counts. */
+export function languageCountsOf(settings: Settings): LanguageCounts {
+  return {
+    uz: settings.uzbekDictations,
+    en: settings.englishDictations,
+    ru: settings.russianDictations,
+    tr: settings.turkishDictations,
+    ar: settings.arabicDictations,
+  };
+}
+
+/** The settings key that counts `language`'s delivered dictations (`AppSettings.countDictation`). */
+const DICTATION_COUNT_KEY = {
+  uz: 'uzbekDictations',
+  en: 'englishDictations',
+  ru: 'russianDictations',
+  tr: 'turkishDictations',
+  ar: 'arabicDictations',
+} as const satisfies Readonly<Record<Language, keyof Settings>>;
 
 /** The optional languages that are on (Turkish, Arabic). */
 function enabledOptional(settings: Settings): Language[] {
@@ -401,6 +428,19 @@ export function createDictationController(deps: ControllerDeps): DictationContro
   ): DictationSession {
     const started = live.started;
     const settings = deps.settings.current();
+    // The language decision (P4, D-14), when the language-ID model is loaded: over the languages
+    // that are on AND have an engine here (an optional language whose files are not built is out
+    // of reach, the Mac's `routable`), with the user's own history as the prior.
+    const identifier = deps.engines.languageIdentifier?.() ?? null;
+    const policy: LanguagePolicy | null =
+      identifier === null
+        ? null
+        : languagePolicy({
+            counts: languageCountsOf(settings),
+            enabled: settings.enabledLanguages.filter(
+              (language) => (language !== 'tr' && language !== 'ar') || deps.engines.engineFor(language === 'tr' ? 'turkish' : 'arabic') !== null,
+            ),
+          });
     return makeSession({
       // Known at key-down: which family to stream into, and what to polish with while the
       // key is held (C1 §5, C2, C3 §8). Neither decides anything at key-up.
@@ -420,15 +460,22 @@ export function createDictationController(deps: ControllerDeps): DictationContro
       // router captured once at construction keeps routing on the threshold the app
       // started with, and `turkicThreshold` is the one number a user tunes when Uzbek
       // is being missed.
-      router: ports.createRouter({
-        classifier: deps.engines.detector(),
-        threshold: settings.turkicThreshold,
-        fallbackLanguage: settings.defaultLanguage,
-        // Turkish and Arabic, only when on (C4): off, the router is the three-language one.
-        optional: optionalLanguageRules(settings.enabledLanguages),
-        // Every language the user turned off is out of the router's reach.
-        languages: languageSubset(settings.enabledLanguages),
-      }),
+      //
+      // P4: with the language-ID model loaded, the router is its policy's (`policyRoute`), and the
+      // session reads the transcripts after it (`languageID`, step 4L); whisper base otherwise.
+      router:
+        identifier !== null && policy !== null
+          ? createLanguageIDRouter({ classifier: identifier, policy, fallback: settings.defaultLanguage })
+          : ports.createRouter({
+              classifier: deps.engines.detector(),
+              threshold: settings.turkicThreshold,
+              fallbackLanguage: settings.defaultLanguage,
+              // Turkish and Arabic, only when on (C4): off, the router is the three-language one.
+              optional: optionalLanguageRules(settings.enabledLanguages),
+              // Every language the user turned off is out of the router's reach.
+              languages: languageSubset(settings.enabledLanguages),
+            }),
+      languageID: policy,
       engineFor: (family) => deps.engines.engineFor(family),
       ...(deps.gettingReady === undefined ? {} : { gettingReady: deps.gettingReady }),
       // turbo's head settles a Turkish and an Arabic candidate alike (C4 §13.1, §14.1).
@@ -462,6 +509,7 @@ export function createDictationController(deps: ControllerDeps): DictationContro
     if (deps.settings.current().keepHistory) {
       try {
         await deps.history.open();
+        void seedLanguageCounts();
       } catch (error: unknown) {
         historyOpenError = describe(error);
       }
@@ -483,6 +531,9 @@ export function createDictationController(deps: ControllerDeps): DictationContro
 
     await prepareEngines({ eagerly: deps.settings.current().preloadAllLanguages });
     settleReadiness();
+    // The language decision's word lists (~40 ms to split), built now rather than by the first
+    // key-up that reads a transcript — the Mac's `Lexicon.warmUp` at launch.
+    if ((deps.engines.languageIdentifier?.() ?? null) !== null) warmLexicons();
 
     // THE GESTURE IS CONNECTED HERE, AND NOWHERE ELSE.
     //
@@ -810,7 +861,7 @@ export function createDictationController(deps: ControllerDeps): DictationContro
         const policy = polishPolicyFor(mode);
 
         const record = await running.finish({
-          pin: effectivePin(mode, settings, deps.engines.detector() !== null),
+          pin: effectivePin(mode, settings, (deps.engines.languageIdentifier?.() ?? null) !== null || deps.engines.detector() !== null),
           polisher,
           polishInstructions: instructions,
           polishGuard: policy.guard,
@@ -868,13 +919,13 @@ export function createDictationController(deps: ControllerDeps): DictationContro
     if (hint !== null) quietMic = hint;
     if (state.kind === 'done') {
       show({ kind: 'succeeded', text: record.polished ?? record.result ?? '' });
-      // Counted for the Turkish check's threshold — a delivered Turkish dictation, pinned or not.
-      if (record.route?.language === 'tr') {
-        await deps.settings.update({ turkishDictations: deps.settings.current().turkishDictations + 1 });
-      }
-      // …and for the Arabic check's (C4 §14.1).
-      if (record.route?.language === 'ar') {
-        await deps.settings.update({ arabicDictations: deps.settings.current().arabicDictations + 1 });
+      // Counted for the Turkish check's threshold — a delivered Turkish dictation, pinned or not —
+      // and the Arabic check's (C4 §14.1), and every language's for the language decision's prior
+      // (`languageLogPrior`, P4): the Mac's `countDictation(in:)`.
+      const language = record.route?.language;
+      if (language !== undefined) {
+        const key = DICTATION_COUNT_KEY[language];
+        await deps.settings.update({ [key]: deps.settings.current()[key] + 1 });
       }
       await persist(record);
     } else if (state.kind === 'heardNothing') {
@@ -972,6 +1023,26 @@ export function createDictationController(deps: ControllerDeps): DictationContro
   }
 
   // ---- settings ------------------------------------------------------------------
+
+  /**
+   * Once per install: the per-language counts the language decision's prior reads start from the
+   * user's History, where there is one (P4, the Mac's `seedLanguageCounts`). The Turkish and
+   * Arabic counts existed already and are kept when larger. Marked seeded even when History
+   * cannot count (a fake, an error): seeding is a convenience, never a reason to ask again.
+   */
+  async function seedLanguageCounts(): Promise<void> {
+    const settings = deps.settings.current();
+    if (settings.languageCountsSeeded) return;
+    const counts = await deps.history.countsByLanguage?.().catch(() => null);
+    const patch: Partial<Record<(typeof DICTATION_COUNT_KEY)[Language], number>> = {};
+    if (counts !== null && counts !== undefined) {
+      for (const language of Object.keys(DICTATION_COUNT_KEY) as Language[]) {
+        const key = DICTATION_COUNT_KEY[language];
+        patch[key] = Math.max(settings[key], counts[language] ?? 0);
+      }
+    }
+    await deps.settings.update({ ...patch, languageCountsSeeded: true }).catch(() => undefined);
+  }
 
   async function settingsChanged(): Promise<void> {
     const settings = deps.settings.current();

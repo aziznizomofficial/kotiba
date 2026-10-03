@@ -4795,25 +4795,25 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Download the detector (57 MB)"
+            "value": "Download the detector (43 MB)"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Скачать определитель (57 МБ)"
+            "value": "Скачать определитель (43 МБ)"
           }
         },
         "uz-Latn": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aniqlagichni yuklab olish (57 MB)"
+            "value": "Aniqlagichni yuklab olish (43 MB)"
           }
         },
         "uz-Cyrl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Аниқлагични юклаб олиш (57 МБ)"
+            "value": "Аниқлагични юклаб олиш (43 МБ)"
           }
         }
       }

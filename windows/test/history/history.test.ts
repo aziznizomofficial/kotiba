@@ -49,6 +49,14 @@ async function lines(): Promise<string[]> {
 }
 
 describe('insert and list', () => {
+  it('counts dictations per language — the language decision’s one-time seed (P4)', async () => {
+    await store.insert(entry({ id: 'a', language: 'uz' }));
+    await store.insert(entry({ id: 'b', language: 'uz' }));
+    await store.insert(entry({ id: 'c', language: 'ar' }));
+    await store.insert(entry({ id: 'b', language: 'uz' }));
+    expect(await store.countsByLanguage?.()).toEqual({ uz: 2, ar: 1 });
+  });
+
   it('lists newest first', async () => {
     await store.insert(entry({ id: 'a', startedAt: '2026-08-19T10:00:00Z' }));
     await store.insert(entry({ id: 'b', startedAt: '2026-08-19T12:00:00Z' }));

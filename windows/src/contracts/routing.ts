@@ -18,7 +18,9 @@ import type { EngineFamily, Language } from './language.js';
 /* `only`: one language on (or English and Russian alone), so nothing was detected
  * (`LanguageSubset.soleRoute`) — free like a pin, but recoveries may still move it within the
  * languages that are on. */
-export const ROUTE_SOURCES = ['pin', 'acoustic', 'scriptCheck', 'transcriptCheck', 'fallback', 'turkishCheck', 'arabicCheck', 'only'] as const;
+/* `languageID`: the language decision (P4, D-14) moved the route after reading the transcripts —
+ * the routed engine's, and the second engine's it then asked (`LanguagePolicy`, session step 4L). */
+export const ROUTE_SOURCES = ['pin', 'acoustic', 'scriptCheck', 'transcriptCheck', 'fallback', 'turkishCheck', 'arabicCheck', 'only', 'languageID'] as const;
 export type RouteSource = (typeof ROUTE_SOURCES)[number];
 
 /**
@@ -70,6 +72,36 @@ export interface RouteDecision {
   readonly turkishVerified?: number | null;
   /** turbo's `ar` share, when `ArabicCheck` was asked. For the record. */
   readonly arabicVerified?: number | null;
+  /**
+   * What the language-ID model heard (P4) — the acoustic evidence the decision after
+   * transcription starts from. Absent on the whisper-base router and on pins.
+   */
+  readonly acoustic?: AcousticEvidence | null;
+  /**
+   * The language decision's posterior over the enabled languages when it routed (P4): from the
+   * audio alone at the route, from the transcripts too once step 4L moved it. Keyed by code.
+   */
+  readonly probabilities?: Readonly<Record<string, number>> | null;
+}
+
+/**
+ * What the language-ID model heard (the Mac's `AcousticEvidence`, P4): its log-posterior for each
+ * of the five languages in the model's order (uz, tr, ar, en, ru), then for everything else, and
+ * how long the audio was. The Swift `Codable` wire format, field for field.
+ */
+export interface AcousticEvidence {
+  readonly logProbabilities: readonly number[];
+  readonly seconds: number;
+}
+
+/**
+ * How Uzbek the audio sounded (the Mac's `RouteDecision.uzbekEvidence`): the language decision's
+ * probability of Uzbek when the language-ID router made the decision, else whisper base's Turkic
+ * mass.
+ */
+export function uzbekEvidence(decision: RouteDecision): number | null {
+  const probabilities = decision.probabilities ?? null;
+  return probabilities !== null ? (probabilities['uz'] ?? 0) : decision.turkicMass;
 }
 
 // ---- Optional languages (D-11 on the Mac, C4) ------------------------------------------

@@ -100,6 +100,20 @@ public actor CompositeEngine: StreamingTranscriptionEngine {
     }
 }
 
+/// Respelling goes to the first member that can do it and holds `language`; a slot with none
+/// (Apple's engine writes English in Latin anyway) transcribes as usual.
+extension CompositeEngine: ScriptRespelling {
+    public func transcribe(_ audio: AudioBuffer,
+                           writtenIn language: Language) async throws -> Transcript {
+        for engine in engines where engine.supportedLanguages.contains(language) {
+            if let respelling = engine as? any ScriptRespelling {
+                return try await respelling.transcribe(audio, writtenIn: language)
+            }
+        }
+        return try await transcribe(audio, language: language)
+    }
+}
+
 // MARK: - Streaming through a family slot
 
 extension CompositeEngine {

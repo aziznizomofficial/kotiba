@@ -60,6 +60,15 @@ export interface SttEngine {
    * host polls it between decoder steps); an engine that cannot simply finishes.
    */
   transcribe(audio: AudioBuffer, language: Language, signal?: AbortSignal): Promise<TranscriptResult>;
+  /**
+   * The Mac's `ScriptRespelling` (P4): an engine that writes more than one script — Parakeet,
+   * whose decoder picks Latin or Cyrillic per token — decodes the same audio again held to
+   * `language`'s script. The language decision uses it when it decided English for a transcript
+   * written in Cyrillic (`Инсайд зе контент фоль.` for "Inside the content folder"), or the
+   * reverse for Russian. Never on the ordinary path: there the free choice is what keeps an
+   * English word inside Russian speech in Latin. Absent on every engine with one script.
+   */
+  transcribeWrittenIn?(audio: AudioBuffer, language: Language): Promise<TranscriptResult>;
   /** D-W7: the engine is a child process, so it must be stoppable. Idempotent. */
   dispose(): Promise<void>;
 }
@@ -111,6 +120,13 @@ export interface EngineManager {
    * else need not have it.
    */
   languageHead?(): AcousticClassifier | null;
+  /**
+   * The language-ID model (P4, D-14) — VoxLingua107 ECAPA, loaded — or `null` while it is not
+   * installed (or would not load). When it is here it is the router's classifier, and key-up
+   * decides the language after reading the transcripts (session step 4L); `detector()` (whisper
+   * base) is what routes without it. Optional in the type, like `languageHead`.
+   */
+  languageIdentifier?(): AcousticClassifier | null;
   /**
    * Attempt to load. `eagerly` preloads every configured language rather than only the
    * one about to be used.
@@ -324,6 +340,12 @@ export interface HistoryStore {
    * not a parse error.
    */
   search(text: string, limit?: number): Promise<readonly HistoryEntry[]>;
+  /**
+   * Dictations per language — what seeds the language decision's prior for a user who had a
+   * history before the counts existed (P4, the Mac's `HistoryStore.countsByLanguage`). Optional
+   * so a fake that is about something else need not count.
+   */
+  countsByLanguage?(): Promise<Partial<Record<Language, number>>>;
   close(): Promise<void>;
 }
 

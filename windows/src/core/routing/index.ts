@@ -123,6 +123,46 @@ export {
 } from './transcript-check.js';
 export type { TranscriptReading } from './transcript-check.js';
 
+// The language decision (P4, D-14) — lexicon.ts holds the five word lists, language-id.ts the
+// evidence, the fitted model and the policy session step 4L runs. Golden: language-id.json.
+export { LEXICON_SHA256, lexiconContains, lexiconCounts, lexiconFold, warmLexicons } from './lexicon.js';
+export {
+  ACOUSTIC_LOG_FLOOR,
+  DEFAULT_ASK_FROM,
+  DEFAULT_MAX_ENGINES,
+  FITTED_LANGUAGE_MODEL,
+  LANGUAGE_PRIOR_SMOOTHING,
+  LANGUAGE_PRIOR_WEIGHT,
+  LID_ORDER,
+  acousticEvidence,
+  acousticFeatures,
+  createLanguageIDRouter,
+  decideLanguage,
+  decideLanguageIDRoute,
+  decisionCodes,
+  decisionConfidence,
+  decisionLanguage,
+  languageLogPrior,
+  languagePolicy,
+  languageScores,
+  needsRespelling,
+  policyChoose,
+  policyConsider,
+  policyRoute,
+  rankedLanguages,
+  readTranscriptEvidence,
+  transcriptFeatures,
+} from './language-id.js';
+export type {
+  LanguageCounts,
+  LanguageDecision,
+  LanguageModel,
+  LanguagePolicy,
+  ReadTranscript,
+  TranscriptEvidence,
+  TranscriptsByFamily,
+} from './language-id.js';
+
 // The per-language on/off (the Mac's `LanguageSubset`).
 export {
   ALL_LANGUAGES,
@@ -458,15 +498,22 @@ export function reroutedDecision(
   source: RouteSource,
   turkishVerified?: number | null,
   arabicVerified?: number | null,
+  probabilities?: Readonly<Record<string, number>> | null,
 ): RouteDecision {
   const verified = turkishVerified ?? original.turkishVerified ?? null;
   const arabic = arabicVerified ?? original.arabicVerified ?? null;
+  // P4: what the language-ID model heard is kept, and the posterior is the newest one the
+  // decision made — the Mac's `rerouted(to:by:…probabilities:)`.
+  const acoustic = original.acoustic ?? null;
+  const posterior = probabilities ?? original.probabilities ?? null;
   return {
     ...decision(language, source, original.turkicMass),
     ...(original.turkishShare === undefined ? {} : { turkishShare: original.turkishShare }),
     ...(original.arabicShare === undefined ? {} : { arabicShare: original.arabicShare }),
     ...(verified === null ? {} : { turkishVerified: verified }),
     ...(arabic === null ? {} : { arabicVerified: arabic }),
+    ...(acoustic === null ? {} : { acoustic }),
+    ...(posterior === null ? {} : { probabilities: posterior }),
   };
 }
 
@@ -601,6 +648,19 @@ export function recoveryPlan(decision: RouteDecision, verdict: RouteVerdict): Re
  * whose fixture is not the return of a public Swift API.
  */
 export function isUsableRerun(text: string): boolean {
+  return usable(text, true);
+}
+
+/**
+ * `TranscriptEvidence.isUsable` (the language decision, P4): `isUsableRerun` without "Cyrillic
+ * is unusable", which was a rule about the Uzbek engine only — here every engine's transcript is
+ * judged, and Cyrillic is Russian's script. Golden-pinned through language-id.json › evidence.
+ */
+export function isUsableTranscript(text: string): boolean {
+  return usable(text, false);
+}
+
+function usable(text: string, cyrillicIsUnusable: boolean): boolean {
   const trimmed = trimWhitespaceAndNewlines(text);
   if (trimmed.length === 0) return false;
 
@@ -614,7 +674,7 @@ export function isUsableRerun(text: string): boolean {
   // The Uzbek engine's vocabulary holds zero Cyrillic tokens, so Cyrillic out of it is
   // not a second opinion — it is a broken one, and certainly not evidence against the
   // first.
-  if (scriptOf(withoutMarkers) === 'cyrillic') return false;
+  if (cyrillicIsUnusable && scriptOf(withoutMarkers) === 'cyrillic') return false;
 
   // A repetition loop. This splitter keeps DIGITS and the okina U+02BB inside words and
   // walks consecutive pairs WITHOUT deduplicating — the deliberate other half of the

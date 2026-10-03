@@ -221,7 +221,7 @@ export const ru: Catalog = {
   "lang.ar.reason.slow": "Этому ПК понадобилось {ms} мс на 3-секундный фрагмент с Cohere, {device} (предел {threshold} мс), поэтому арабский работает на более быстрой FastConformer.",
   "lang.ar.reason.switching": "Переключаемся на {engine} — пока она не готова, арабский печатает текущий движок.",
   "lang.ar.reason.whisper": "Пока арабская модель не скачана, арабский печатает более медленная модель.",
-  "lang.downloadDetector": "Скачать модель определения (57 МБ)",
+  "lang.downloadDetector": "Скачать модель определения (86 МБ)",
   "lang.downloadParakeet": "Скачать Parakeet",
   "lang.fallback": "Если не уверен, использовать",
   "lang.fastEnglish": "Быстрый английский",

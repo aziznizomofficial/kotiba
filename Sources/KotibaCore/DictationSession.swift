@@ -96,6 +96,11 @@ public struct DictationRecord: Sendable, Codable, Equatable {
     /// rule's real firing rate is in the owner's diagnostics rather than assumed. Nil when the
     /// check did not run or found nothing.
     public var unifiedDoubt: String?
+    /// The language decision's posterior after reading the routed engine's transcript (P4) —
+    /// over the enabled languages, whatever came of it.
+    public var languageAfterTranscript: [String: Double]?
+    /// The language whose engine the decision asked for a second opinion (P4), when it did.
+    public var secondOpinion: Language?
     /// Milliseconds key-up spent waiting for `TurkishCheck` — nil when it did not wait (no
     /// Turkish candidate, or the check had already heard everything during the hold).
     public var turkishCheckWaitMillis: Double?
@@ -138,6 +143,11 @@ public actor DictationSession {
         /// Language detection while the key is held; nil turns it off (then both families'
         /// streams run for the whole hold and nothing is polished before key-up).
         public var earlyRouting: EarlyRouting? = EarlyRouting()
+        /// The language decision (P4, D-14): set when the router is the language-ID model's
+        /// (`LanguageIDRouter`, the same policy). Then key-up reads the routed transcript and may
+        /// ask a second engine (`decideLanguage`) instead of the chain of one-way checks (4a, 4a″,
+        /// 4a′, 4b, 4c), which stays for the whisper-base router of a Mac without the model.
+        public var languageID: LanguagePolicy?
         /// How long key-up waits for the sentence still being polished when the rest was
         /// polished during the hold. `IncrementalPolish` delivers anything later as spoken.
         public var liveTailDeadline: Duration = .milliseconds(1500)
@@ -232,7 +242,23 @@ public actor DictationSession {
         /// an Uzbek clip the whole-clip detection would have *mis*-routed. Worth ~140 ms on
         /// Uzbek, where the release-time detection shares the GPU with the Uzbek tail decode.
         public var trustUzbekMass: Double = 0.3
+        /// The same trust on the language-ID model's route (P4): its probability of Uzbek. Over
+        /// 4 s prefixes 95 % of Uzbek clips reach it and 1 of 200 Turkish ones — so this early
+        /// route only picks the stream that finishes first, and key-up hears the whole recording
+        /// for step 4L's evidence (`wholeAcoustic`).
+        public var trustUzbekProbability: Double = 0.9
+        /// On the language-ID model's route, an early answer this sure over this much audio is
+        /// the route and the evidence (P4 §7: from 6 s at 0.95, no prefix disagreed with the
+        /// language spoken).
+        public var trustAnyProbability: Double = 0.95
+        public var trustAnyAfter: Double = 6
         public var trustUzbekAfter: Double = 4
+        /// On the language-ID model's route, Turkish's or Arabic's stream works during the hold
+        /// while its language holds at least this much of the posterior (P4).
+        public var lidStreamFrom: Double = 0.2
+        /// …unless the route is this sure of another language: then only the route's own GPU
+        /// stream works (and Parakeet's, on the Neural Engine).
+        public var lidSureFrom: Double = 0.9
         /// Then again every this much more, so the latest answer covers most of the hold.
         public var every: Double = 3
         /// The detector reads 30 s; nothing after that is news to it.
@@ -361,6 +387,9 @@ public actor DictationSession {
     /// to Uzbek on that evidence its tail is already decoded. Recomputed at every change of the
     /// text, so it clears itself when the next pause decode reads as English again.
     private var unifiedTextDoubt = false
+    /// Key-up's route is an early "Uzbek" trusted before it heard every word (P4 §7): step 4L
+    /// then weighs a detection over the whole recording instead (`wholeAcoustic`).
+    private var partialEarlyRoute = false
     private var lastUnifiedText: String?
 
     // The live polish.
@@ -565,7 +594,12 @@ public actor DictationSession {
             if let engine = engines[.uzbek], await engine.isReady() == false {
                 Task { try? await engine.prepare() }
             }
-        } else if (decision.turkicMass ?? 0) < early.standDownBelow, !unifiedTextDoubt {
+        } else if (decision.uzbekEvidence ?? 0) < early.standDownBelow, !unifiedTextDoubt {
+            await liveStreams[.uzbek]?.setLikely(false)
+        } else if sureOfGPUFamily(decision), !unifiedTextDoubt {
+            // On the language-ID model's route, a sure Turkish or Arabic route has the GPU to
+            // itself: the Uzbek pause decodes beside turbo's or Cohere's slowed the very tail
+            // key-up waits for (P4 §6).
             await liveStreams[.uzbek]?.setLikely(false)
         }
         // The optional streams work only while a detection points at them: Arabic when the route
@@ -576,11 +610,21 @@ public actor DictationSession {
         // but not beside the Uzbek stream: both on the GPU slowed the Uzbek tail of the Uzbek
         // dictations that are candidates (C4 §14.4: 178 → 381 ms p50), and those are most of
         // them. An Arabic "yes" over an Uzbek base pays Cohere's decode at key-up instead.
+        //
+        // On the language-ID model's route (P4) there are no candidates: an optional stream works
+        // while its language is the route, or holds `lidStreamFrom` of the posterior — Arabic
+        // then only beside Parakeet, for the GPU reason above.
         for optional in [EngineFamily.turkish, .arabic] {
             guard let stream = liveStreams[optional] else { continue }
-            let wanted = optional == .arabic
+            let p = decision.probabilities?[optional == .arabic ? "ar" : "tr"]
+            let sure = LanguageDecision(posterior: decision.decisionPosterior).confidence
+                >= early.lidSureFrom
+            let wanted = p.map { p in
+                family == optional || (p >= early.lidStreamFrom && !sure
+                                       && (optional == .turkish || family != .uzbek))
+            } ?? (optional == .arabic
                 ? family == .arabic || (decision.candidate == .arabic && family != .uzbek)
-                : decision.candidate == .turkish
+                : decision.candidate == .turkish)
             await stream.setLikely(wanted)
             if wanted, let engine = engines[optional], await engine.isReady() == false {
                 Task { try? await engine.prepare() }
@@ -588,6 +632,14 @@ public actor DictationSession {
         }
         if headWanted { startTurkishCheck(atPause: atPause) }
         likelyFamily = liveStreams[family] != nil ? family : likelyFamily
+    }
+
+    /// A language-ID route this sure of Turkish or Arabic (`EarlyRouting.lidSureFrom`).
+    private func sureOfGPUFamily(_ decision: RouteDecision) -> Bool {
+        guard decision.probabilities != nil, let early = config.earlyRouting,
+              decision.family == .turkish || decision.family == .arabic else { return false }
+        return LanguageDecision(posterior: decision.decisionPosterior).confidence
+            >= early.lidSureFrom
     }
 
     /// Ask turbo's language head about everything heard so far, in the background — once a
@@ -1060,12 +1112,18 @@ public actor DictationSession {
             // side each slowed the other past the sum of the two run in turn (measured on Uzbek
             // clips released on the last syllable: detection 144 ms instead of ~40, and the tail
             // ~350 ms after key-up instead of ~200). So on Uzbek the detection goes first.
-            let candidates: [EngineFamily] = (likelyFamily ?? .unified) == .unified
-                && streams[.unified] != nil ? [.unified] : []
+            //
+            // The language-ID model (P4) runs on the CPU, so it shares the GPU with nothing: then
+            // the likely family's stream finishes beside the detection whatever the family is.
+            let likely = likelyFamily ?? .unified
+            let candidates: [EngineFamily] = config.languageID != nil
+                ? (streams[likely] != nil ? [likely] : [])
+                : likely == .unified && streams[.unified] != nil ? [.unified] : []
             for family in candidates {
                 guard let stream = streams[family], let engine = engines[family],
                       await engine.isReady() else { continue }
                 let language: Language = family == .uzbek ? .uzbek
+                    : family == .turkish ? .turkish : family == .arabic ? .arabic
                     : (earlyDecision.map { $0.family == .unified ? $0.language : nil } ?? nil)
                         ?? config.defaultLanguage.unifiedOrEnglish
                 speculativeFinishes[family] = Task { try await stream.finish(buffer,
@@ -1144,7 +1202,22 @@ public actor DictationSession {
         }
         turkishCheck?.task.cancel()
         note { $0.route = routed }
+        // The language decision (P4) reads the routed engine's transcript and may ask another
+        // engine for its own: every stream is kept until it has decided, and a speculative finish
+        // of another family is kept as that second opinion rather than thrown away.
+        let decidesLanguage = config.languageID != nil && pin == nil && routed.source != .pin
+        // The route may have come from a detection over part of the recording (a trusted early
+        // Uzbek): good enough to choose which stream finishes first, not to be the evidence the
+        // decision weighs. The whole recording is heard now, on the CPU, beside the tail decode
+        // (the language-ID model never shares the GPU with it), and 4L waits for it.
+        let wholeAcoustic: Task<RouteDecision, Never>? = decidesLanguage && partialEarlyRoute
+            ? Task { [router] in await router.route(buffer, pin: nil) } : nil
+        var spareFinishes: [EngineFamily: Task<Transcript, any Error>] = [:]
         for (family, task) in speculativeFinishes where family != routed.family {
+            if decidesLanguage {
+                spareFinishes[family] = task
+                continue
+            }
             task.cancel()
             await streams[family]?.cancel()
             streams[family] = nil
@@ -1156,9 +1229,9 @@ public actor DictationSession {
         //    Unpinned on Parakeet, the Uzbek stream is kept until step 4a′ has read Parakeet's
         //    transcript: it is the second opinion that step asks for.
         let keepsUzbekForCheck = pin == nil && routed.family == .unified
-            && config.languages.permits(.uzbek)
-        streams = await cancel(streams, except: keepsUzbekForCheck ? [routed.family, .uzbek]
-                                                                   : [routed.family])
+            && config.languages.permits(.uzbek) && !decidesLanguage
+        streams = await cancel(streams, except: decidesLanguage ? Set(streams.keys)
+                               : keepsUzbekForCheck ? [routed.family, .uzbek] : [routed.family])
         let stream = streams[routed.family]
         guard let engine = engines[routed.family] else {
             streams = await cancel(streams)
@@ -1223,6 +1296,18 @@ public actor DictationSession {
             return record!
         }
 
+        // 4L. The language decision (P4, D-14) — in place of 4a, 4a″, 4a′, 4b and 4c below,
+        //     whenever the language-ID model routed. See `decideLanguage`.
+        if decidesLanguage, let policy = config.languageID {
+            if let whole = await wholeAcoustic?.value.acoustic {
+                routed = RouteDecision(language: routed.language, source: routed.source,
+                                       acoustic: whole, probabilities: routed.probabilities)
+            }
+            (transcribed, routed) = await decideLanguage(
+                transcribed, routed: routed, streams: &streams, spare: spareFinishes,
+                buffer: buffer, policy: policy)
+        }
+
         // 4b. Recover from the one mis-route that is silent *and* total.
         //
         // `RouteSource.scriptCheck` and `RouteDecision.verify` were both written for this and
@@ -1256,7 +1341,7 @@ public actor DictationSession {
         // advisory. Taking it matters beyond the label: Latin text on a Russian route is what
         // `verify` reads as a mis-route toward Uzbek, and the step below would then hand good
         // English to the Uzbek engine. A pin still wins, as it does everywhere.
-        if routed.family == .unified, routed.source != .pin,
+        if !decidesLanguage, routed.family == .unified, routed.source != .pin,
            transcribed.language != routed.language, transcribed.language != .uzbek,
            config.languages.permits(transcribed.language) {
             routed = routed.rerouted(to: transcribed.language, by: .scriptCheck)
@@ -1270,7 +1355,7 @@ public actor DictationSession {
         //      be handed to the Uzbek engine. Same constraints as 4b: never a pin, a usable
         //      answer, the reroute deadline; and only when Arabic is on (its engine is present).
         var settledByScript = false
-        if pin == nil, routed.source != .pin, routed.language != .arabic,
+        if !decidesLanguage, pin == nil, routed.source != .pin, routed.language != .arabic,
            ScriptCheck.script(of: transcribed.raw) == .arabic, config.languages.permits(.arabic),
            let arabic = engines[.arabic] {
             let was = routed
@@ -1366,7 +1451,7 @@ public actor DictationSession {
 
         if settledByScript { await streams.removeValue(forKey: .uzbek)?.cancel() }
 
-        let verdict = routed.verify(transcribed.raw)
+        let verdict = decidesLanguage ? .consistent : routed.verify(transcribed.raw)
         if case .suspect(_, let suggests) = verdict, suggests == .uzbek, routed.language != .uzbek,
            config.languages.permits(.uzbek) {
             let letters = ScriptCheck.nonRussianCyrillicCount(transcribed.raw)
@@ -1725,18 +1810,158 @@ public actor DictationSession {
             && Double(heardCount) >= config.turkishMinimumSeconds
                 * Double(AudioBuffer.sampleRate)
             && (earlyDecision?.turkishShare ?? 0) >= config.turkishDoubtShare
-        if let earlyDecision, earlyDecision.family == .uzbek, !mayBeTurkish,
-           (earlyDecision.turkicMass ?? 0) >= early.trustUzbekMass,
-           earlyCoverage >= Int(early.trustUzbekAfter * Double(AudioBuffer.sampleRate)) {
+        // On the language-ID model's route (P4) any language is trusted from 6 s at 0.95: over the
+        // tuning and held-out prefixes, 1,088 of 1,145 six-second prefixes were that sure and none
+        // disagreed with the language spoken (P4 §7). Its posterior is then the evidence step 4L
+        // weighs too — no detection over the whole recording at key-up, which on the CPU grows
+        // with the recording (~120–200 ms for 18–30 s).
+        if let earlyDecision, earlyDecision.probabilities != nil, !mayBeTurkish,
+           LanguageDecision(posterior: earlyDecision.decisionPosterior).confidence
+               >= early.trustAnyProbability,
+           earlyCoverage >= Int(early.trustAnyAfter * Double(AudioBuffer.sampleRate)) {
             return earlyDecision
         }
+        let trustFrom = earlyDecision?.probabilities != nil ? early.trustUzbekProbability
+                                                             : early.trustUzbekMass
         let window = Int(early.through * Double(AudioBuffer.sampleRate))
         let needed = min(spoken, window)
+        if let earlyDecision, earlyDecision.family == .uzbek, !mayBeTurkish,
+           (earlyDecision.uzbekEvidence ?? 0) >= trustFrom,
+           earlyCoverage >= Int(early.trustUzbekAfter * Double(AudioBuffer.sampleRate)) {
+            // Trusted for the route, and on the language-ID model's route not as evidence unless
+            // it heard every word (`partialEarlyRoute`, P4 §7).
+            partialEarlyRoute = earlyDecision.probabilities != nil && earlyCoverage < needed
+            return earlyDecision
+        }
         if detecting, let running = detection, detectionCoverage >= needed {
             await running.value
         }
         guard let earlyDecision, earlyCoverage >= needed else { return nil }
         return earlyDecision
+    }
+
+    // MARK: The language decision after transcription (P4)
+
+    /// No engine is registered for the language the decision wanted to ask.
+    struct SecondOpinionMissing: Error, CustomStringConvertible {
+        let language: Language
+        var description: String { "no \(language.rawValue) engine is installed" }
+    }
+
+    /// Step 4L. The routed engine's transcript is read against every language's word list and
+    /// added to what the audio said (`LanguagePolicy.consider`). While the languages of engines
+    /// not yet heard from hold `askFrom` or more, the most likely of them is asked: its engine
+    /// transcribes the same audio — its kept stream, a speculative finish already made, or a
+    /// batch pass — under the reroute deadline, and its transcript is read too (at most
+    /// `maxEngines` in all). Then `choose` decides among the engines that wrote, and that
+    /// engine's transcript is delivered. Inside Parakeet's family the decision names English or
+    /// Russian over the script Parakeet happened to write, and a transcript in the other script
+    /// is decoded again held to the decided one (`ScriptRespelling`).
+    ///
+    /// Symmetric by construction: the same function sends Parakeet's text to Arabic, the Uzbek
+    /// engine's to Turkish or English, Cohere's to Uzbek. Never a pin (the caller checks).
+    /// Every stream not delivered is cancelled here.
+    private func decideLanguage(_ first: Transcript, routed: RouteDecision,
+                                streams: inout [EngineFamily: any TranscriptionStream],
+                                spare: [EngineFamily: Task<Transcript, any Error>],
+                                buffer: AudioBuffer, policy: LanguagePolicy) async
+        -> (Transcript, RouteDecision) {
+        var routed = routed
+        var written: [EngineFamily: Transcript] = [routed.family: first]
+        var evidence: [(Language, TranscriptEvidence)] = [(routed.language,
+                                                           TranscriptEvidence.read(first.raw))]
+        let considered = policy.consider(routed.acoustic, transcripts: evidence)
+        var ask = considered.ask
+        note { $0.languageAfterTranscript = considered.decision.codes }
+        var refused: Set<EngineFamily> = []
+        while let next = ask, config.languages.permits(next),
+              !refused.contains(EngineFamily(for: next)) {
+            let family = EngineFamily(for: next)
+            note { $0.secondOpinion = $0.secondOpinion ?? next }
+            let stream = streams.removeValue(forKey: family)
+            let speculative = spare[family]
+            let engine = engines[family]
+            let answer = await measure("rerouting") {
+                await withDeadline(rerouteDeadline(for: buffer)) { () async throws -> Transcript in
+                    if let speculative { return try await speculative.value }
+                    if let stream { return try await stream.finish(buffer, language: next) }
+                    guard let engine else { throw SecondOpinionMissing(language: next) }
+                    if await engine.isReady() == false { try await engine.prepare() }
+                    return try await engine.transcribe(buffer, language: next)
+                }
+            }
+            switch answer {
+            case .value(let text) where TranscriptEvidence.isUsable(text.raw):
+                written[family] = text
+                evidence.append((next, TranscriptEvidence.read(text.raw)))
+                if let stream { streams[family] = stream }
+            case .value:
+                // An engine with nothing usable to say still said something: it could not read
+                // this audio. That is evidence, and the next engine may be asked.
+                evidence.append((next, TranscriptEvidence.read("")))
+                await stream?.cancel()
+                note { $0.errors.append("the \(next.rawValue) engine's opinion was not usable.") }
+            case .timedOut:
+                refused.insert(family)
+                await stream?.cancel()
+                note { $0.errors.append("the \(next.rawValue) engine did not answer within "
+                                        + "\(self.rerouteDeadline(for: buffer)).") }
+            case .failed(let message):
+                refused.insert(family)
+                await stream?.cancel()
+                note { $0.errors.append("the \(next.rawValue) engine refused a second opinion: "
+                                        + "\(message).") }
+            }
+            if refused.contains(family) { break }
+            ask = policy.consider(routed.acoustic, transcripts: evidence).ask
+        }
+        // Delivered only from an engine that wrote something usable — the routed one always.
+        let deliverable = Set(written.keys)
+        let final = policy.choose(routed.acoustic, transcripts: evidence, deliverable: deliverable)
+        var transcribed = first
+        let chosenFamily = EngineFamily(for: final.language)
+        if chosenFamily != routed.family, let text = written[chosenFamily],
+           config.languages.permits(final.language) {
+            let was = routed
+            transcribed = text
+            routed = was.rerouted(to: final.language, by: .languageID, probabilities: final.codes)
+            let settled = await streams[chosenFamily]?.settlement()
+            note {
+                $0.route = routed
+                if let settled { $0.tail = settled }
+                $0.errors.append("route said \(was.language.rawValue); the transcripts of "
+                    + evidence.map { $0.0.rawValue }.joined(separator: ", ")
+                    + " read as \(final.language.rawValue)"
+                    + String(format: " (%.2f)", final.confidence) + " — that one stands.")
+            }
+        } else if routed.family == .unified, chosenFamily == .unified,
+                  final.language != routed.language, config.languages.permits(final.language) {
+            // English or Russian, inside Parakeet's family: the decision's, not the script's.
+            routed = routed.rerouted(to: final.language, by: .languageID,
+                                     probabilities: final.codes)
+            note { $0.route = routed }
+        }
+        if routed.family == .unified, LanguagePolicy.respell(transcribed.raw, as: routed.language),
+           let respelling = engines[.unified] as? any ScriptRespelling {
+            let language = routed.language
+            let again = await measure("respelling") {
+                await withDeadline(rerouteDeadline(for: buffer)) {
+                    try await respelling.transcribe(buffer, writtenIn: language)
+                }
+            }
+            if case .value(let answer) = again, TranscriptEvidence.isUsable(answer.raw),
+               !LanguagePolicy.respell(answer.raw, as: language) {
+                note { $0.errors.append("\(transcribed.engineID) wrote \(language.rawValue) speech "
+                                        + "in the other script; decoded again in "
+                                        + "\(language.rawValue)'s.") }
+                transcribed = Transcript(raw: answer.raw, language: language,
+                                         engineID: answer.engineID)
+            }
+        }
+        for (family, stream) in streams where family != routed.family { await stream.cancel() }
+        streams = streams.filter { $0.key == routed.family }
+        for (family, task) in spare where family != routed.family { task.cancel() }
+        return (transcribed, routed)
     }
 
     /// Insert once — the path every mode that polishes before inserting ends on.

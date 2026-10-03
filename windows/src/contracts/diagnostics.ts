@@ -8,6 +8,7 @@
 // reading what is already there. One corrupt line costs that line, not the file.
 
 import type { InputDeviceInfo } from './audio.js';
+import type { Language } from './language.js';
 import type { RouteDecision, TranscriptDoubt } from './routing.js';
 import type { DictationOutcome, StageMillis } from './state.js';
 
@@ -80,6 +81,14 @@ export interface DictationRecord {
    * did not run (no Turkish candidate).
    */
   readonly turkishCheckWaitMillis?: number;
+  /**
+   * The language decision's posterior after reading the routed engine's transcript (P4, session
+   * step 4L) — over the enabled languages, keyed by code, whatever came of it. Omitted when the
+   * language-ID router did not route.
+   */
+  readonly languageAfterTranscript?: Readonly<Record<string, number>>;
+  /** The language whose engine step 4L asked for a second opinion (P4), when it did. */
+  readonly secondOpinion?: Language;
 }
 
 /**

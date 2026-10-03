@@ -1,0 +1,5452 @@
+{
+  "acousticEvidence": [
+    {
+      "exercises": "clear English",
+      "features": [
+        -5.298317,
+        -11.512925,
+        -11.512925,
+        -0.030459,
+        -4.605170,
+        -4.199705,
+        1.163151
+      ],
+      "posterior": {
+        "_": 0.015000,
+        "en": 0.970000,
+        "ru": 0.010000,
+        "uz": 0.005000
+      },
+      "seconds": 3.200
+    },
+    {
+      "exercises": "clear Uzbek",
+      "features": [
+        -0.083382,
+        -3.218876,
+        -4.605170,
+        -11.512925,
+        -11.512925,
+        -3.506558,
+        1.410987
+      ],
+      "posterior": {
+        "_": 0.030000,
+        "ar": 0.010000,
+        "tr": 0.040000,
+        "uz": 0.920000
+      },
+      "seconds": 4.100
+    },
+    {
+      "exercises": "Uzbek heard as Turkish",
+      "features": [
+        -1.049822,
+        -0.597837,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -2.302585,
+        0.916291
+      ],
+      "posterior": {
+        "_": 0.050000,
+        "az": 0.050000,
+        "tr": 0.550000,
+        "uz": 0.350000
+      },
+      "seconds": 2.500
+    },
+    {
+      "exercises": "Arabic, half-heard",
+      "features": [
+        -1.386294,
+        -11.512925,
+        -0.597837,
+        -2.302585,
+        -11.512925,
+        -2.302585,
+        1.029619
+      ],
+      "posterior": {
+        "_": 0.050000,
+        "ar": 0.550000,
+        "en": 0.100000,
+        "fa": 0.050000,
+        "uz": 0.250000
+      },
+      "seconds": 2.800
+    },
+    {
+      "exercises": "English or Russian",
+      "features": [
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -0.693147,
+        -0.798508,
+        -2.995732,
+        0.470004
+      ],
+      "posterior": {
+        "_": 0.050000,
+        "en": 0.500000,
+        "ru": 0.450000
+      },
+      "seconds": 1.600
+    },
+    {
+      "exercises": "nothing of the five",
+      "features": [
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        0.000000,
+        1.609438
+      ],
+      "posterior": {
+        "_": 0.100000,
+        "fa": 0.600000,
+        "ur": 0.300000
+      },
+      "seconds": 5.000
+    },
+    {
+      "exercises": "a short Turkish phrase",
+      "features": [
+        -2.120264,
+        -0.223144,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -2.525729,
+        1.193922
+      ],
+      "posterior": {
+        "_": 0.030000,
+        "az": 0.050000,
+        "tr": 0.800000,
+        "uz": 0.120000
+      },
+      "seconds": 3.300
+    },
+    {
+      "exercises": "empty",
+      "features": [
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        -11.512925,
+        0.000000
+      ],
+      "posterior": {},
+      "seconds": 1.000
+    }
+  ],
+  "constants": {
+    "askFrom": 0.100000,
+    "maxEngines": 3,
+    "order": [
+      "uz",
+      "tr",
+      "ar",
+      "en",
+      "ru"
+    ],
+    "priorSmoothing": 20.000000,
+    "priorWeight": 0.250000
+  },
+  "decisions": [
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "ar": 0.000253,
+        "en": 0.830740,
+        "ru": 0.166086,
+        "tr": 0.002437,
+        "uz": 0.000483
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.833385,
+        "ru": 0.166615
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": true,
+      "route": {
+        "ar": 0.000072,
+        "en": 0.885894,
+        "ru": 0.113674,
+        "tr": 0.000299,
+        "uz": 0.000061
+      },
+      "routeLanguage": "en",
+      "routed": "ru",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "ar": 0.000004,
+        "en": 0.997244,
+        "ru": 0.000042,
+        "tr": 0.000010,
+        "uz": 0.002700
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999958,
+        "ru": 0.000042
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 0,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000049,
+        "en": 0.879389,
+        "ru": 0.047779,
+        "tr": 0.000406,
+        "uz": 0.072377
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.031861,
+        "en": 0.027499,
+        "ru": 0.000085,
+        "tr": 0.000142,
+        "uz": 0.940414
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.376238,
+        "en": 0.066787,
+        "ru": 0.000816,
+        "tr": 0.000879,
+        "uz": 0.555280
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.107223,
+        "ru": 0.001310,
+        "uz": 0.891467
+      },
+      "chooseFirst": {
+        "en": 0.996926,
+        "ru": 0.003074
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.987927,
+        "ru": 0.012073
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 16,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.058294,
+        "en": 0.172754,
+        "ru": 0.001601,
+        "tr": 0.000059,
+        "uz": 0.767293
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.436572,
+        "en": 0.266094,
+        "ru": 0.009774,
+        "tr": 0.000231,
+        "uz": 0.287330
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.720884,
+        "en": 0.085825,
+        "ru": 0.007211,
+        "tr": 0.000112,
+        "uz": 0.185969
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.794929,
+        "uz": 0.205071
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "ar",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 5,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.058294,
+        "en": 0.172754,
+        "ru": 0.001601,
+        "tr": 0.000059,
+        "uz": 0.767293
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "ar": 0.000238,
+        "en": 0.002168,
+        "ru": 0.000007,
+        "tr": 0.554822,
+        "uz": 0.442766
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.000247,
+        "en": 0.000429,
+        "ru": 0.000001,
+        "tr": 0.182558,
+        "uz": 0.816765
+      },
+      "ask": "uz",
+      "choose": {
+        "tr": 0.182682,
+        "uz": 0.817318
+      },
+      "chooseFirst": {
+        "tr": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "tr": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 8,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000204,
+        "en": 0.011019,
+        "ru": 0.000004,
+        "tr": 0.236189,
+        "uz": 0.752583
+      },
+      "routeLanguage": "uz",
+      "routed": "tr",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "ar": 0.000469,
+        "en": 0.003275,
+        "ru": 0.000006,
+        "tr": 0.971738,
+        "uz": 0.024510
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.000237,
+        "en": 0.000280,
+        "ru": 0.000005,
+        "tr": 0.993203,
+        "uz": 0.006274
+      },
+      "ask": "tr",
+      "choose": {
+        "tr": 0.993722,
+        "uz": 0.006278
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 7,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000305,
+        "en": 0.013197,
+        "ru": 0.000006,
+        "tr": 0.556965,
+        "uz": 0.429527
+      },
+      "routeLanguage": "tr",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "ar": 0.014973,
+        "en": 0.005951,
+        "ru": 0.000043,
+        "tr": 0.019835,
+        "uz": 0.959198
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 4,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.011536,
+        "en": 0.007256,
+        "ru": 0.000023,
+        "tr": 0.025399,
+        "uz": 0.955786
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "ar": 0.090493,
+        "en": 0.014761,
+        "ru": 0.011097,
+        "tr": 0.002127,
+        "uz": 0.881523
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.054544,
+        "en": 0.001692,
+        "ru": 0.000987,
+        "tr": 0.000406,
+        "uz": 0.942372
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001790,
+        "ru": 0.001045,
+        "uz": 0.997165
+      },
+      "chooseFirst": {
+        "en": 0.570841,
+        "ru": 0.429159
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.631450,
+        "ru": 0.368550
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 14,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.085348,
+        "en": 0.225404,
+        "ru": 0.413172,
+        "tr": 0.021212,
+        "uz": 0.254863
+      },
+      "routeLanguage": "ru",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "ar": 0.159795,
+        "en": 0.042608,
+        "ru": 0.066387,
+        "tr": 0.370000,
+        "uz": 0.361210
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.283327,
+        "en": 0.031342,
+        "ru": 0.006863,
+        "tr": 0.041438,
+        "uz": 0.637029
+      },
+      "ask": "tr",
+      "choose": {
+        "en": 0.393534,
+        "ru": 0.086168,
+        "tr": 0.520299
+      },
+      "chooseFirst": {
+        "en": 0.390918,
+        "ru": 0.609082
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "en": 0.820372,
+        "ru": 0.179628
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.200000,
+        "en": 0.200000,
+        "ru": 0.200000,
+        "tr": 0.200000,
+        "uz": 0.200000
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": "uz"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "ar": 0.000143,
+        "en": 0.904546,
+        "ru": 0.093491,
+        "tr": 0.001240,
+        "uz": 0.000580
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.906326,
+        "ru": 0.093674
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": true,
+      "route": {
+        "ar": 0.000040,
+        "en": 0.937549,
+        "ru": 0.062193,
+        "tr": 0.000148,
+        "uz": 0.000071
+      },
+      "routeLanguage": "en",
+      "routed": "ru",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "ar": 0.000002,
+        "en": 0.996996,
+        "ru": 0.000022,
+        "tr": 0.000005,
+        "uz": 0.002976
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999978,
+        "ru": 0.000022
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 0,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000026,
+        "en": 0.893612,
+        "ru": 0.025100,
+        "tr": 0.000193,
+        "uz": 0.081069
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.015365,
+        "en": 0.025443,
+        "ru": 0.000041,
+        "tr": 0.000061,
+        "uz": 0.959090
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.223919,
+        "en": 0.076259,
+        "ru": 0.000482,
+        "tr": 0.000469,
+        "uz": 0.698871
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.098321,
+        "ru": 0.000621,
+        "uz": 0.901057
+      },
+      "chooseFirst": {
+        "en": 0.998409,
+        "ru": 0.001591
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.993722,
+        "ru": 0.006278
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 16,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.028944,
+        "en": 0.164566,
+        "ru": 0.000789,
+        "tr": 0.000026,
+        "uz": 0.805675
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.279028,
+        "en": 0.326287,
+        "ru": 0.006196,
+        "tr": 0.000132,
+        "uz": 0.388357
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.783769,
+        "en": 0.003548,
+        "ru": 0.000060,
+        "tr": 0.000050,
+        "uz": 0.212573
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.016410,
+        "ru": 0.000280,
+        "uz": 0.983310
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 5,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.028944,
+        "en": 0.164566,
+        "ru": 0.000789,
+        "tr": 0.000026,
+        "uz": 0.805675
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "ar": 0.000165,
+        "en": 0.002892,
+        "ru": 0.000005,
+        "tr": 0.345793,
+        "uz": 0.651144
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.000131,
+        "en": 0.000435,
+        "ru": 0.000001,
+        "tr": 0.086479,
+        "uz": 0.912955
+      },
+      "ask": "uz",
+      "choose": {
+        "tr": 0.086528,
+        "uz": 0.913472
+      },
+      "chooseFirst": {
+        "tr": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "tr": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 8,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000112,
+        "en": 0.011587,
+        "ru": 0.000002,
+        "tr": 0.116017,
+        "uz": 0.872282
+      },
+      "routeLanguage": "uz",
+      "routed": "tr",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "ar": 0.000505,
+        "en": 0.006760,
+        "ru": 0.000007,
+        "tr": 0.936962,
+        "uz": 0.055765
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.000263,
+        "en": 0.000595,
+        "ru": 0.000006,
+        "tr": 0.984462,
+        "uz": 0.014675
+      },
+      "ask": "tr",
+      "choose": {
+        "tr": 0.985313,
+        "uz": 0.014687
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 7,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000213,
+        "en": 0.017667,
+        "ru": 0.000004,
+        "tr": 0.348303,
+        "uz": 0.633813
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "ar": 0.007224,
+        "en": 0.005509,
+        "ru": 0.000021,
+        "tr": 0.008577,
+        "uz": 0.978670
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 4,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.005574,
+        "en": 0.006727,
+        "ru": 0.000011,
+        "tr": 0.010999,
+        "uz": 0.976688
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "ar": 0.045339,
+        "en": 0.014188,
+        "ru": 0.005514,
+        "tr": 0.000955,
+        "uz": 0.934003
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.026581,
+        "en": 0.001582,
+        "ru": 0.000477,
+        "tr": 0.000177,
+        "uz": 0.971183
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001625,
+        "ru": 0.000490,
+        "uz": 0.997885
+      },
+      "chooseFirst": {
+        "en": 0.720118,
+        "ru": 0.279882
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.768206,
+        "ru": 0.231794
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 14,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.057451,
+        "en": 0.291098,
+        "ru": 0.275852,
+        "tr": 0.012797,
+        "uz": 0.362802
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "ar": 0.113907,
+        "en": 0.058271,
+        "ru": 0.046936,
+        "tr": 0.236377,
+        "uz": 0.544509
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.145919,
+        "en": 0.047171,
+        "ru": 0.085389,
+        "tr": 0.182188,
+        "uz": 0.539333
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.070206,
+        "ru": 0.127087,
+        "uz": 0.802707
+      },
+      "chooseFirst": {
+        "en": 0.553867,
+        "ru": 0.446133
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.355848,
+        "ru": 0.644152
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.144481,
+        "en": 0.277192,
+        "ru": 0.143301,
+        "tr": 0.129487,
+        "uz": 0.305539
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": "tr"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "en": 0.832981,
+        "ru": 0.166534,
+        "uz": 0.000485
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.833385,
+        "ru": 0.166615
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": true,
+      "route": {
+        "en": 0.886223,
+        "ru": 0.113716,
+        "uz": 0.000061
+      },
+      "routeLanguage": "en",
+      "routed": "ru",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "en": 0.997258,
+        "ru": 0.000042,
+        "uz": 0.002700
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999958,
+        "ru": 0.000042
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 0,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.879789,
+        "ru": 0.047800,
+        "uz": 0.072410
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.028408,
+        "ru": 0.000088,
+        "uz": 0.971505
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.107223,
+        "ru": 0.001310,
+        "uz": 0.891467
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.107223,
+        "ru": 0.001310,
+        "uz": 0.891467
+      },
+      "chooseFirst": {
+        "en": 0.996926,
+        "ru": 0.003074
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.987927,
+        "ru": 0.012073
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 16,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.183459,
+        "ru": 0.001700,
+        "uz": 0.814841
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.472470,
+        "ru": 0.017355,
+        "uz": 0.510175
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.018052,
+        "ru": 0.000595,
+        "uz": 0.981353
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.018052,
+        "ru": 0.000595,
+        "uz": 0.981353
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 5,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.183459,
+        "ru": 0.001700,
+        "uz": 0.814841
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "en": 0.062249,
+        "ru": 0.000197,
+        "uz": 0.937553
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 8,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.014431,
+        "ru": 0.000005,
+        "uz": 0.985564
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "en": 0.117848,
+        "ru": 0.000231,
+        "uz": 0.881921
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.007494,
+        "ru": 0.000001,
+        "uz": 0.992505
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.007494,
+        "ru": 0.000001,
+        "uz": 0.992505
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 7,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.029808,
+        "ru": 0.000012,
+        "uz": 0.970179
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "en": 0.006166,
+        "ru": 0.000045,
+        "uz": 0.993789
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 4,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.007534,
+        "ru": 0.000024,
+        "uz": 0.992442
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "en": 0.016267,
+        "ru": 0.012230,
+        "uz": 0.971503
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.001790,
+        "ru": 0.001045,
+        "uz": 0.997165
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001790,
+        "ru": 0.001045,
+        "uz": 0.997165
+      },
+      "chooseFirst": {
+        "en": 0.570841,
+        "ru": 0.429159
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.631450,
+        "ru": 0.368550
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 14,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.252288,
+        "ru": 0.462451,
+        "uz": 0.285261
+      },
+      "routeLanguage": "ru",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "en": 0.090616,
+        "ru": 0.141187,
+        "uz": 0.768197
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.067230,
+        "ru": 0.235407,
+        "uz": 0.697363
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.067230,
+        "ru": 0.235407,
+        "uz": 0.697363
+      },
+      "chooseFirst": {
+        "en": 0.390918,
+        "ru": 0.609082
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.222148,
+        "ru": 0.777852
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.333333,
+        "ru": 0.333333,
+        "uz": 0.333333
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "en": 0.905799,
+        "ru": 0.093620,
+        "uz": 0.000581
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.906326,
+        "ru": 0.093674
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": true,
+      "route": {
+        "en": 0.937725,
+        "ru": 0.062204,
+        "uz": 0.000071
+      },
+      "routeLanguage": "en",
+      "routed": "ru",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "en": 0.997003,
+        "ru": 0.000022,
+        "uz": 0.002976
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999978,
+        "ru": 0.000022
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 0,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.893808,
+        "ru": 0.025105,
+        "uz": 0.081087
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.025842,
+        "ru": 0.000041,
+        "uz": 0.974117
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.098321,
+        "ru": 0.000621,
+        "uz": 0.901057
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.098321,
+        "ru": 0.000621,
+        "uz": 0.901057
+      },
+      "chooseFirst": {
+        "en": 0.998409,
+        "ru": 0.001591
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.993722,
+        "ru": 0.006278
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 16,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.169476,
+        "ru": 0.000812,
+        "uz": 0.829712
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.452648,
+        "ru": 0.008596,
+        "uz": 0.538756
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.016410,
+        "ru": 0.000280,
+        "uz": 0.983310
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.016410,
+        "ru": 0.000280,
+        "uz": 0.983310
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 5,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.169476,
+        "ru": 0.000812,
+        "uz": 0.829712
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "en": 0.056808,
+        "ru": 0.000093,
+        "uz": 0.943099
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 8,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.013110,
+        "ru": 0.000002,
+        "uz": 0.986888
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "en": 0.108110,
+        "ru": 0.000110,
+        "uz": 0.891781
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.006803,
+        "ru": 0.000001,
+        "uz": 0.993196
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.006803,
+        "ru": 0.000001,
+        "uz": 0.993196
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 7,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.027118,
+        "ru": 0.000006,
+        "uz": 0.972876
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "en": 0.005597,
+        "ru": 0.000021,
+        "uz": 0.994382
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 4,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.006840,
+        "ru": 0.000011,
+        "uz": 0.993148
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "en": 0.014877,
+        "ru": 0.005782,
+        "uz": 0.979341
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.001625,
+        "ru": 0.000490,
+        "uz": 0.997885
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001625,
+        "ru": 0.000490,
+        "uz": 0.997885
+      },
+      "chooseFirst": {
+        "en": 0.720118,
+        "ru": 0.279882
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.768206,
+        "ru": 0.231794
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 14,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.313092,
+        "ru": 0.296694,
+        "uz": 0.390214
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "en": 0.089686,
+        "ru": 0.072241,
+        "uz": 0.838072
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.070206,
+        "ru": 0.127087,
+        "uz": 0.802707
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.070206,
+        "ru": 0.127087,
+        "uz": 0.802707
+      },
+      "chooseFirst": {
+        "en": 0.553867,
+        "ru": 0.446133
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 0.355848,
+        "ru": 0.644152
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.381791,
+        "ru": 0.197375,
+        "uz": 0.420834
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "en": 0.999418,
+        "uz": 0.000582
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": true,
+      "route": {
+        "en": 0.999931,
+        "uz": 0.000069
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "en": 0.997300,
+        "uz": 0.002700
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 0,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.923955,
+        "uz": 0.076045
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.028410,
+        "uz": 0.971590
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.107363,
+        "uz": 0.892637
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.107363,
+        "uz": 0.892637
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 16,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.183772,
+        "uz": 0.816228
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.480814,
+        "uz": 0.519186
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.018063,
+        "uz": 0.981937
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.018063,
+        "uz": 0.981937
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 5,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.183772,
+        "uz": 0.816228
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "en": 0.062262,
+        "uz": 0.937738
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 8,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.014431,
+        "uz": 0.985569
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "en": 0.117875,
+        "uz": 0.882125
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.007494,
+        "uz": 0.992506
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.007494,
+        "uz": 0.992506
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 7,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.029809,
+        "uz": 0.970191
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "en": 0.006166,
+        "uz": 0.993834
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 4,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.007534,
+        "uz": 0.992466
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "en": 0.016469,
+        "uz": 0.983531
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.001792,
+        "uz": 0.998208
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001792,
+        "uz": 0.998208
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 14,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.469330,
+        "uz": 0.530670
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "en": 0.105513,
+        "uz": 0.894487
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.087929,
+        "uz": 0.912071
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.087929,
+        "uz": 0.912071
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.500000,
+        "uz": 0.500000
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "en": 0.999359,
+        "uz": 0.000641
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": true,
+      "route": {
+        "en": 0.999924,
+        "uz": 0.000076
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "en": 0.997024,
+        "uz": 0.002976
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 0,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.916825,
+        "uz": 0.083175
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.025843,
+        "uz": 0.974157
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.098383,
+        "uz": 0.901617
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.098383,
+        "uz": 0.901617
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 16,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.169614,
+        "uz": 0.830386
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.456573,
+        "uz": 0.543427
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.016415,
+        "uz": 0.983585
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.016415,
+        "uz": 0.983585
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 5,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.169614,
+        "uz": 0.830386
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "en": 0.056814,
+        "uz": 0.943186
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 8,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.013110,
+        "uz": 0.986890
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "en": 0.108122,
+        "uz": 0.891878
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.006803,
+        "uz": 0.993197
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.006803,
+        "uz": 0.993197
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 7,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.027118,
+        "uz": 0.972882
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "en": 0.005597,
+        "uz": 0.994403
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 4,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.006840,
+        "uz": 0.993160
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "en": 0.014964,
+        "uz": 0.985036
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.001626,
+        "uz": 0.998374
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001626,
+        "uz": 0.998374
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 14,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.445172,
+        "uz": 0.554828
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "en": 0.096670,
+        "uz": 0.903330
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "en": 0.080428,
+        "uz": 0.919572
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.080428,
+        "uz": 0.919572
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.475678,
+        "uz": 0.524322
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "en": 0.833385,
+        "ru": 0.166615
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.833385,
+        "ru": 0.166615
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": true,
+      "route": {
+        "en": 0.886277,
+        "ru": 0.113723
+      },
+      "routeLanguage": "en",
+      "routed": "ru",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "en": 0.999958,
+        "ru": 0.000042
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999958,
+        "ru": 0.000042
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 0,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.948468,
+        "ru": 0.051532
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.996926,
+        "ru": 0.003074
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.996926,
+        "ru": 0.003074
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 16,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.990817,
+        "ru": 0.009183
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.996953,
+        "ru": 0.003047
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.996953,
+        "ru": 0.003047
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 5,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.990817,
+        "ru": 0.009183
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic"
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "en": 0.999972,
+        "ru": 0.000028
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999972,
+        "ru": 0.000028
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 8,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.999647,
+        "ru": 0.000353
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "en": 0.999892,
+        "ru": 0.000108
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999892,
+        "ru": 0.000108
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 7,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.999582,
+        "ru": 0.000418
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it"
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "en": 0.998818,
+        "ru": 0.001182
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.998818,
+        "ru": 0.001182
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 4,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.996792,
+        "ru": 0.003208
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "en": 0.570841,
+        "ru": 0.429159
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.570841,
+        "ru": 0.429159
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 14,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.352979,
+        "ru": 0.647021
+      },
+      "routeLanguage": "ru",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript"
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "en": 0.390918,
+        "ru": 0.609082
+      },
+      "afterFirstLanguage": "ru",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.390918,
+        "ru": 0.609082
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "en": 0.500000,
+        "ru": 0.500000
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "no acoustic evidence"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "en": 0.906326,
+        "ru": 0.093674
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.906326,
+        "ru": 0.093674
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": true,
+      "route": {
+        "en": 0.937791,
+        "ru": 0.062209
+      },
+      "routeLanguage": "en",
+      "routed": "ru",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "en": 0.999978,
+        "ru": 0.000022
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999978,
+        "ru": 0.000022
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 0,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.972679,
+        "ru": 0.027321
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.998409,
+        "ru": 0.001591
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.998409,
+        "ru": 0.001591
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 16,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.995231,
+        "ru": 0.004769
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "en": 0.998422,
+        "ru": 0.001578
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.998422,
+        "ru": 0.001578
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 5,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.995231,
+        "ru": 0.004769
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic"
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "en": 0.999985,
+        "ru": 0.000015
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999985,
+        "ru": 0.000015
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 8,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.999818,
+        "ru": 0.000182
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "en": 0.999944,
+        "ru": 0.000056
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999944,
+        "ru": 0.000056
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 7,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.999784,
+        "ru": 0.000216
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it"
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "en": 0.999389,
+        "ru": 0.000611
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.999389,
+        "ru": 0.000611
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 4,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.998339,
+        "ru": 0.001661
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "en": 0.720118,
+        "ru": 0.279882
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.720118,
+        "ru": 0.279882
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 14,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "en": 0.513445,
+        "ru": 0.486555
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript"
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "en": 0.553867,
+        "ru": 0.446133
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 0.553867,
+        "ru": 0.446133
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": true,
+      "route": {
+        "en": 0.659207,
+        "ru": 0.340793
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "no acoustic evidence"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "ar": 0.500114,
+        "tr": 0.352357,
+        "uz": 0.147528
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.002468,
+        "tr": 0.894648,
+        "uz": 0.102885
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.002751,
+        "tr": 0.997249
+      },
+      "chooseFirst": {
+        "tr": 1.000000
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "tr": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.166313,
+        "tr": 0.692929,
+        "uz": 0.140758
+      },
+      "routeLanguage": "tr",
+      "routed": "tr",
+      "scenario": "English heard; Parakeet transliterated it",
+      "secondText": 6,
+      "thirdAsk": "uz"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "ar": 0.000313,
+        "tr": 0.027749,
+        "uz": 0.971938
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 0,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000674,
+        "tr": 0.005579,
+        "uz": 0.993747
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.396963,
+        "tr": 0.000196,
+        "uz": 0.602841
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.022573,
+        "tr": 0.000947,
+        "uz": 0.976481
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.022594,
+        "uz": 0.977406
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 16,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.070604,
+        "tr": 0.000071,
+        "uz": 0.929325
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.602890,
+        "tr": 0.000318,
+        "uz": 0.396792
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.794831,
+        "tr": 0.000123,
+        "uz": 0.205046
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.794929,
+        "uz": 0.205071
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "ar",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 5,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.070604,
+        "tr": 0.000071,
+        "uz": 0.929325
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "ar": 0.000238,
+        "tr": 0.556031,
+        "uz": 0.443731
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.000247,
+        "tr": 0.182636,
+        "uz": 0.817116
+      },
+      "ask": "uz",
+      "choose": {
+        "tr": 0.182682,
+        "uz": 0.817318
+      },
+      "chooseFirst": {
+        "tr": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "tr": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 8,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000207,
+        "tr": 0.238821,
+        "uz": 0.760972
+      },
+      "routeLanguage": "uz",
+      "routed": "tr",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "ar": 0.000471,
+        "tr": 0.974938,
+        "uz": 0.024591
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.000238,
+        "tr": 0.993486,
+        "uz": 0.006276
+      },
+      "ask": "tr",
+      "choose": {
+        "tr": 0.993722,
+        "uz": 0.006278
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 7,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000309,
+        "tr": 0.564416,
+        "uz": 0.435274
+      },
+      "routeLanguage": "tr",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "ar": 0.015063,
+        "tr": 0.019954,
+        "uz": 0.964982
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 4,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.011621,
+        "tr": 0.025585,
+        "uz": 0.962794
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "ar": 0.236145,
+        "tr": 0.058690,
+        "uz": 0.705164
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.001815,
+        "tr": 0.232129,
+        "uz": 0.766056
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.002364,
+        "uz": 0.997636
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 14,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.236145,
+        "tr": 0.058690,
+        "uz": 0.705164
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": "tr"
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "ar": 0.734198,
+        "tr": 0.224803,
+        "uz": 0.040999
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.022176,
+        "tr": 0.920923,
+        "uz": 0.056901
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.280431,
+        "uz": 0.719569
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.333333,
+        "tr": 0.333333,
+        "uz": 0.333333
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": "tr"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "ar": 0.443407,
+        "tr": 0.279984,
+        "uz": 0.276609
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.002415,
+        "tr": 0.784662,
+        "uz": 0.212923
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.003068,
+        "tr": 0.996932
+      },
+      "chooseFirst": {
+        "tr": 1.000000
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "tr": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.153284,
+        "tr": 0.572369,
+        "uz": 0.274347
+      },
+      "routeLanguage": "tr",
+      "routed": "tr",
+      "scenario": "English heard; Parakeet transliterated it",
+      "secondText": 6,
+      "thirdAsk": "uz"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "ar": 0.000150,
+        "tr": 0.011953,
+        "uz": 0.987896
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 0,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000320,
+        "tr": 0.002373,
+        "uz": 0.997307
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.237419,
+        "tr": 0.000105,
+        "uz": 0.762476
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.010808,
+        "tr": 0.000406,
+        "uz": 0.988785
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.010813,
+        "uz": 0.989187
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 16,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.034679,
+        "tr": 0.000031,
+        "uz": 0.965290
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.418009,
+        "tr": 0.000198,
+        "uz": 0.581793
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.646961,
+        "tr": 0.000090,
+        "uz": 0.352949
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.647019,
+        "uz": 0.352981
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "ar",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 5,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.034679,
+        "tr": 0.000031,
+        "uz": 0.965290
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "ar": 0.000166,
+        "tr": 0.346798,
+        "uz": 0.653036
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.000131,
+        "tr": 0.086517,
+        "uz": 0.913352
+      },
+      "ask": "uz",
+      "choose": {
+        "tr": 0.086528,
+        "uz": 0.913472
+      },
+      "chooseFirst": {
+        "tr": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "tr": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 8,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000113,
+        "tr": 0.117377,
+        "uz": 0.882510
+      },
+      "routeLanguage": "uz",
+      "routed": "tr",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "ar": 0.000508,
+        "tr": 0.943346,
+        "uz": 0.056145
+      },
+      "afterFirstLanguage": "tr",
+      "afterSecond": {
+        "ar": 0.000263,
+        "tr": 0.985054,
+        "uz": 0.014683
+      },
+      "ask": "tr",
+      "choose": {
+        "tr": 0.985313,
+        "uz": 0.014687
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "tr",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 7,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000217,
+        "tr": 0.354569,
+        "uz": 0.645214
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "ar": 0.007264,
+        "tr": 0.008624,
+        "uz": 0.984112
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 4,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.005612,
+        "tr": 0.011074,
+        "uz": 0.983314
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "ar": 0.132667,
+        "tr": 0.029551,
+        "uz": 0.837782
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.000992,
+        "tr": 0.113691,
+        "uz": 0.885317
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.001119,
+        "uz": 0.998881
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 14,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.132667,
+        "tr": 0.029551,
+        "uz": 0.837782
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": "tr"
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "ar": 0.718130,
+        "tr": 0.197065,
+        "uz": 0.084805
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.022912,
+        "tr": 0.852761,
+        "uz": 0.124327
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.155611,
+        "uz": 0.844389
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.249316,
+        "tr": 0.223444,
+        "uz": 0.527240
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": "tr"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "ar": 0.000304,
+        "en": 0.999115,
+        "uz": 0.000581
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": true,
+      "route": {
+        "ar": 0.000081,
+        "en": 0.999850,
+        "uz": 0.000069
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "ar": 0.000004,
+        "en": 0.997296,
+        "uz": 0.002700
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 0,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000052,
+        "en": 0.923907,
+        "uz": 0.076041
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.031868,
+        "en": 0.027505,
+        "uz": 0.940627
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.376877,
+        "en": 0.066901,
+        "uz": 0.556223
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.107363,
+        "uz": 0.892637
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 16,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.058391,
+        "en": 0.173041,
+        "uz": 0.768568
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.440984,
+        "en": 0.268783,
+        "uz": 0.290233
+      },
+      "afterFirstLanguage": "ar",
+      "afterSecond": {
+        "ar": 0.726201,
+        "en": 0.086458,
+        "uz": 0.187341
+      },
+      "ask": "ar",
+      "choose": {
+        "ar": 0.794929,
+        "uz": 0.205071
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "ar",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 5,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.058391,
+        "en": 0.173041,
+        "uz": 0.768568
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "ar": 0.006728,
+        "en": 0.061843,
+        "uz": 0.931429
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 8,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000268,
+        "en": 0.014427,
+        "uz": 0.985305
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "ar": 0.016614,
+        "en": 0.115917,
+        "uz": 0.867469
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.008079,
+        "en": 0.007433,
+        "uz": 0.984488
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.007494,
+        "uz": 0.992506
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 7,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.000689,
+        "en": 0.029788,
+        "uz": 0.969523
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "ar": 0.015277,
+        "en": 0.006072,
+        "uz": 0.978651
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 4,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.011837,
+        "en": 0.007445,
+        "uz": 0.980718
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "ar": 0.091705,
+        "en": 0.014958,
+        "uz": 0.893336
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.054620,
+        "en": 0.001694,
+        "uz": 0.943686
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001792,
+        "uz": 0.998208
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 14,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.150895,
+        "en": 0.398511,
+        "uz": 0.450594
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "ar": 0.283519,
+        "en": 0.075598,
+        "uz": 0.640883
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.342903,
+        "en": 0.057778,
+        "uz": 0.599319
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.087929,
+        "uz": 0.912071
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "new user",
+      "respell": false,
+      "route": {
+        "ar": 0.333333,
+        "en": 0.333333,
+        "uz": 0.333333
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 4,
+      "afterFirst": {
+        "ar": 0.000158,
+        "en": 0.999201,
+        "uz": 0.000641
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": true,
+      "route": {
+        "ar": 0.000042,
+        "en": 0.999882,
+        "uz": 0.000076
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet transliterated it"
+    },
+    {
+      "acoustic": 0,
+      "afterFirst": {
+        "ar": 0.000002,
+        "en": 0.997022,
+        "uz": 0.002976
+      },
+      "afterFirstLanguage": "en",
+      "ask": null,
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 0,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000027,
+        "en": 0.916800,
+        "uz": 0.083173
+      },
+      "routeLanguage": "en",
+      "routed": "en",
+      "scenario": "English heard; Parakeet wrote English"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.015367,
+        "en": 0.025446,
+        "uz": 0.959188
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.224132,
+        "en": 0.076332,
+        "uz": 0.699536
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.098383,
+        "uz": 0.901617
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 16,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.028968,
+        "en": 0.164700,
+        "uz": 0.806332
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "Arabic half-heard; Parakeet doubts; the Uzbek engine transliterates",
+      "secondText": 5,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 3,
+      "afterFirst": {
+        "ar": 0.280805,
+        "en": 0.328365,
+        "uz": 0.390830
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.783856,
+        "en": 0.003548,
+        "uz": 0.212596
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.016415,
+        "uz": 0.983585
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 5,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.028968,
+        "en": 0.164700,
+        "uz": 0.806332
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Arabic half-heard on Uzbek; Cohere's answer is Arabic",
+      "secondText": 9,
+      "thirdAsk": "ar"
+    },
+    {
+      "acoustic": 2,
+      "afterFirst": {
+        "ar": 0.003211,
+        "en": 0.056631,
+        "uz": 0.940158
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 8,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000127,
+        "en": 0.013108,
+        "uz": 0.986765
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "Uzbek heard as Turkish; Uzbek is asked"
+    },
+    {
+      "acoustic": 6,
+      "afterFirst": {
+        "ar": 0.008013,
+        "en": 0.107255,
+        "uz": 0.884732
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.003839,
+        "en": 0.006777,
+        "uz": 0.989384
+      },
+      "ask": "en",
+      "choose": {
+        "en": 0.006803,
+        "uz": 0.993197
+      },
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 7,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.000327,
+        "en": 0.027109,
+        "uz": 0.972564
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "a short Turkish phrase; the Uzbek engine wrote it",
+      "secondText": 8,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 1,
+      "afterFirst": {
+        "ar": 0.007287,
+        "en": 0.005557,
+        "uz": 0.987157
+      },
+      "afterFirstLanguage": "uz",
+      "ask": null,
+      "chooseFirst": {
+        "uz": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 4,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.005636,
+        "en": 0.006802,
+        "uz": 0.987562
+      },
+      "routeLanguage": "uz",
+      "routed": "uz",
+      "scenario": "clear Uzbek greeting"
+    },
+    {
+      "acoustic": 5,
+      "afterFirst": {
+        "ar": 0.045634,
+        "en": 0.014281,
+        "uz": 0.940085
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.026598,
+        "en": 0.001583,
+        "uz": 0.971819
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.001626,
+        "uz": 0.998374
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 14,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.080764,
+        "en": 0.409218,
+        "uz": 0.510018
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "nothing of the five; empty transcript",
+      "secondText": 6,
+      "thirdAsk": null
+    },
+    {
+      "acoustic": 7,
+      "afterFirst": {
+        "ar": 0.158936,
+        "en": 0.081306,
+        "uz": 0.759758
+      },
+      "afterFirstLanguage": "uz",
+      "afterSecond": {
+        "ar": 0.199228,
+        "en": 0.064404,
+        "uz": 0.736368
+      },
+      "ask": "uz",
+      "choose": {
+        "en": 0.080428,
+        "uz": 0.919572
+      },
+      "chooseFirst": {
+        "en": 1.000000
+      },
+      "chooseLanguage": "uz",
+      "chooseRoutedOnly": {
+        "en": 1.000000
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "firstText": 1,
+      "prior": "dictates Uzbek, English, some Arabic",
+      "respell": false,
+      "route": {
+        "ar": 0.198677,
+        "en": 0.381171,
+        "uz": 0.420151
+      },
+      "routeLanguage": "uz",
+      "routed": "en",
+      "scenario": "no acoustic evidence",
+      "secondText": 4,
+      "thirdAsk": "ar"
+    }
+  ],
+  "evidence": [
+    {
+      "counted": 4,
+      "exercises": "English",
+      "features": [
+        0.693147,
+        1.386294,
+        0.000000,
+        1.609438,
+        0.000000,
+        1.609438,
+        1.609438,
+        0.000000,
+        0.000000,
+        1.609438,
+        0.000000
+      ],
+      "known": [
+        1,
+        0,
+        0,
+        4,
+        0
+      ],
+      "text": "Inside the content folder.",
+      "unusable": false
+    },
+    {
+      "counted": 4,
+      "exercises": "English transliterated into Cyrillic",
+      "features": [
+        0.000000,
+        1.609438,
+        0.000000,
+        1.609438,
+        0.000000,
+        1.609438,
+        0.000000,
+        1.609438,
+        0.693147,
+        1.386294,
+        0.000000
+      ],
+      "known": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "text": "\u0418\u043d\u0441\u0430\u0439\u0434 \u0437\u0435 \u043a\u043e\u043d\u0442\u0435\u043d\u0442 \u0444\u043e\u043b\u044c.",
+      "unusable": false
+    },
+    {
+      "counted": 3,
+      "exercises": "English transliterated, short",
+      "features": [
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000
+      ],
+      "known": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "\u0417\u0435 \u0432\u0438\u0434\u0436\u0435\u0442\u0441 \u043e\u0444.",
+      "unusable": false
+    },
+    {
+      "counted": 8,
+      "exercises": "Russian",
+      "features": [
+        0.000000,
+        2.197225,
+        0.000000,
+        2.197225,
+        0.000000,
+        2.197225,
+        0.000000,
+        2.197225,
+        2.197225,
+        0.000000,
+        0.000000
+      ],
+      "known": [
+        0,
+        0,
+        0,
+        0,
+        8
+      ],
+      "text": "\u042f \u043d\u0435 \u043c\u043e\u0433\u0443 \u043d\u0430\u0439\u0442\u0438 \u043a\u043b\u044e\u0447\u0438, \u043f\u043e\u0437\u0432\u043e\u043d\u0438 \u043c\u043d\u0435 \u0432\u0435\u0447\u0435\u0440\u043e\u043c.",
+      "unusable": false
+    },
+    {
+      "counted": 6,
+      "exercises": "Uzbek greeting",
+      "features": [
+        1.609438,
+        1.098612,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000
+      ],
+      "known": [
+        4,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "assalomu alaykum, do'stlar, qalaysizlar, ahvollar yaxshimi?",
+      "unusable": false
+    },
+    {
+      "counted": 6,
+      "exercises": "Arabic transliterated into Uzbek spelling",
+      "features": [
+        0.693147,
+        1.791759,
+        0.693147,
+        1.791759,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000
+      ],
+      "known": [
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "text": "ya ayyuhannas tubu ilallohi tavbatan nasuha",
+      "unusable": false
+    },
+    {
+      "counted": 6,
+      "exercises": "Uzbek",
+      "features": [
+        1.945910,
+        0.000000,
+        0.693147,
+        1.791759,
+        0.000000,
+        1.945910,
+        0.693147,
+        1.791759,
+        0.000000,
+        1.945910,
+        0.000000
+      ],
+      "known": [
+        6,
+        1,
+        0,
+        1,
+        0
+      ],
+      "text": "bugun bozorga bordim va non oldim.",
+      "unusable": false
+    },
+    {
+      "counted": 6,
+      "exercises": "Turkish without its letters",
+      "features": [
+        0.693147,
+        1.791759,
+        1.386294,
+        1.386294,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000
+      ],
+      "known": [
+        1,
+        3,
+        0,
+        0,
+        0
+      ],
+      "text": "nasilsin abicim bugun hava cok guzel",
+      "unusable": false
+    },
+    {
+      "counted": 6,
+      "exercises": "Turkish",
+      "features": [
+        0.000000,
+        1.945910,
+        1.791759,
+        0.693147,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000,
+        1.945910,
+        0.000000
+      ],
+      "known": [
+        0,
+        5,
+        0,
+        0,
+        0
+      ],
+      "text": "Nas\u0131ls\u0131n, abicim? Bug\u00fcn hava \u00e7ok g\u00fczel.",
+      "unusable": false
+    },
+    {
+      "counted": 8,
+      "exercises": "Arabic",
+      "features": [
+        0.000000,
+        2.197225,
+        0.000000,
+        2.197225,
+        2.197225,
+        0.000000,
+        0.000000,
+        2.197225,
+        0.000000,
+        2.197225,
+        0.000000
+      ],
+      "known": [
+        0,
+        0,
+        8,
+        0,
+        0
+      ],
+      "text": "\u064a\u0627 \u0623\u064a\u0647\u0627 \u0627\u0644\u0646\u0627\u0633 \u062a\u0648\u0628\u0648\u0627 \u0625\u0644\u0649 \u0627\u0644\u0644\u0647 \u062a\u0648\u0628\u0629 \u0646\u0635\u0648\u062d\u0627",
+      "unusable": false
+    },
+    {
+      "counted": 3,
+      "exercises": "Arabic with tashkeel and ornate brackets",
+      "features": [
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        1.386294,
+        0.000000,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000
+      ],
+      "known": [
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      "text": "\ufd3f \u064a\u064e\u0627 \u0623\u064e\u064a\u064f\u0651\u0647\u064e\u0627 \u0627\u0644\u0646\u064e\u0651\u0627\u0633\u064f \ufd3e",
+      "unusable": false
+    },
+    {
+      "counted": 7,
+      "exercises": "a repetition loop",
+      "features": [
+        0.000000,
+        2.079442,
+        0.000000,
+        2.079442,
+        2.079442,
+        0.000000,
+        0.000000,
+        2.079442,
+        0.000000,
+        2.079442,
+        1.000000
+      ],
+      "known": [
+        0,
+        0,
+        7,
+        0,
+        0
+      ],
+      "text": "\u0628\u0627\u0642\u0629 \u0628\u0627\u0642\u0629 \u0628\u0627\u0642\u0629 \u0628\u0627\u0642\u0629 \u0628\u0627\u0642\u0629 \u0628\u0627\u0642\u0629 \u0628\u0627\u0642\u0629",
+      "unusable": true
+    },
+    {
+      "counted": 6,
+      "exercises": "proper noun, number suffix, hesitation",
+      "features": [
+        1.609438,
+        1.098612,
+        1.098612,
+        1.609438,
+        0.000000,
+        1.945910,
+        1.945910,
+        0.000000,
+        0.000000,
+        1.945910,
+        0.000000
+      ],
+      "known": [
+        4,
+        2,
+        0,
+        6,
+        0
+      ],
+      "text": "Send it to Gonka on the 1st, um, okay.",
+      "unusable": false
+    },
+    {
+      "counted": 1,
+      "exercises": "only a hesitation",
+      "features": [
+        0.693147,
+        0.000000,
+        0.693147,
+        0.000000,
+        0.000000,
+        0.693147,
+        0.000000,
+        0.693147,
+        0.000000,
+        0.693147,
+        0.000000
+      ],
+      "known": [
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "text": "Uh.",
+      "unusable": false
+    },
+    {
+      "counted": 0,
+      "exercises": "empty",
+      "features": [
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        1.000000
+      ],
+      "known": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "",
+      "unusable": true
+    },
+    {
+      "counted": 0,
+      "exercises": "a marker only",
+      "features": [
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        0.000000,
+        1.000000
+      ],
+      "known": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "[BLANK_AUDIO]",
+      "unusable": true
+    },
+    {
+      "counted": 3,
+      "exercises": "made-up Latin",
+      "features": [
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000,
+        1.386294,
+        0.000000
+      ],
+      "known": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "Morvalen tikoshar penduvi.",
+      "unusable": false
+    },
+    {
+      "counted": 7,
+      "exercises": "code-switched",
+      "features": [
+        1.386294,
+        1.609438,
+        0.000000,
+        2.079442,
+        0.000000,
+        2.079442,
+        1.791759,
+        1.098612,
+        0.000000,
+        2.079442,
+        0.000000
+      ],
+      "known": [
+        3,
+        0,
+        0,
+        5,
+        0
+      ],
+      "text": "first send all the files, keyin ko'ramiz",
+      "unusable": false
+    }
+  ],
+  "fixture": "language-id",
+  "folds": [
+    {
+      "folded": "o'zbekiston",
+      "language": "uz",
+      "word": "O\u02bbzbekiston"
+    },
+    {
+      "folded": "o'zbek",
+      "language": "uz",
+      "word": "o\u2018zbek"
+    },
+    {
+      "folded": "g'alaba",
+      "language": "uz",
+      "word": "g`alaba"
+    },
+    {
+      "folded": "xo'p",
+      "language": "uz",
+      "word": "XO\u02bcP"
+    },
+    {
+      "folded": "istanbul",
+      "language": "tr",
+      "word": "\u0130stanbul"
+    },
+    {
+      "folded": "isik",
+      "language": "tr",
+      "word": "ISIK"
+    },
+    {
+      "folded": "islak",
+      "language": "tr",
+      "word": "\u0131slak"
+    },
+    {
+      "folded": "\u00e7i\u00e7ek",
+      "language": "tr",
+      "word": "\u00c7i\u00e7ek"
+    },
+    {
+      "folded": "\u0435\u043b\u043a\u0430",
+      "language": "ru",
+      "word": "\u0401\u043b\u043a\u0430"
+    },
+    {
+      "folded": "\u0435\u0436\u0438\u043a",
+      "language": "ru",
+      "word": "\u0401\u0416\u0418\u041a"
+    },
+    {
+      "folded": "\u043f\u0440\u0438\u0432\u0435\u0442",
+      "language": "ru",
+      "word": "\u041f\u0440\u0438\u0432\u0435\u0442"
+    },
+    {
+      "folded": "\u0627\u064a\u0647\u0627",
+      "language": "ar",
+      "word": "\u0623\u064e\u064a\u064f\u0651\u0647\u064e\u0627"
+    },
+    {
+      "folded": "\u0645\u062f\u0631\u0633\u0647",
+      "language": "ar",
+      "word": "\u0645\u062f\u0631\u0633\u0629"
+    },
+    {
+      "folded": "\u0627\u0644\u064a",
+      "language": "ar",
+      "word": "\u0625\u0644\u0649"
+    },
+    {
+      "folded": "\u0627\u0645\u0646\u062a",
+      "language": "ar",
+      "word": "\u0622\u0645\u0646\u062a"
+    },
+    {
+      "folded": "\u0627\u0644\u0631\u062d\u0645\u0646",
+      "language": "ar",
+      "word": "\u0671\u0644\u0631\u064e\u0651\u062d\u0652\u0645\u064e\u0670\u0646\u0650"
+    },
+    {
+      "folded": "\u0643\u062a\u0627\u0628",
+      "language": "ar",
+      "word": "\u0643\u0640\u0640\u0640\u062a\u0627\u0628"
+    },
+    {
+      "folded": "hello",
+      "language": "en",
+      "word": "Hello"
+    }
+  ],
+  "generator": "kotiba-golden v1 \u2014 swift run kotiba-golden windows/fixtures/golden",
+  "lists": {
+    "ar": {
+      "count": 50648,
+      "sha256": "9a792983d00442db4e0d4e72568a79c71a24e9a6adc9b23f08bc57b19d2cb816"
+    },
+    "en": {
+      "count": 39154,
+      "sha256": "92a9c795a84409c474ecd3de75ee1183671549cbdfa11bfcd22d8960490e5b0d"
+    },
+    "ru": {
+      "count": 49629,
+      "sha256": "a2bb4acb84f116a6311d0a68cb9075ece243436b1a9a6812567b14b34fcd4973"
+    },
+    "tr": {
+      "count": 34166,
+      "sha256": "2acf6a49b9ae870b8177c19cedda1ee7f6a5d0db3822c96856a4c2ccb2e4f13a"
+    },
+    "uz": {
+      "count": 121320,
+      "sha256": "fdce760239490c3a9462e384b78f656e3663145511a05b63cab8aed91275df1b"
+    }
+  },
+  "lookups": [
+    {
+      "contains": true,
+      "language": "uz",
+      "word": "yaxshimi"
+    },
+    {
+      "contains": true,
+      "language": "uz",
+      "word": "O\u02bbzbekiston"
+    },
+    {
+      "contains": true,
+      "language": "uz",
+      "word": "bo'ladi"
+    },
+    {
+      "contains": true,
+      "language": "uz",
+      "word": "qalaysan"
+    },
+    {
+      "contains": false,
+      "language": "uz",
+      "word": "tavbatannasuha"
+    },
+    {
+      "contains": false,
+      "language": "uz",
+      "word": "ayyuhannasut"
+    },
+    {
+      "contains": true,
+      "language": "uz",
+      "word": "the"
+    },
+    {
+      "contains": true,
+      "language": "tr",
+      "word": "nas\u0131ls\u0131n"
+    },
+    {
+      "contains": true,
+      "language": "tr",
+      "word": "NASILSIN"
+    },
+    {
+      "contains": true,
+      "language": "tr",
+      "word": "g\u00fczel"
+    },
+    {
+      "contains": false,
+      "language": "tr",
+      "word": "abijim"
+    },
+    {
+      "contains": true,
+      "language": "ru",
+      "word": "\u0443\u043d\u0438\u0436\u0435\u043d\u0438\u0435"
+    },
+    {
+      "contains": false,
+      "language": "ru",
+      "word": "\u0451\u043b\u043a\u0430"
+    },
+    {
+      "contains": false,
+      "language": "ru",
+      "word": "\u0438\u043d\u0441\u0430\u0439\u0434"
+    },
+    {
+      "contains": false,
+      "language": "ru",
+      "word": "\u0432\u0438\u0434\u0436\u0435\u0442\u0441"
+    },
+    {
+      "contains": false,
+      "language": "ru",
+      "word": "\u0437\u0435"
+    },
+    {
+      "contains": true,
+      "language": "ru",
+      "word": "\u043a\u043e\u043d\u0442\u0435\u043d\u0442"
+    },
+    {
+      "contains": true,
+      "language": "ar",
+      "word": "\u0627\u0644\u0633\u0644\u0627\u0645"
+    },
+    {
+      "contains": true,
+      "language": "ar",
+      "word": "\u0627\u0644\u0644\u0647"
+    },
+    {
+      "contains": true,
+      "language": "ar",
+      "word": "\u0623\u064a\u0647\u0627"
+    },
+    {
+      "contains": true,
+      "language": "ar",
+      "word": "\u0628\u0627\u0642\u0629"
+    },
+    {
+      "contains": true,
+      "language": "en",
+      "word": "folder"
+    },
+    {
+      "contains": false,
+      "language": "en",
+      "word": "widgets"
+    },
+    {
+      "contains": false,
+      "language": "en",
+      "word": "yaxshi"
+    }
+  ],
+  "note": "The language decision (P4, D-14). Fold: ' for U+2019 U+2018 U+02BB U+02BC and `; Turkish U+0130, I and U+0131 -> i; Russian U+0451/U+0401 -> U+0435; Arabic drops U+0610-061A U+064B-065F U+0670 U+06D6-06ED U+0640 and maps U+0623 U+0625 U+0622 U+0671 -> U+0627, U+0649 -> U+064A, U+0629 -> U+0647; then lowercase. English is TranscriptCheck.isEnglishWord. Transcript words and what is counted are TranscriptCheck's (see transcript-check.json); known[i] counts the counted words each list holds, in model order uz tr ar en ru. features: per list log1p(known), log1p(counted - known), then unusable (empty, markers only, or six of one word in a row). Acoustic features: log of each of the five shares of the posterior's total then of the rest, floored at log(1e-5), then log(max(seconds, 0.25)). Score = acoustic weights . [features, 1] + for each transcript its source's weights . its features + logPrior; posterior = softmax over the enabled languages (empty set = all). Ties rank in model order. consider(transcripts): the posterior over the enabled languages with every transcript added; ask = the most likely language of a family no transcript came from, when those families hold >= askFrom and fewer than maxEngines families have written. choose(transcripts, deliverable): the same score over the enabled languages of the deliverable families only (default: every family that wrote). respell: unified language, and more Cyrillic than Latin letters (A-Z a-z vs U+0400-04FF) for English, or the reverse for Russian.",
+  "prior": [
+    {
+      "counts": {},
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "logPrior": {
+        "ar": 0.000000,
+        "en": 0.000000,
+        "ru": 0.000000,
+        "tr": 0.000000,
+        "uz": 0.000000
+      },
+      "prior": "new user"
+    },
+    {
+      "counts": {},
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "logPrior": {
+        "en": 0.000000,
+        "ru": 0.000000,
+        "uz": 0.000000
+      },
+      "prior": "new user"
+    },
+    {
+      "counts": {},
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "logPrior": {
+        "en": 0.000000,
+        "uz": 0.000000
+      },
+      "prior": "new user"
+    },
+    {
+      "counts": {},
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "logPrior": {
+        "en": 0.000000,
+        "ru": 0.000000
+      },
+      "prior": "new user"
+    },
+    {
+      "counts": {},
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "logPrior": {
+        "ar": 0.000000,
+        "tr": 0.000000,
+        "uz": 0.000000
+      },
+      "prior": "new user"
+    },
+    {
+      "counts": {},
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "logPrior": {
+        "ar": 0.000000,
+        "en": 0.000000,
+        "uz": 0.000000
+      },
+      "prior": "new user"
+    },
+    {
+      "counts": {
+        "ar": 11,
+        "en": 400,
+        "ru": 10,
+        "uz": 600
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar",
+        "en",
+        "ru"
+      ],
+      "logPrior": {
+        "ar": -0.494638,
+        "en": 0.156929,
+        "ru": -0.502835,
+        "tr": -0.604202,
+        "uz": 0.254295
+      },
+      "prior": "dictates Uzbek, English, some Arabic"
+    },
+    {
+      "counts": {
+        "ar": 11,
+        "en": 400,
+        "ru": 10,
+        "uz": 600
+      },
+      "enabled": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "logPrior": {
+        "en": 0.040863,
+        "ru": -0.618901,
+        "uz": 0.138229
+      },
+      "prior": "dictates Uzbek, English, some Arabic"
+    },
+    {
+      "counts": {
+        "ar": 11,
+        "en": 400,
+        "ru": 10,
+        "uz": 600
+      },
+      "enabled": [
+        "uz",
+        "en"
+      ],
+      "logPrior": {
+        "en": -0.053394,
+        "uz": 0.043973
+      },
+      "prior": "dictates Uzbek, English, some Arabic"
+    },
+    {
+      "counts": {
+        "ar": 11,
+        "en": 400,
+        "ru": 10,
+        "uz": 600
+      },
+      "enabled": [
+        "en",
+        "ru"
+      ],
+      "logPrior": {
+        "en": 0.156039,
+        "ru": -0.503726
+      },
+      "prior": "dictates Uzbek, English, some Arabic"
+    },
+    {
+      "counts": {
+        "ar": 11,
+        "en": 400,
+        "ru": 10,
+        "uz": 600
+      },
+      "enabled": [
+        "uz",
+        "tr",
+        "ar"
+      ],
+      "logPrior": {
+        "ar": -0.494042,
+        "tr": -0.603606,
+        "uz": 0.254891
+      },
+      "prior": "dictates Uzbek, English, some Arabic"
+    },
+    {
+      "counts": {
+        "ar": 11,
+        "en": 400,
+        "ru": 10,
+        "uz": 600
+      },
+      "enabled": [
+        "uz",
+        "ar",
+        "en"
+      ],
+      "logPrior": {
+        "ar": -0.610937,
+        "en": 0.040630,
+        "uz": 0.137996
+      },
+      "prior": "dictates Uzbek, English, some Arabic"
+    }
+  ],
+  "source": "KotibaCore/Lexicon.swift, LanguageID.swift, LanguageModelWeights.swift",
+  "weights": {
+    "acoustic": [
+      [
+        0.772016,
+        -0.265557,
+        -0.288622,
+        -0.082352,
+        -0.236249,
+        0.130203,
+        0.533410,
+        -1.374614
+      ],
+      [
+        -0.246536,
+        0.736686,
+        -0.148942,
+        0.004566,
+        -0.079650,
+        -0.194039,
+        0.103022,
+        1.055869
+      ],
+      [
+        -0.274168,
+        -0.004038,
+        0.558502,
+        -0.190393,
+        -0.150364,
+        0.012732,
+        -0.482602,
+        -0.369385
+      ],
+      [
+        -0.160657,
+        0.079639,
+        -0.060278,
+        0.339101,
+        -0.021752,
+        -0.193146,
+        -1.118845,
+        4.348729
+      ],
+      [
+        -0.090655,
+        -0.546730,
+        -0.060660,
+        -0.070921,
+        0.488015,
+        0.244250,
+        0.965016,
+        -3.660599
+      ]
+    ],
+    "transcript": [
+      [
+        [
+          -0.509799,
+          -0.190657,
+          1.097785,
+          1.800688,
+          0.000000,
+          0.157348,
+          -0.116506,
+          0.459956,
+          -0.915466,
+          -1.461179,
+          2.709619
+        ],
+        [
+          -0.807651,
+          -0.904792,
+          0.774525,
+          -0.385837,
+          0.000000,
+          0.819927,
+          -1.323485,
+          -0.044996,
+          -0.978645,
+          1.772316,
+          -0.831109
+        ],
+        [
+          2.171708,
+          1.273985,
+          0.098819,
+          0.143647,
+          0.000000,
+          -1.169513,
+          -0.615051,
+          -0.140034,
+          -0.244754,
+          0.075531,
+          1.527222
+        ],
+        [
+          -0.639089,
+          -0.170793,
+          -1.290336,
+          -1.608279,
+          0.000000,
+          0.468512,
+          2.353189,
+          -0.722620,
+          0.317271,
+          1.326936,
+          -1.257240
+        ],
+        [
+          -0.215170,
+          -0.007743,
+          -0.680792,
+          0.049781,
+          0.000000,
+          -0.276275,
+          -0.298147,
+          0.447694,
+          1.821593,
+          -1.713604,
+          -2.148492
+        ]
+      ],
+      [
+        [
+          0.181141,
+          -1.811817,
+          -0.654029,
+          -0.306038,
+          0.000000,
+          0.418322,
+          -0.163388,
+          0.300076,
+          0.000000,
+          0.418322,
+          0.000000
+        ],
+        [
+          -0.063535,
+          0.419398,
+          0.335432,
+          -1.250557,
+          0.000000,
+          0.329484,
+          0.152856,
+          0.236046,
+          0.000000,
+          0.329484,
+          0.000000
+        ],
+        [
+          -0.990459,
+          -0.763195,
+          1.265742,
+          2.240706,
+          0.000000,
+          -1.275864,
+          -0.183398,
+          1.650879,
+          0.000000,
+          -1.275864,
+          0.000000
+        ],
+        [
+          0.860639,
+          1.333561,
+          -0.567462,
+          -0.295598,
+          0.000000,
+          0.369781,
+          0.953563,
+          -2.054776,
+          0.000000,
+          0.369781,
+          0.000000
+        ],
+        [
+          0.012215,
+          0.822053,
+          -0.379683,
+          -0.388513,
+          0.000000,
+          0.158277,
+          -0.759633,
+          -0.132224,
+          0.000000,
+          0.158277,
+          0.000000
+        ]
+      ],
+      [
+        [
+          0.197733,
+          -0.879115,
+          -0.200156,
+          0.230088,
+          -0.136713,
+          0.859019,
+          -0.680559,
+          -0.909339,
+          -0.112242,
+          0.817227,
+          -0.010350
+        ],
+        [
+          -0.252357,
+          0.237508,
+          -0.194272,
+          -1.733643,
+          -0.004179,
+          0.315090,
+          -0.050440,
+          0.421372,
+          -0.019930,
+          0.319385,
+          -0.228202
+        ],
+        [
+          -0.020415,
+          -0.373797,
+          0.524672,
+          1.349274,
+          0.272674,
+          -1.700652,
+          0.160826,
+          2.719133,
+          -0.265129,
+          -1.472871,
+          0.244030
+        ],
+        [
+          0.567469,
+          0.183577,
+          -0.580327,
+          0.106589,
+          -0.122191,
+          0.660439,
+          0.788029,
+          -1.930778,
+          -0.535897,
+          0.805606,
+          0.315226
+        ],
+        [
+          -0.492430,
+          0.831827,
+          0.450082,
+          0.047693,
+          -0.009592,
+          -0.133897,
+          -0.217856,
+          -0.300388,
+          0.933199,
+          -0.469346,
+          -0.320705
+        ]
+      ],
+      [
+        [
+          0.286167,
+          0.523604,
+          0.522476,
+          -0.050982,
+          -0.556823,
+          -0.283470,
+          0.045166,
+          0.515158,
+          -0.008529,
+          -0.438243,
+          -0.468260
+        ],
+        [
+          0.168922,
+          0.215154,
+          0.900485,
+          0.895925,
+          -1.386861,
+          -0.462215,
+          -0.395377,
+          -0.131580,
+          -0.004620,
+          0.267687,
+          -0.235178
+        ],
+        [
+          -1.113490,
+          -0.091628,
+          -0.181864,
+          -0.766544,
+          1.795587,
+          0.565468,
+          -1.372082,
+          0.309835,
+          -0.004971,
+          -0.828283,
+          -1.612386
+        ],
+        [
+          -0.674760,
+          -1.244397,
+          -0.727656,
+          -0.407206,
+          0.379311,
+          0.323092,
+          2.102326,
+          -0.443047,
+          -0.003911,
+          1.391065,
+          1.338062
+        ],
+        [
+          1.333160,
+          0.597268,
+          -0.513440,
+          0.328807,
+          -0.231213,
+          -0.142875,
+          -0.380033,
+          -0.250366,
+          0.022031,
+          -0.392226,
+          0.977761
+        ]
+      ]
+    ]
+  }
+}

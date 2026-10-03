@@ -45,7 +45,7 @@ import {
   type TranscriptResult,
 } from '../contracts/index.js';
 import { DEFAULT_SEGMENTER, segmentCut, type StreamSegmenter } from '../core/stt/segmenter.js';
-import { writtenLanguage } from '../core/stt/tdt.js';
+import { writtenLanguage, type WrittenLanguage } from '../core/stt/tdt.js';
 
 import type { BundleStore } from './bundle-store.js';
 import { CrashLimiter, EngineProcessExit, type EngineLauncher } from './engine-process.js';
@@ -350,6 +350,21 @@ export class ParakeetEngine implements StreamingSttEngine {
     return { raw, language: writtenLanguage(raw, language), engineId: this.engineId };
   }
 
+  /**
+   * The language decision's respelling (P4): the same audio, the greedy decoder held to English's
+   * or Russian's letters (`scriptSuppression` in src/core/stt/tdt.ts — the twin of FluidAudio's
+   * token-language filter on the Mac). Loads first if it has to, like the Mac's.
+   */
+  async transcribeWrittenIn(audio: AudioBuffer, language: Language): Promise<TranscriptResult> {
+    if (language !== 'en' && language !== 'ru') {
+      throw new EngineFailure(engineError.languageUnsupported(language, this.engineId));
+    }
+    if (audio.samples.length === 0) throw new EngineFailure(engineError.transcriptionFailed('no audio'));
+    if (this.liveRuntime() === null) await this.prepare();
+    const raw = await this.decode(audio.samples, language);
+    return { raw, language: writtenLanguage(raw, language), engineId: this.engineId };
+  }
+
   openStream(): TranscriptionStream {
     return new ParakeetStream(this, this.segmenter);
   }
@@ -360,7 +375,7 @@ export class ParakeetEngine implements StreamingSttEngine {
    * nothing promises that is safe, so it never happens. Assigned before the first
    * suspension point, so two callers cannot read the same predecessor.
    */
-  decode(samples: Float32Array): Promise<string> {
+  decode(samples: Float32Array, script: WrittenLanguage | null = null): Promise<string> {
     const runtime = this.liveRuntime();
     if (runtime === null) {
       return Promise.reject(new EngineFailure(engineError.notReady(this.lastError ?? 'prepare() has not run')));
@@ -373,8 +388,8 @@ export class ParakeetEngine implements StreamingSttEngine {
       input.set(samples);
     }
     const job = this.queue.then(
-      () => runtime.transcribeSamples(input),
-      () => runtime.transcribeSamples(input),
+      () => runtime.transcribeSamples(input, script),
+      () => runtime.transcribeSamples(input, script),
     );
     this.queue = job.catch(() => undefined);
     this.lastUsedAt = this.now();
