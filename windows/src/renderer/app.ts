@@ -18,7 +18,7 @@ import { APP_SECTIONS, RAIL_BELOW, SECTION_IDS, appSections } from '../main/sett
 
 import { invoke, on } from './bridge.js';
 import { BRAND_ICON } from './brand-icon.js';
-import { h, statusDot } from './components.js';
+import { h } from './components.js';
 import { icon } from './icons.js';
 import { syncLanguage } from './language.js';
 import { mountOnboarding } from './onboarding.js';
@@ -207,7 +207,7 @@ export function mountApp(root: HTMLElement): void {
   // The interface language. A switch — from Settings or onboarding's first step — re-words
   // the frame and rebuilds the page on screen; onboarding re-renders itself.
   scope.watch(['settings'], () => {
-    if (!syncLanguage()) return;
+    syncLanguage();
   });
   scope.add(
     onAppLanguageChange(() => {
@@ -239,7 +239,6 @@ export function mountApp(root: HTMLElement): void {
     if (!store.settings.onboardingCompleted) openOnboarding();
   });
   layout();
-  void statusDot;
 }
 
 const mount = document.getElementById('root');

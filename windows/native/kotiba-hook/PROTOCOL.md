@@ -19,6 +19,15 @@ held (overlapping presses), and each typed character (VK_PACKET, 231) or the pas
 V used to reach the consumer as another key during the hold and cancel it. Every other
 injected event (AutoHotkey, a vendor remapper) is still reported.
 
+**Since 1.3.0 the hook callback does no I/O, and a hook Windows removed is put back.** The
+callback records each transition in a lock-free ring that a writer thread drains to stdout,
+so a parent that stops reading can no longer hold the callback past `LowLevelHooksTimeout`
+(which makes Windows remove the hook silently — the "it stopped reacting" failure). The
+helper also listens to Raw Input from the keyboard on a message-only window (it never reads
+which key — only that one was pressed); once a second, if raw input saw a key the hook did
+not, the hook is installed again, `REHOOKED` is written, and the keyboard is re-swept
+against what was last reported (below). The process runs at above-normal priority.
+
 ## stdin — commands (1.1.0)
 
 One command per `\n`-terminated line. Unknown lines are ignored, so an older consumer
@@ -56,6 +65,7 @@ transitions happened:
     DOWN <vk>[ S]
     UP <vk>[ S]
     STATE <vk> <0|1>      only ever in answer to a POLL
+    REHOOKED              1.3.0: the hook had been removed by Windows and was re-installed
 
 ` S` (1.1.1) marks a transition the helper SWALLOWED. The consumer trusts it over its own
 record of which modifiers are down, because the helper read the real keyboard.
@@ -85,10 +95,24 @@ dictation, and its eventual `UP` is not orphaned.
 
 This is the Windows analogue of `PushToTalkMonitor.resyncHeld()` on macOS.
 
+The generic 16/17/18 and the mouse buttons (1, 2, 4, 5, 6) are never swept: they are not
+keys the hook reports, and a mouse button "down" would read as a chord.
+
+## stdout after `REHOOKED` — the re-sweep (1.3.0)
+
+Right after `REHOOKED` the helper compares every key's physical state with what it last
+reported and writes `DOWN <vk>` / `UP <vk>` for each difference — a key that went down or
+came up while the hook was gone. A swallowed key's state cannot be read back, so it is
+reported up. These lines are ordinary transitions and the consumer treats them as such: a
+dictation key held through the gap opens its dictation now, one released closes it.
+
 ## stderr — diagnostics, never parsed
 
     kotiba-hook <version>: watching
     kotiba-hook: SetWindowsHookEx refused, GetLastError=<n>
+    kotiba-hook: the hook had stopped receiving keys; re-installed
+    kotiba-hook: raw input refused (GetLastError=<n>); re-hooking every 30 s
+    kotiba-hook: the parent stopped reading; <n> transitions dropped
 
 ## Exit codes
 
@@ -114,7 +138,8 @@ the process is also safe — Windows removes a low-level hook when its owning th
    Windows) has to live here because a hook must answer synchronously.
 3. **The callback stays trivial.** Windows silently removes a hook that exceeds
    `LowLevelHooksTimeout`, and a silently-removed hook is a dead gesture with a healthy
-   tray icon. No allocation, no locking, no COM in the callback.
+   tray icon. No I/O (1.3.0: not even the pipe), no allocation, no locking, no COM in the
+   callback — a ring write and a `SetEvent`.
 4. **It emits VK codes only** — never scan codes, never characters, never modifier
    state. See the privacy note in `src/main.cpp`: this pipe sees every key the user
    presses, and its containment is a property of the design, not of a filter.

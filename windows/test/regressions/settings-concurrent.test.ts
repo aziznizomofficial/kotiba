@@ -5,16 +5,17 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { SETTINGS_FILE_NAME } from '../../src/contracts/index.js';
-import { createFileSettingsStore, writeFileAtomic } from '../../src/platform/settings.js';
+import { atomicWriteFs, createFileSettingsStore, writeFileAtomic } from '../../src/platform/settings.js';
 
 let directory: string;
 beforeEach(async () => {
   directory = await fs.mkdtemp(path.join(os.tmpdir(), 'kotiba-review-'));
 });
 afterEach(async () => {
+  vi.restoreAllMocks();
   await fs.rm(directory, { recursive: true, force: true });
 });
 
@@ -40,7 +41,11 @@ it('overlapping settings updates never reject and the file holds the last state'
   expect(JSON.stringify(saved)).toContain('0.5');
 });
 
-it('whatever the interleaving, the settings file on disk always parses', async () => {
+// I/O-BOUND BY DESIGN: up to 180 temp files, each fsync'd. It timed out at vitest's 5 s default
+// when the whole suite ran beside other heavy jobs — the flake the 1.0.3 review chased. It was
+// not a serialisation bug (the queue held every time); writes are now coalesced, which halves
+// the fsyncs here, and the budget says what this test costs instead of hoping.
+it('whatever the interleaving, the settings file on disk always parses', { timeout: 30_000 }, async () => {
   const store = createFileSettingsStore({ directory });
   await store.load();
   const target = path.join(directory, SETTINGS_FILE_NAME);
@@ -59,4 +64,46 @@ it('whatever the interleaving, the settings file on disk always parses', async (
     }
   }
   expect(unparsable).toBe(0);
+});
+
+it('overlapping writes are coalesced: the newest contents, written once, and every caller settles', async () => {
+  const target = path.join(directory, 'x.json');
+  const rename = vi.spyOn(atomicWriteFs, 'rename');
+  const calls = Array.from({ length: 10 }, (_, i) => writeFileAtomic(target, JSON.stringify({ i })));
+  const results = await Promise.allSettled(calls);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
+  // The first goes to disk at once; the nine that arrived while it was there collapse into one.
+  expect(rename).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(await fs.readFile(target, 'utf8'))).toEqual({ i: 9 });
+});
+
+it('a rename Windows refuses while a scanner holds the file is retried, not reported', async () => {
+  const target = path.join(directory, 'x.json');
+  const real = atomicWriteFs.rename;
+  let refusals = 0;
+  vi.spyOn(atomicWriteFs, 'rename').mockImplementation(async (from, to) => {
+    if (refusals < 3) {
+      refusals += 1;
+      throw Object.assign(new Error('EPERM: operation not permitted, rename'), { code: 'EPERM' });
+    }
+    await real(from, to);
+  });
+  await writeFileAtomic(target, '{"ok":true}');
+  expect(refusals).toBe(3);
+  expect(await fs.readFile(target, 'utf8')).toBe('{"ok":true}');
+});
+
+it('a rename that keeps failing gives up, rejects, and leaves no temp file behind', async () => {
+  const target = path.join(directory, 'x.json');
+  vi.spyOn(atomicWriteFs, 'rename').mockRejectedValue(Object.assign(new Error('EPERM'), { code: 'EPERM' }));
+  await expect(writeFileAtomic(target, '{}')).rejects.toThrow('EPERM');
+  expect(await fs.readdir(directory)).toEqual([]);
+});
+
+it('a failure that is not a busy file is not retried', async () => {
+  const target = path.join(directory, 'x.json');
+  const rename = vi.spyOn(atomicWriteFs, 'rename').mockRejectedValue(Object.assign(new Error('ENOSPC'), { code: 'ENOSPC' }));
+  await expect(writeFileAtomic(target, '{}')).rejects.toThrow('ENOSPC');
+  expect(rename).toHaveBeenCalledTimes(1);
+  expect(await fs.readdir(directory)).toEqual([]);
 });

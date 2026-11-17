@@ -173,6 +173,12 @@ export interface CompositionDeps {
    * `utilityProcess` launcher; absent, they run in this process as before.
    */
   readonly engineLauncher?: import('../engines/index.js').EngineLauncher;
+  /**
+   * How model downloads reach the network. The app passes Electron's `net.fetch` (Chromium's
+   * stack: the Windows proxy settings and certificate store) with Node's `fetch` behind it
+   * (`./download-transport.ts`). Absent: Node's `fetch` — tests, `--check`.
+   */
+  readonly fetch?: typeof fetch;
   /** Told when a bundle's state changes, so the window can say "downloading 40 %". */
   readonly onBundleState?: (id: import('../contracts/index.js').BundleId, state: import('../contracts/index.js').BundleState) => void;
   /**
@@ -305,6 +311,7 @@ export async function composePipeline(deps: CompositionDeps): Promise<Compositio
   const models = deps.engines.createModelStore({
     modelsDirectory: paths.modelsDirectory,
     bundledDirectory: paths.bundledDirectory,
+    ...(deps.fetch === undefined ? {} : { fetch: deps.fetch }),
   });
 
   // ---- the microphone ---------------------------------------------------------------
@@ -445,6 +452,7 @@ export async function composePipeline(deps: CompositionDeps): Promise<Compositio
     const bundles = module.createBundleStore({
       modelsDirectory: paths.modelsDirectory,
       readOnlyDirectory: paths.bundledDirectory,
+      ...(deps.fetch === undefined ? {} : { fetch: deps.fetch }),
     });
     let parakeet: OnDeviceEngines['parakeet'] = null;
     try {
@@ -616,6 +624,10 @@ export async function composePipeline(deps: CompositionDeps): Promise<Compositio
     async dispose(): Promise<void> {
       if (disposed) return;
       disposed = true;
+      // Downloads first: each stops where it is and its `.partial` is what the next launch
+      // resumes — a transfer still writing while the process is torn down helps nobody.
+      onDevice?.bundles.cancelAll?.();
+      models.cancelDownloads?.();
       // The shared helper belongs to THIS module: neither the inserter nor the focus
       // source created it, so neither will tear it down, and a `kotiba-input.exe` left
       // running after the app quits is a process the user has no way to find.

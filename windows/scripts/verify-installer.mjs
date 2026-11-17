@@ -38,6 +38,8 @@
 //          forced (`-tnsis`; left to sniff, 7-Zip may pick the PE handler and list
 //          SECTIONS), find the nested archive entry, extract it to a temp dir, and list
 //          THAT. The model names and sizes are one layer down and that is where we look.
+//   6. the three native helpers are in `win-unpacked/resources/native/` and are PE images
+//      ('MZ', not a placeholder) — without them the key does nothing at all;
 //      Step 5's archive work is skipped with a warning, not a failure, when `7z` is not
 //      on the machine — windows-latest ships it, a developer's Mac might not. Steps 1–4
 //      still run, and step 3 in particular is a real backstop that needs no 7z.
@@ -322,6 +324,37 @@ async function checkNativeEngines(releaseDir) {
       fail(`native: onnxruntime-node's ${platform} binaries were packaged; only win32/x64 belongs here`);
     } catch {
       // Absent, as it should be.
+    }
+  }
+}
+
+/**
+ * The three native helpers, in `resources/native/` where `src/main/paths.ts` looks for them,
+ * each a real Windows executable. Nothing checked this: an installer built with an empty
+ * `resources/native` (a failed or skipped `build-native-zig.sh`) passed every check above and
+ * then, on the user's machine, the key did nothing ("the dictation key is not being
+ * watched"), nothing was ever typed, and nothing was ever transcribed.
+ */
+async function checkNativeHelpers(releaseDir) {
+  const native = path.join(releaseDir, 'win-unpacked', 'resources', 'native');
+  for (const name of ['kotiba-hook.exe', 'kotiba-input.exe', 'kotiba-stt.exe']) {
+    const file = path.join(native, name);
+    let handle;
+    try {
+      handle = await fs.open(file, 'r');
+      const { size } = await handle.stat();
+      const head = Buffer.alloc(2);
+      await handle.read(head, 0, 2, 0);
+      // 'MZ': the DOS header every PE image starts with. A 0-byte or text placeholder is not.
+      if (size < 4096 || head.toString('latin1') !== 'MZ') {
+        fail(`helpers: resources/native/${name} is not a Windows executable (${size} bytes)`);
+      } else {
+        ok(`helpers: resources/native/${name} (${size} bytes)`);
+      }
+    } catch {
+      fail(`helpers: resources/native/${name} is missing — run scripts/build-native-zig.sh before electron-builder`);
+    } finally {
+      await handle?.close();
     }
   }
 }
@@ -614,6 +647,7 @@ async function main() {
 
   await checkUnpackedModels(releaseDir, specs);
   await checkNativeEngines(releaseDir);
+  await checkNativeHelpers(releaseDir);
 
   if (exePath || zipPath) {
     const sevenZip = await find7z();

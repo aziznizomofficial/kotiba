@@ -44,6 +44,8 @@
 
 import type { AudioHost, AudioHostCommand, AudioHostEvent, AudioHostReply } from '../audio/index.js';
 
+import { METER_ATTACK, METER_RELEASE } from '../audio/levels.js';
+
 import { IPC_AUDIO, IPC_SEND } from './ipc.js';
 
 /**
@@ -87,12 +89,23 @@ export function captureBootstrap(workletSource: string, rendererSource: string):
     // thread that is also pumping the STT host's pipe, to move a number the HUD redraws
     // 20 times a second. Everything that is not a level goes straight through: a device
     // change delayed is a graph that stays stale for another press.
+    //
+    // AND THE METER IS THE MAC'S, PER BLOCK: instant attack, exponential release, applied to
+    // EVERY block (`LevelMeter.publishPeak`), and what crosses at 20 Hz is the meter, not one
+    // block's peak. The first version sent whichever block happened to open each 50 ms
+    // window — one 8 ms slice in six — so the pill's bars fell to nothing between syllables
+    // and jumped on a consonant, where the Mac's sit steady under speech.
     `window.__kotibaLevelSentAt = 0;`,
+    `window.__kotibaLevel = 0;`,
     `window.__kotibaSend = (event) => {`,
     `  if (event && event.kind === 'level') {`,
+    `    const peak = typeof event.peak === 'number' ? event.peak : 0;`,
+    `    const was = window.__kotibaLevel;`,
+    `    window.__kotibaLevel = peak > was ? peak : was * ${String(METER_RELEASE)} + peak * ${String(METER_ATTACK)};`,
     `    const now = Date.now();`,
     `    if (now - window.__kotibaLevelSentAt < ${String(LEVEL_INTERVAL_MS)}) return;`,
     `    window.__kotibaLevelSentAt = now;`,
+    `    event = { kind: 'level', peak: window.__kotibaLevel };`,
     `  }`,
     `  window.kotibaAudio.send(${JSON.stringify(IPC_AUDIO.event)}, event);`,
     `};`,

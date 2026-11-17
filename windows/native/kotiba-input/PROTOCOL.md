@@ -12,6 +12,20 @@ Since 1.2.0 every key event this helper synthesises (the unicode path's characte
 clipboard path's Ctrl+V) carries `dwExtraInfo = 0x4B4F5442`, the value kotiba-hook 1.2.0
 skips, so a paste made while the next dictation's key is held never cancels that dictation.
 
+**1.3.0** — every `insert` and `replace` first waits for the previous paste's restore (the
+Mac's `PasteWindow`); the restore delay is 600 ms (the Mac's is 250 ms; see `kDefaultRestoreDelayMs`
+for why Windows waits longer); a restore is skipped when somebody else changed the clipboard
+after our write (`GetClipboardSequenceNumber`); what Kotiba puts on the clipboard, and what it
+puts back, is marked `CanIncludeInClipboardHistory` = 0, `CanUploadToCloudClipboard` = 0 and
+`ExcludeClipboardContentFromMonitorProcessing`, so dictations no longer fill Win+V history or
+sync to the cloud clipboard; `auto` does not TYPE while Ctrl is physically held (overlapping
+dictations hold Right Ctrl — typed characters would be Ctrl+letter shortcuts) and pastes
+instead; typing or pasting waits up to 1 s for Alt and the Windows keys to come up; an
+`auto` that fell back after a partial delivery pastes only what was not typed; and an
+insertion into a window that runs ELEVATED is refused with `elevated`, the text left on the
+clipboard for the user's own Ctrl+V (UIPI drops what a non-elevated process injects there,
+usually with `SendInput` still reporting success).
+
 The client sends `"path":"clipboard"` for any text containing a line break or a tab
 (`pathFor` in `src/platform/insert.ts`): typed, U+000A is Enter in a chat box and a tab
 moves the focus.
@@ -35,14 +49,14 @@ resynchronise past: a malformed line costs exactly that line.
 
 ```json
 {"id":"7","op":"insert","text":"Assalomu alaykum","path":"auto",
- "restoreDelayMs":250,"confirm":true}
+ "restoreDelayMs":600,"confirm":true}
 ```
 
 | field | default | meaning |
 |-------|---------|---------|
 | `text` | — | UTF-8. Empty is refused with `empty`. |
 | `path` | `"auto"` | `"unicode"`, `"clipboard"` or `"auto"`. |
-| `restoreDelayMs` | `250` | Clipboard path only. Parity with `PasteboardSink.restoreDelay`. |
+| `restoreDelayMs` | `600` | Clipboard path only. The Mac's `PasteboardSink.restoreDelay` is 250. |
 | `confirm` | `true` | Clipboard path only. Read the clipboard back before pasting. |
 
 **`unicode`** — `SendInput` with `KEYEVENTF_UNICODE`, one key-down/key-up pair per UTF-16
@@ -58,7 +72,8 @@ detached thread. Exists because unicode injection is not universal: an applicati
 reads scan codes rather than characters ignores a `KEYEVENTF_UNICODE` event *silently*,
 and `SendInput` still reports success because the event was injected, not consumed.
 
-**`auto`** — unicode, falling back to the clipboard when `SendInput` refuses to inject.
+**`auto`** — unicode, falling back to the clipboard when `SendInput` refuses to inject
+(pasting only the part that was not typed), and straight to the clipboard while Ctrl is held.
 It cannot detect an application that accepts the injection and ignores it; that case
 needs `path: "clipboard"` from the caller.
 
@@ -186,6 +201,7 @@ message** (D-W10):
 | `couldNotSendKeys` | `couldNotSendKeys` |
 | `moved` | `moved` |
 | `notEditable` | `notEditable` |
+| `elevated` | `elevated` / `elevatedNoClipboard` (1.3.0) — the window in front runs as administrator; `insert` answers `"onClipboard":true` when it left the text on the clipboard |
 | `badRequest` | — a bug in the caller; the helper stays alive |
 | `userChanged` | — ducking: the user moved the session's volume; leave it |
 | `sessionGone` | — ducking: the session ended or its device went away |
@@ -197,13 +213,11 @@ The user-visible sentence for each is written once, in
 Optional diagnostic fields on any response:
 
 - `heldModifiers` — modifiers physically down when the insertion ran, e.g. `"RCtrl"`.
-  Should always be absent: insertion happens after the hotkey is released. When it is
-  present, a Ctrl+V became a Ctrl+Shift+V, and that is otherwise unexplainable.
+  Present when a dictation lands while the next one's key is held (overlapping presses);
+  with Shift it means a Ctrl+V became a Ctrl+Shift+V, which is otherwise unexplainable.
 - `droppedFormats` — clipboard formats the snapshot deliberately did not capture.
 - `unicodeUnitsBeforeFallback` — on `path: "clipboard"` reached from `"auto"`, how many
-  units the unicode attempt delivered before Windows refused it. Non-zero means part of
-  the text landed twice, and a success message with no number would leave that
-  unexplainable.
+  units the unicode attempt delivered before Windows refused it; the paste carried the rest.
 
 ## What the clipboard snapshot preserves, and what it does not
 
@@ -222,12 +236,14 @@ Restoring an **empty** snapshot empties the clipboard rather than leaving the di
 text behind. Parity with `PasteboardSink.restore`, and correct on its own terms: the
 clipboard was empty before, so it is empty after.
 
-## Known races, both inherited from macOS deliberately
+## Known races
 
-1. Two insertions less than `restoreDelayMs` apart: the first restore lands after the
-   second insert.
+1. ~~Two insertions less than `restoreDelayMs` apart~~ — closed in 1.3.0 by the paste window,
+   as the Mac closed it with `PasteWindow`.
 2. The `confirm` read-back only detects an overwrite between our write and our read. It
    cannot detect an application that steals the clipboard after Ctrl+V is posted.
+3. A target that has not read the clipboard `restoreDelayMs` after Ctrl+V pastes the user's
+   own contents instead. 600 ms is a guess at a busy Windows machine, not a measurement.
 
 ## Shutdown
 

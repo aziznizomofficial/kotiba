@@ -464,8 +464,13 @@ public final class HUDPanel {
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.assistiveTechHighWindow)))
         // Visible over full-screen apps and on every Space: dictation happens wherever the user
         // already is, and a HUD that vanishes in full screen is a HUD nobody trusts.
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary,
-                                    .ignoresCycle]
+        //
+        // `.moveToActiveSpace`, not `.canJoinAllSpaces`: this panel is long-lived and is ordered
+        // out after every dictation. With "all Spaces" the window server leaves it on the Space it
+        // was last shown on, and a later show from another app's full-screen Space (Chrome, Orca)
+        // put it on a Space nobody was looking at — measured: the window had the right level and
+        // frame and was simply not on screen. "Move to active Space" re-homes it on every order-front.
+        panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .ignoresCycle]
     }
 
     public func show() {

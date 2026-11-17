@@ -214,11 +214,6 @@ export function formatLongDate(date: Date): string {
   });
 }
 
-/** For `<html lang>`: what a screen reader and the spell checker should assume. */
-export function htmlLang(language: AppLanguage = current): string {
-  return language;
-}
-
 /** Built-in modes carry English names in their data; their display names live here. */
 export function builtInModeName(key: string): string | null {
   switch (key) {

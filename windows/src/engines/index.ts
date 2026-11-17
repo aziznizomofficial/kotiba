@@ -27,6 +27,7 @@ export {
   padForDecode,
   resolveDecodeCores,
   resolveThreadCount,
+  resolveWhisperThreads,
   whisperParamsFor,
 } from './params.js';
 

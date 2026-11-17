@@ -412,6 +412,19 @@ suite('streaming Whisper session — scheduling, without a model', () => {
     }
   });
 
+  test('a pause decode is offered as the transcript so far, for the polish to prime', async () => {
+    const decoder = new FakeDecoder();
+    const stream = session(decoder);
+    const progress: string[] = [];
+    stream.onProgress((text) => progress.push(text));
+    const audio = concat(voice(2), room(0.35));
+    await feed(stream, audio);
+    expect(progress).toEqual(['w0']);
+    await release(stream, audio);
+    // Nothing more once the dictation is over.
+    expect(progress).toEqual(['w0']);
+  });
+
   test('committed text is offered to incremental polish as it lands', async () => {
     const decoder = new FakeDecoder();
     const stream = session(decoder, { ...SHORT, speculate: false });

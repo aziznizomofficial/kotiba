@@ -156,8 +156,15 @@ class Store {
       const key = (record: AppSnapshot['lastRecord']): string | null =>
         record === null ? null : `${record.startedAt}|${record.outcome}|${record.result ?? ''}`;
       const previous = key(this.app.lastRecord);
+      const filesBefore = filesOnDisk(this.app);
       this.app = app;
       this.emit('app');
+      // A download that finished (or failed) in the BACKGROUND — the core fetched after setup,
+      // a language turned on — changes what the model report says, and nothing else re-asks:
+      // the report was read once when the window opened, so the Uzbek card said "No model"
+      // beside a finished download until the app was restarted. Asked again only when a
+      // download's KIND moves, never on a percent.
+      if (filesOnDisk(app) !== filesBefore) void this.reloadModels();
       if (app.lastRecord !== null && key(app.lastRecord) !== previous) {
         this.include(app.lastRecord);
         // A finished dictation is new history.
@@ -169,6 +176,13 @@ class Store {
       this.emit('level');
     });
   }
+}
+
+/** What a finished download changes, without its progress: one string per push, cheap. */
+function filesOnDisk(app: AppSnapshot): string {
+  const rows = app.downloads.map((row) => `${row.id}:${row.state.kind}`).join();
+  const bundles = `${app.onDevice.parakeet.kind}|${app.onDevice.modesModel.kind}|${app.onDevice.arabicModesModel.kind}`;
+  return `${rows}|${bundles}|${app.downloading ?? ''}`;
 }
 
 export const store = new Store();

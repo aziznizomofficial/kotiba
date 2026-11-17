@@ -198,6 +198,20 @@ hold is open: it recovers a key-up lost to a removed hook or to an elevated wind
 recorder is fed by the hook itself, so it records exactly the code the hook reports.
 The Windows key cannot be the hotkey (it opens Start on release).
 
+**1.0.3 addendum (shell review, 2026-11-17).** Windows silently removes a low-level hook whose
+callback overruns `LowLevelHooksTimeout`, and until now nothing noticed — the gesture died
+with a healthy tray. kotiba-hook 1.3.0 therefore (a) does no I/O in the callback: a lock-free
+ring and a writer thread own stdout, so a parent that stops reading can no longer stall it;
+(b) runs above normal priority; (c) watches itself through Raw Input (a key event raw input
+saw and the hook did not re-installs the hook, writes `REHOOKED`, and re-sweeps the keyboard
+against what it reported — a dictation key held through the gap opens, as the Mac's
+`resyncHeld` does after a tap re-enable). kotiba-input 1.3.0 adopts the Mac's `PasteWindow`
+(a paste's restore runs before the next insertion touches the clipboard), restores after
+**600 ms, not the Mac's 250** (a busy Windows target that has not read the clipboard by then
+pastes the user's OLD clipboard), keeps its writes out of clipboard history and the cloud
+clipboard, never TYPES while Ctrl is held (overlapping dictations hold Right Ctrl; it pastes),
+and refuses an elevated foreground with `elevated`, leaving the text on the clipboard.
+
 ## D-W15 — Ducking is per app session, not the master volume
 
 The Mac moves the output device's volume because it is the only knob that ramps. On
@@ -345,7 +359,8 @@ Kotib STT (in the installer today, so "Included") — onboarding has a **Downloa
   Modes counts as a yes.
 * Uzbek, if missing, is offered only once `PUBLIC_MODELS_LIVE`; until then its row says
   "reinstall", never a button that 404s. Its download (then) goes through the model store,
-  which is sha256-verified but buffers in memory and does not resume.
+  which is sha256-verified but buffers in memory and does not resume. (Superseded by D-W26: it
+  streams, resumes and retries through the same downloader as the bundles.)
 
 Silero VAD (885 KB) moves the other way: it ships in the installer
 (`resources/models/silero-vad-v6.2.0/`), is hashed once per launch by the bundle store, and
@@ -469,4 +484,74 @@ Owner, 2026-10-02: a light app for general users, with no choices to make in set
 Not verified: an installer built and measured with this change (the size above is arithmetic);
 a real first run on Windows (the downloads' order and resume are covered by unit tests over the
 pure model, not by a run).
+
+## D-W26 — Downloads that finish by themselves (1.0.3; amends D-W20, D-W23, D-W25)
+
+Owner, 2026-11-17: "downloading the language models kept failing". The causes found in review,
+none reproduced on Windows hardware (none is available), each fixed by construction:
+
+* **One attempt.** A drop mid-body (`ECONNRESET`, "other side closed", a Wi-Fi hand-over) turned
+  the row `failed` until someone clicked. Now ONE downloader (`src/engines/download-file.ts`)
+  serves both stores: retried with capped exponential backoff (2 s doubling to 60 s, jittered),
+  each retry resumed with `Range`; `Retry-After` honoured for 429/503; any other 4xx final. An
+  attempt that wrote ≥ 256 KB resets the count, so a line that drops every 100 MB still finishes;
+  six dead attempts in a row (~1 min) end the call.
+* **No stall timeout.** A dead TCP connection never errors; undici waits 300 s per stall. Now no
+  byte for 30 s (headers or body) abandons the attempt and resumes. The bar says "reconnecting"
+  (`retrying` on the downloading state) instead of freezing.
+* **Range answered wrongly.** 200 to a range restarts the file; a 206 whose `Content-Range` starts
+  elsewhere is not spliced; 416 restarts clean; a server length that is not the pin is final. A
+  resumed file that fails sha256 is fetched once more from byte 0 in the same call.
+* **The model store buffered the whole file** (574 MB of turbo in the main process) with no resume.
+  It now streams through the same downloader, and two callers for one model share one download.
+* **Disk and antivirus.** Free space is checked before each request (`statfs`); ENOSPC is caught —
+  "needs 1.28 GB, 412 MB free", localised. A rename refused EPERM/EBUSY/EACCES (antivirus scanning
+  the just-closed file) is retried with a growing delay; the verified partial survives regardless.
+* **Node's `fetch` ignores the Windows proxy and certificate store.** Antivirus HTTPS scanning
+  (Kaspersky, ESET — common here) re-signs TLS with a root only the Windows store trusts, so
+  undici failed every attempt with "unable to get local issuer certificate". Downloads now go
+  through Electron's `net.fetch` (Chromium's stack, what the user's browser does), with Node's
+  `fetch` behind it for a request Chromium's could not start (`src/main/download-transport.ts`).
+* **No automatic retry after a failure.** The app now tries again by itself
+  (`scheduleDownloadRetry`): 1, 2, 5, 10, then every 15 minutes, up to 12 online rounds per launch,
+  offline rounds only polling `net.isOnline()`; waking from sleep retries after 10 s with a fresh
+  count. Only failures that can pass (`DownloadError.retryLater`: network, server, disk, locked) —
+  never a 404 or a corrupt body, which would refetch gigabytes for the same answer.
+* **The installer's Uzbek model was downloaded again.** Onboarding and the readiness card queue
+  every wanted id; the model store looks only in the models directory, so it fetched 539 MB the
+  installer already carries, invisibly (the row stays "Included"), ahead of Qwen. The queue now
+  skips any row already present when its turn comes.
+* **A quit** cancels every transfer (`cancelAll` / `cancelDownloads`, for good — the queue cannot
+  start its next link mid-quit); each `.partial` is closed where it is and resumed next launch.
+
+Not verified on Windows: `net.fetch` with `Range` across Hugging Face's 302 to its Xet/CDN host,
+`statfs` on a real NTFS volume, Defender's actual rename behaviour. Unit tests cover each fault
+with an injected transport, clock, free-space probe and rename.
+# 1.0.3 — key-up latency on Windows (2026-11-17)
+
+## D-W27 — Nothing between key-up and text that the Mac does not have, and nothing unbounded
+
+Owner, 2026-11-17: "it processed speech for way too long and did not react all the time." The
+review found the Windows key-up path doing strictly more serial work than the Mac's:
+
+* **Parakeet decodes at pauses during the hold** (the Mac's `ParakeetStream` speculation, ported):
+  before, every English/Russian dictation under 14 s was decoded in one batch after key-up.
+* **The speculated stream finishes beside the language-ID pass** (the Mac's `speculativeFinishes`),
+  not after it.
+* **The modes' polish is primed from every pause decode** (the Mac's `IncrementalPolish.prime`),
+  not only from the 14 s / 20 s commits — so Message, Note and Uzbek Super start before key-up.
+* **Parakeet is preloaded whatever the default language** (the Mac's rule), and a pinned press
+  preloads its own family.
+* **Bounded:** the routed transcription (`transcribeDeadlineMs`, 30 s floor + 2 s per second of
+  audio — fails with a sentence, aborts the decode); a Parakeet or language-ID process that does
+  not answer (30 s + 2 s/s; 10 s) is killed and restarted by the next dictation; kotiba-stt's hang
+  timeout 120 s → 60 s. The Mac has none of these: its engines are in-process.
+* **Whisper threads = physical cores** (03-ENGINE-PARITY §2.2; it shipped as logical − 2).
+* **The modes' model stays 15 min, and is paged in at launch** for the default mode when that mode
+  uses it (the Mac: 180 s, first key-down) — a CPU reload + prefill is seconds.
+
+Not changed, and why: the 14 s commit window (shorter commits would cut the key-up tail on a CPU,
+but their WER cost on Parakeet was never measured — `parakeet-bench.mjs` with a smaller
+`commitAfter` is the experiment); the polish deadlines (2 s whole, 1.5 s tail — the Mac's).
+**Not run on Windows** — every number is the unit tests' and this Mac's.
 

@@ -106,7 +106,8 @@ Everything else is parity. These are the exceptions, and each is a decision with
 |---|---|---|---|
 | D-W4 | right ⌘ held | **Right Ctrl** held, configurable | no Command key; Right Alt is AltGr on the audience's layouts |
 | D-W2 | English via `SpeechTranscriber`, 117 ms | English via `large-v3-turbo` | no Windows equivalent exists |
-| D-W5 | `history.sqlite` + FTS5 | JSONL + in-memory index | avoids a native module nobody here can debug |
+| D-W5 | `history.sqlite` + FTS5 | JSONL + in-memory index; appends and rewrites run one at a time, in call order | avoids a native module nobody here can debug |
+| — | `UserDefaults` (cannot fail) | settings file: temp + fsync + rename; overlapping saves coalesce to the newest; a rename refused with EPERM/EACCES/EBUSY (a scanner holding the file) is retried for ~1.5 s | NTFS + antivirus; a save that loses to Defender must not read as "settings could not be saved" |
 | D-W6 | AVAudioEngine + AVAudioConverter | hidden renderer, `AudioContext({sampleRate:16000})` | the browser's resampler is VHQ-class and already written |
 | D-W11 | `whisperBeamSize = 5` for every model | **beam 1 for the Uzbek model, 5 for `large-v3-turbo`** | see below |
 | — | 3 permission blockers | 1 (microphone) | Windows needs no Accessibility or Input Monitoring grant |

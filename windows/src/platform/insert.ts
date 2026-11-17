@@ -46,8 +46,21 @@ import {
  */
 export const INPUT_REQUEST_TIMEOUT_MS = 5_000;
 
-/** A helper that dies on every request is not going to start working. */
+/** A helper that dies on every request is not going to start working — for now. */
 export const INPUT_MAX_CONSECUTIVE_FAILURES = 3;
+
+/**
+ * After the budget is spent, how long until ONE more start is tried.
+ *
+ * It used to be spent for good: three timeouts in a row — a target application that hung
+ * while three dictations were pasted into it, a machine paging hard after a model load —
+ * and every insertion AND every foreground read failed for the rest of the session, until
+ * the user restarted Kotiba. "It did not react" for the next hour, for a fault that had
+ * long since cleared. Now the budget recovers: half a minute after the last failure one
+ * start is allowed, and if that one dies too the half-minute starts again. A helper that
+ * genuinely cannot start costs one spawn per 30 s, which is no fork bomb.
+ */
+export const INPUT_RETRY_AFTER_MS = 30_000;
 
 /** Which way the text actually went in. Recorded, because a diagnostic that cannot tell
  * "we pasted" from "we typed" cannot explain an empty text field. */
@@ -66,6 +79,8 @@ export interface InputResponse {
   readonly restoreDelayMs?: number;
   readonly droppedFormats?: string;
   readonly heldModifiers?: string;
+  /** `elevated` refusal (1.3.0): the text was left on the clipboard for the user's Ctrl+V. */
+  readonly onClipboard?: boolean;
   readonly appId?: string;
   readonly displayName?: string;
   readonly pid?: number;
@@ -111,6 +126,9 @@ export interface InputHelperOptions {
   readonly spawnProcess?: (path: string) => ChildProcessWithoutNullStreams;
   /** Every spawn, death and refusal, for the diagnostics pane. Never the inserted text. */
   readonly onNote?: (note: string) => void;
+  /** Injected in tests. See `INPUT_RETRY_AFTER_MS`. */
+  readonly retryAfterMs?: number;
+  readonly now?: () => number;
 }
 
 interface Pending {
@@ -138,18 +156,27 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
     ((path: string) => spawn(path, [], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true }));
   const note = options.onNote ?? (() => {});
   const requestTimeoutMs = options.requestTimeoutMs ?? INPUT_REQUEST_TIMEOUT_MS;
+  const retryAfterMs = options.retryAfterMs ?? INPUT_RETRY_AFTER_MS;
+  const now = options.now ?? (() => Date.now());
 
   let child: ChildProcessWithoutNullStreams | null = null;
   let pending: Pending | null = null;
   let stdout = '';
   let stderrTail = '';
   let consecutiveFailures = 0;
+  /** When the last failure was counted, for the cool-off. */
+  let lastFailureAt = 0;
   let restarts = 0;
   let disposed = false;
   let nextId = 1;
 
   /** The serialisation chain. Every request awaits its predecessor before it is written. */
   let chain: Promise<unknown> = Promise.resolve();
+
+  function failed(): void {
+    consecutiveFailures += 1;
+    lastFailureAt = now();
+  }
 
   function settleWithFailure(reason: string): void {
     const waiting = pending;
@@ -203,6 +230,11 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
       }
     });
 
+    // Without a listener, a write into the pipe of a helper that has just died raises
+    // EPIPE as an uncaught 'error' event on stdin and takes the main process down with
+    // it. The death itself is reported by 'exit' below; the write's failure is nothing new.
+    process_.stdin.on('error', () => undefined);
+
     process_.stderr.setEncoding('utf8');
     process_.stderr.on('data', (chunk: string) => {
       stderrTail = (stderrTail + chunk).slice(-2048);
@@ -211,7 +243,7 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
     process_.on('error', (error: Error) => {
       if (child !== process_) return;
       child = null;
-      consecutiveFailures += 1;
+      failed();
       note(`kotiba-input would not start: ${error.message}`);
       settleWithFailure(error.message);
     });
@@ -221,7 +253,7 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
       child = null;
       const how = signal !== null ? `killed by ${signal}` : `exited with code ${code ?? 'unknown'}`;
       if (!disposed) {
-        consecutiveFailures += 1;
+        failed();
         note(`kotiba-input ${how}${stderrTail.trim().length > 0 ? ` — ${stderrTail.trim().slice(-300)}` : ''}`);
       }
       settleWithFailure(how);
@@ -234,10 +266,16 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
     if (child !== null) return child;
     if (disposed) throw new InputHelperUnavailable('the insertion helper has been shut down');
     if (consecutiveFailures >= INPUT_MAX_CONSECUTIVE_FAILURES) {
-      throw new InputHelperUnavailable(
-        `kotiba-input died ${consecutiveFailures} times in a row and will not be restarted again` +
-          (stderrTail.trim().length > 0 ? ` — ${stderrTail.trim().slice(-300)}` : ''),
-      );
+      if (now() - lastFailureAt < retryAfterMs) {
+        throw new InputHelperUnavailable(
+          `kotiba-input died ${consecutiveFailures} times in a row and will not be restarted again ` +
+            `for ${String(Math.ceil((retryAfterMs - (now() - lastFailureAt)) / 1000))} s` +
+            (stderrTail.trim().length > 0 ? ` — ${stderrTail.trim().slice(-300)}` : ''),
+        );
+      }
+      // The cool-off is over: one more start. Dying again closes the budget again.
+      note(`kotiba-input: trying again after ${String(Math.round(retryAfterMs / 1000))} s`);
+      consecutiveFailures = INPUT_MAX_CONSECUTIVE_FAILURES - 1;
     }
     if (restarts > 0) note(`kotiba-input restarting (attempt ${consecutiveFailures + 1})`);
     const started = start();
@@ -262,7 +300,7 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
         // this the next request finds a child that is still non-null, writes into a
         // dying pipe, and is rejected by the death of a process it never used.
         if (child === process_) child = null;
-        consecutiveFailures += 1;
+        failed();
         try {
           process_.kill();
         } catch {
@@ -332,7 +370,11 @@ export function createInputHelper(options: InputHelperOptions): InputHelper {
  * An unknown code is not a crash and not a lie: it becomes its own sentence, so a
  * helper newer than this file still produces something honest in the HUD.
  */
-export function refusalReason(code: string | undefined, detail: string | undefined): string {
+export function refusalReason(
+  code: string | undefined,
+  detail: string | undefined,
+  onClipboard?: boolean,
+): string {
   switch (code) {
     case 'empty':
       return INSERTION_REFUSALS.empty;
@@ -348,6 +390,9 @@ export function refusalReason(code: string | undefined, detail: string | undefin
       return INSERTION_REFUSALS.moved;
     case 'notEditable':
       return INSERTION_REFUSALS.notEditable;
+    case 'elevated':
+      // A field, not the prose: whether the helper managed to leave the text on the clipboard.
+      return onClipboard === true ? INSERTION_REFUSALS.elevated : INSERTION_REFUSALS.elevatedNoClipboard;
     default:
       return detail !== undefined && detail.length > 0
         ? `the insertion helper refused: ${detail}`
@@ -409,7 +454,7 @@ export function createInserter(options: InserterOptions): Inserter {
       }
       return { kind: 'inserted' };
     }
-    return { kind: 'refused', reason: refusalReason(response.code, response.detail) };
+    return { kind: 'refused', reason: refusalReason(response.code, response.detail, response.onClipboard) };
   }
 
   return {

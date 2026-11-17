@@ -21,6 +21,7 @@ import type { BundleStore } from './bundle-store.js';
 
 import { CrashLimiter, EngineProcessExit, type EngineLauncher } from './engine-process.js';
 import {
+  ECAPA_MAXIMUM_SAMPLES,
   loadLanguageIDRuntime,
   posteriorFromLogp,
   type LanguageIDReply,
@@ -39,6 +40,9 @@ export {
   type LanguageIDRuntime,
 } from './language-id-runtime.js';
 
+/** A pass that has not answered in this long is a hung process (see `logPosterior`). */
+export const LANGUAGE_ID_REQUEST_TIMEOUT_MS = 10_000;
+
 /** Intra-op threads for the pass (language-id-runtime.ts has the measurement). */
 export const LANGUAGE_ID_THREADS = 2;
 
@@ -52,6 +56,7 @@ export function startLanguageIDProcess(
   options: LanguageIDRuntimeOptions,
   launcher: EngineLauncher,
   onExit?: (exit: EngineProcessExit) => void,
+  requestTimeoutMs: number = LANGUAGE_ID_REQUEST_TIMEOUT_MS,
 ): Promise<LanguageIDRuntime> {
   const channel = launcher('lid');
   let dead: EngineProcessExit | null = null;
@@ -59,13 +64,19 @@ export function startLanguageIDProcess(
   let loaded = false;
   let disposing = false;
   let nextId = 1;
-  const pending = new Map<number, { resolve: (logp: Float32Array) => void; reject: (error: Error) => void }>();
+  const pending = new Map<
+    number,
+    { resolve: (logp: Float32Array) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
+  >();
 
   return new Promise<LanguageIDRuntime>((resolveLoad, rejectLoad) => {
     channel.onExit((code) => {
       if (dead !== null) return;
       dead = new EngineProcessExit('lid', code, !hello);
-      for (const [, waiter] of pending) waiter.reject(dead);
+      for (const [, waiter] of pending) {
+        clearTimeout(waiter.timer);
+        waiter.reject(dead);
+      }
       pending.clear();
       if (!loaded) rejectLoad(dead);
       else if (!disposing) onExit?.(dead);
@@ -92,6 +103,7 @@ export function startLanguageIDProcess(
       const waiter = pending.get(reply.id);
       if (waiter === undefined) return;
       pending.delete(reply.id);
+      clearTimeout(waiter.timer);
       if (reply.kind === 'logp') waiter.resolve(reply.logp);
       else waiter.reject(new Error(reply.message));
     });
@@ -102,7 +114,16 @@ export function startLanguageIDProcess(
         const id = nextId;
         nextId += 1;
         return new Promise<Float32Array>((resolve, reject) => {
-          pending.set(id, { resolve, reject });
+          // The pass is ~25–70 ms (≤ 30 s of audio is all it reads). One that has not answered
+          // in `requestTimeoutMs` is a hung process: it is ended, the router decides without the
+          // model this once (the posterior reads `{}`), and the next dictation starts a fresh one.
+          const timer = setTimeout(() => {
+            if (!pending.delete(id)) return;
+            reject(new Error(`the language-ID engine did not answer within ${Math.round(requestTimeoutMs / 1000)} s — restarting it`));
+            channel.kill();
+          }, requestTimeoutMs);
+          timer.unref?.();
+          pending.set(id, { resolve, reject, timer });
           channel.postMessage({ kind: 'identify', id, samples } satisfies LanguageIDRequest);
         });
       },
@@ -196,9 +217,13 @@ export function createLanguageIdentifier(options: LanguageIdentifierOptions): La
       await prepare();
       const ready = runtime;
       if (ready === null) return {};
+      // Only what the model reads (`ecapaInput`: the first 30 s) crosses to its process, and as
+      // its own buffer: the whole recording of a long hold is otherwise cloned for nothing.
+      const samples =
+        audio.samples.length > ECAPA_MAXIMUM_SAMPLES ? audio.samples.slice(0, ECAPA_MAXIMUM_SAMPLES) : audio.samples;
       const pass = queue.then(
-        () => ready.logPosterior(audio.samples),
-        () => ready.logPosterior(audio.samples),
+        () => ready.logPosterior(samples),
+        () => ready.logPosterior(samples),
       );
       queue = pass.catch(() => undefined);
       const answer = posteriorFromLogp(await pass);

@@ -285,6 +285,17 @@ only when Kotiba is started from a terminal. For those sections, quit Kotiba, th
    keeps showing Kotiba. (Before 1.0 it would replace the page.)
 8. Close the window with X. The tray icon stays. Left-click the tray: Home comes back.
    Right-click the tray: the first item is "Open Kotiba".
+9. **The window is not a browser (1.0.3).** In the window press Ctrl+R, F5, Ctrl+Shift+I,
+   Ctrl+= / Ctrl+-, hold Ctrl and turn the mouse wheel, and tap Alt. Expected: nothing — no
+   reload, no DevTools, no zoom, no File/Edit/View bar. Ctrl+C / Ctrl+V still work in the
+   History search box and Settings' text fields.
+10. **History while searching (1.0.3).** Type a word in History's search; delete one of the
+   results with its bin. It goes and does not come back. Dictate something containing the word
+   while the search is still typed: it appears in the results.
+11. **Settings survive a busy disk (1.0.3).** With Windows Security real-time protection ON,
+   press the → key twenty times quickly on Settings › Sound › "Lower to". Quit (tray › Quit)
+   and relaunch: the slider shows the last value, and Home shows no "some settings could not be
+   read" notice.
 
 ### C2. The pill and a first dictation (3 min)
 
@@ -354,6 +365,34 @@ Pin Oʻzbekcha on Home, so each dictation takes long enough to overlap.
    - Afterwards, Ctrl+V pastes YOUR word, not the dictation.
 5. Uzbek letters: dictate an Uzbek sentence with oʻ/gʻ into Notepad. The okina (ʻ) appears
    correctly, not as `?` or a box.
+
+### C4a. 1.0.3 shell checks (10 min)
+
+1. **Overlap under Ctrl, into Telegram Desktop.** Pin Oʻzbekcha, click into a Telegram Desktop
+   chat, say a 10 s sentence, release, and at once HOLD Right Ctrl again for ~5 s. The first
+   text lands while you still hold — as a paste — and no chat closes, nothing is sent, no
+   letter goes missing. (`heldModifiers: RCtrl` in the log.)
+2. **Back-to-back pastes.** Tray → Note; copy a word first. Two multi-line dictations less
+   than a second apart: both land whole, in order, the first one not replaced by the second;
+   afterwards Ctrl+V pastes YOUR word.
+3. **Clipboard history.** Turn on Win+V history. Dictate a multi-line Note. Win+V shows
+   neither the dictation nor a second copy of your own word.
+4. **Elevated window.** Notepad "Run as administrator", click into it, dictate (start the hold
+   over the elevated window). The pill says the app runs as administrator and the text is on
+   the clipboard; Ctrl+V pastes it. (If the key does nothing at all over an elevated window,
+   that is Windows: a normal app's hook does not see keys sent there — note it.)
+5. **Hook watchdog.** In `regedit`, set `HKCU\Control Panel\Desktop\LowLevelHooksTimeout`
+   (DWORD) to `1` and sign out/in, so Windows removes the hook at nearly every key (a stress
+   test, harsher than any real machine). Type a few words, then hold Right Ctrl for 3 s and
+   speak. Expected: the dictation opens within ~1 s of the key going down even when its DOWN
+   was lost, stderr has `re-installed (N this session)` (quit Kotiba and start it from
+   PowerShell as `& "$env:LOCALAPPDATA\Programs\Kotiba\Kotiba.exe" 2> "$HOME\kotiba-stderr.txt"`
+   to capture it), and Kotiba never stops reacting for
+   good — before 1.0.3 the first removal killed the key until a restart. Delete the value and
+   sign out/in afterwards.
+6. **Sleep.** Close the lid / Sleep, wake, unlock, press at once: it dictates, the first word is
+   there. Unplug a USB headset while idle, press: the built-in microphone is used.
+7. **Idle CPU.** Leave Kotiba idle 2 minutes; Task Manager shows its processes at ~0 % CPU.
 
 ### C5. Ducking (3 min)
 

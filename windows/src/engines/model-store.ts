@@ -12,9 +12,9 @@
 // Not ported, because the wiring audit found them dead in the macOS app:
 // `ModelStore.isInstalled`, `.remove` and `.installedBytes`.
 
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, open, rename, stat, unlink } from 'node:fs/promises';
+import { mkdir, open, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import {
   GGML_MAGIC,
@@ -33,6 +33,7 @@ import {
   type ModelStore,
   type Settings,
 } from '../contracts/index.js';
+import { DownloadError, downloadFile, type DownloadIo, type DownloadPolicy } from './download-file.js';
 
 /**
  * Four magic bytes and a stat, deliberately — this sits in front of every readiness
@@ -135,8 +136,19 @@ export function settingPathFor(role: ModelRole, settings: Settings): string {
   }
 }
 
-export const createModelStore: CreateModelStore = (options): ModelStore => {
+export type ModelStoreOptions = Parameters<CreateModelStore>[0] & {
+  /** Injected by the tests: the clock, the free-space probe, the rename. */
+  readonly io?: Partial<Omit<DownloadIo, 'fetch'>>;
+  readonly policy?: Partial<DownloadPolicy>;
+};
+
+export const createModelStore = (options: ModelStoreOptions): ModelStore => {
   const notes: string[] = [];
+  const inFlight = new Map<ModelId, Promise<string>>();
+  /** Aborted by `cancelDownloads` (quit). Never replaced: after a quit nothing new may start. */
+  const stopping = new AbortController();
+  // Looked up at call time, so a test that stubs the global after building the store is heard.
+  const io: DownloadIo = { ...options.io, fetch: options.fetch ?? ((input, init) => globalThis.fetch(input, init)) };
   const record = (note: string): void => {
     notes.push(note);
     // Bounded. This process runs for days and the diagnostics pane shows the tail.
@@ -234,9 +246,10 @@ export const createModelStore: CreateModelStore = (options): ModelStore => {
    *
    * An already-correct file is not refetched — weights survive re-signs and a 1.1 GB
    * re-download on a hunch is not free — but a file whose hash disagrees is replaced,
-   * and a download whose hash disagrees never lands: it is written to a temporary name
+   * and a download whose hash disagrees never lands: it is written to `<file>.partial`
    * and renamed only after it verifies, so a half-written file can never pass the
-   * existence check that other code does.
+   * existence check that other code does. (`.partial` is invisible to `resolve`: the name
+   * does not end in `.bin`.)
    */
   async function ensure(
     id: ModelId,
@@ -279,91 +292,63 @@ export const createModelStore: CreateModelStore = (options): ModelStore => {
     await ensureModelsDirectory();
     await mkdir(dirname(destination), { recursive: true });
 
+    // Streamed to `<file>.partial`, resumed, retried and verified by the one downloader the
+    // bundle store uses too (`./download-file.ts`). This used to `Buffer.concat` the whole
+    // body — 574 MB of whisper turbo held in the Electron main process of an 8 GB laptop —
+    // with one attempt, no resume, and nothing to notice a stalled connection.
     record(`${spec.name} downloading from ${spec.url}`);
-    const response = await fetch(spec.url);
-    if (!response.ok) {
-      record(`${spec.name} failed to download: HTTP ${response.status}`);
-      throw new Error(`${spec.name} failed to download: HTTP ${response.status}`);
-    }
-    const lengthHeader = response.headers.get('content-length');
-    const totalBytes = lengthHeader === null ? null : Number(lengthHeader);
-
-    const chunks: Buffer[] = [];
-    let receivedBytes = 0;
-    if (response.body !== null) {
-      for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
-        const buffer = Buffer.from(chunk);
-        chunks.push(buffer);
-        receivedBytes += buffer.length;
-        onProgress?.({ modelId: id, receivedBytes, totalBytes });
-      }
-    }
-    const data = Buffer.concat(chunks, receivedBytes);
-
-    const actual = createHash('sha256').update(data).digest('hex');
-    if (spec.sha256.length > 0 && actual !== spec.sha256.toLowerCase()) {
-      record(`${spec.name} arrived corrupt, discarded`);
-      throw new Error(
-        `${spec.name} arrived corrupt — expected sha256 ${spec.sha256.slice(0, 12)}…, got ${actual.slice(0, 12)}…`,
-      );
-    }
-    if (spec.sha256.length === 0) {
-      record(`${spec.name} has no expected sha256; it is ${actual}`);
-    }
-
-    // Atomic: a half-written file that passes an existence check is worse than no file.
-    //
-    // Two things `writeFile(temp)` + `rename()` did not give, and both end with a file
-    // that is present, plausible, and wrong — which is the one outcome D-W10 exists to
-    // make impossible.
-    //
-    //   * ONE SHARED TEMPORARY NAME. `${destination}.partial` is the same path for every
-    //     writer of this model, so two `ensure()` calls in flight at once — two windows,
-    //     a retry racing the attempt it replaced, a second instance — interleave their
-    //     writes into it, and the rename publishes a file whose bytes came from both.
-    //     The sha256 above was computed on the in-memory buffer and never on what
-    //     landed, so nothing downstream ever notices.
-    //   * NO FSYNC. The rename is atomic with respect to READERS — they see the old file
-    //     or the new one, never a mixture — but not with respect to a crash. The
-    //     directory entry and the file's SIZE are metadata and can reach the disk while
-    //     the data behind them has not, leaving a full-length file at the final name
-    //     whose tail is whatever was in those blocks. `inspectModelFile` reads four
-    //     bytes and a stat, so it calls that `ready`.
-    const temporary = `${destination}.${randomBytes(8).toString('hex')}.partial`;
+    const totalBytes = spec.bytes;
     try {
-      const handle = await open(temporary, 'w');
-      try {
-        await handle.write(data);
-        await handle.sync();
-      } finally {
-        await handle.close();
-      }
-      await rename(temporary, destination);
-      // And the directory entry the rename created, so the rename itself survives a
-      // crash. POSIX requires this; Windows has no equivalent and will not open a
-      // directory for reading, so failing here is the EXPECTED case on the platform this
-      // port targets and is not worth a note.
-      const directory = await open(dirname(destination), 'r').catch(() => null);
-      if (directory !== null) {
-        await directory.sync().catch(() => undefined);
-        await directory.close();
-      }
-    } catch (error) {
-      // Never leave the partial behind. It is invisible to `resolve` — the name does not
-      // end in `.bin` — but it is 539 MB on a laptop that may have been short of space
-      // when the write failed in the first place.
-      await unlink(temporary).catch(() => undefined);
+      const landed = await downloadFile(
+        {
+          url: spec.url,
+          destination,
+          label: spec.name,
+          bytes: spec.bytes,
+          sha256: spec.sha256.toLowerCase(),
+          signal: stopping.signal,
+          note: record,
+          onProgress: (progress) =>
+            onProgress?.({
+              modelId: id,
+              receivedBytes: progress.bytes,
+              totalBytes: totalBytes ?? progress.totalBytes,
+              retrying: progress.retrying,
+            }),
+          ...(options.policy === undefined ? {} : { policy: options.policy }),
+        },
+        io,
+      );
+      if (spec.sha256.length === 0) record(`${spec.name} has no expected sha256; it is ${landed.sha256}`);
+      record(`${spec.name} installed (${landed.bytes} bytes)`);
+    } catch (error: unknown) {
+      record(error instanceof DownloadError ? error.detail : `${spec.name} failed: ${String(error)}`);
       throw error;
     }
-    record(`${spec.name} installed (${data.length} bytes)`);
     return destination;
+  }
+
+  /**
+   * One download per model at a time: a second caller — the Languages page's button racing the
+   * launch queue — joins the first, rather than writing into the same `.partial`.
+   */
+  function ensureOnce(id: ModelId, onProgress?: (progress: ModelDownloadProgress) => void): Promise<string> {
+    const running = inFlight.get(id);
+    if (running !== undefined) return running;
+    const task = ensure(id, onProgress).finally(() => inFlight.delete(id));
+    inFlight.set(id, task);
+    return task;
   }
 
   return {
     inspect,
     resolve,
-    ensure,
+    ensure: ensureOnce,
     status,
+    cancelDownloads() {
+      // For good, as the bundle store's: a quit is under way.
+      stopping.abort();
+    },
     get notes() {
       return notes;
     },

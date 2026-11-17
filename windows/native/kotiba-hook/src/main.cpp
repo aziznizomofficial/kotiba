@@ -45,20 +45,40 @@
 // nothing.
 //
 // ---------------------------------------------------------------------------------
-// THE CALLBACK BUDGET, which is why this program is so plain
+// THE CALLBACK BUDGET, and why the callback does not write to the pipe (1.3.0)
 // ---------------------------------------------------------------------------------
 //
 // Windows removes a low-level hook that takes longer than `LowLevelHooksTimeout`
-// (HKEY_CURRENT_USER\Control Panel\Desktop, ~300 ms by default) to answer — silently,
-// with no error and no callback. Every subsequent key is then unreported and the
-// gesture is dead for the life of the process, which is exactly the failure mode this
-// program must not have. So the callback formats a short line, writes it, flushes it,
-// and returns. No allocation, no locking, no logging, no COM.
+// (HKEY_CURRENT_USER\Control Panel\Desktop, ~300 ms by default, at most 1 s) to answer —
+// silently, with no error and no callback. Every subsequent key is then unreported and the
+// gesture is dead: the app "does not react", with a healthy tray icon. So the callback does
+// no I/O at all. It records the transition in a lock-free ring and signals an event; a
+// writer thread turns the ring into lines on stdout. A parent that stops reading (its event
+// loop stalled behind a model load, a pipe that fills) now blocks the WRITER, never the
+// hook. Until 1.2.0 the callback wrote and flushed the pipe itself, and a full pipe blocked
+// it past the timeout.
 //
-// The one thing it can still block on is the pipe: if the parent stops reading, the
-// write blocks and the hook is removed. That is the parent's responsibility and it is
-// stated here because it is invisible from the other side — hotkey.ts must consume
-// stdout continuously and must never pause the stream.
+// The process and the hook thread also run above normal priority. The hook thread sleeps in
+// `GetMessage` almost always; what it must not do is wait behind the speech engines, which
+// keep every core busy at normal priority exactly while the user is pressing the key.
+//
+// ---------------------------------------------------------------------------------
+// A HOOK WINDOWS REMOVED ANYWAY IS NOTICED AND PUT BACK (1.3.0)
+// ---------------------------------------------------------------------------------
+//
+// A stall can still happen — a hard page fault on a machine paging hard while a 1.3 GB model
+// loads is enough — and there is no API that says "your hook is gone". So the helper ALSO
+// registers for Raw Input from the keyboard (RIDEV_INPUTSINK, on a message-only window).
+// Raw input is a posted message, not a hook: it keeps arriving after the hook is removed.
+// Its content is never read — only that a key event happened, and when. Once a second, if
+// raw input has seen a key event that the hook has not (by more than `kMissedSlackMs`), the
+// hook is re-installed, `REHOOKED` is written, and the keyboard is re-swept against what was
+// last reported, so a key that went down or up while the hook was gone is reported now (the
+// held dictation key opens or closes instead of being lost). A raw-input registration that
+// fails degrades to re-installing the hook every `kBlindRearmMs`.
+//
+// A false alarm costs one re-install, which also moves this hook to the head of the chain —
+// useful in its own right when another application's hook stops passing events on.
 //
 // ---------------------------------------------------------------------------------
 // WHAT THIS STREAM IS, and what must never be done with it
@@ -121,27 +141,46 @@
 #include <fcntl.h>
 #include <io.h>
 
+#include <atomic>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <thread>
 
 namespace {
 
-constexpr const char* kVersion = "1.2.0";
+constexpr const char* kVersion = "1.3.0";
 
 /// kotiba-input's stamp on its own keystrokes (`kKotibaInjectedTag` there). Skipped unreported.
 constexpr ULONG_PTR kKotibaInjectedTag = 0x4B4F5442;
 
-/// The hook thread, so the stdin reader can post WM_QUIT to it.
+/// How far raw input may run ahead of the hook before the hook is presumed removed. Both
+/// clocks are this thread's own `GetTickCount` at the moment it handled the event, and the
+/// hook is always called before the raw input message for the same key is posted, so a
+/// live hook is never behind by more than the time it takes this thread to get from one
+/// to the other.
+constexpr DWORD kMissedSlackMs = 500;
+/// How often the watchdog compares the two.
+constexpr UINT kWatchIntervalMs = 1000;
+/// Re-installs closer together than this are not done: a false alarm that repeats (input to
+/// an elevated window, which raw input may see and the hook cannot) must not churn.
+constexpr DWORD kMinRearmGapMs = 5000;
+/// Without raw input, the blind cadence.
+constexpr DWORD kBlindRearmMs = 30000;
+constexpr UINT_PTR kWatchTimerId = 1;
+
+/// The hook thread, so the stdin reader and the writer can post to it.
 DWORD g_hookThreadId = 0;
+/// The installed hook. Replaced by `Rearm`. Hook thread only.
+HHOOK g_hook = nullptr;
 
 /// Set once the pipe has failed. The message loop then exits: a hook whose reports go
 /// nowhere is worse than no hook, because the tray still reads healthy.
 volatile LONG g_pipeBroken = 0;
 
-/// Thread messages from the stdin reader to the hook thread. Everything that writes to
-/// stdout happens on the hook thread, so the two never interleave a line and nothing in
-/// the callback needs a lock.
+/// Thread messages from the stdin reader to the hook thread. Everything that is REPORTED is
+/// enqueued on the hook thread, so the ring has exactly one producer and nothing in the
+/// callback needs a lock.
 constexpr UINT kMsgSwallow = WM_APP + 1;  // wParam: the vk to swallow, 0 for none
 constexpr UINT kMsgPoll = WM_APP + 2;     // wParam: the vk whose state to report
 
@@ -154,21 +193,109 @@ DWORD g_swallowVk = 0;
 /// without its down — an application would then see a lone key-up.
 DWORD g_heldSwallowedVk = 0;
 
-/// Emit one line and flush. Called from the hook callback, so it must stay this small.
-///
-/// `snprintf` into a fixed buffer plus `fwrite` rather than `printf`: this runs on every
-/// key the user presses, and the callback budget above is the reason.
-void Report(const char* edge, DWORD vk, bool swallowed = false) {
-  char line[24];
-  // ` S` marks a transition this helper swallowed. The consumer trusts it over its own
-  // record of which modifiers are down, because this helper read the real keyboard.
-  const int n = std::snprintf(line, sizeof(line), "%s %lu%s\n", edge, static_cast<unsigned long>(vk),
-                              swallowed ? " S" : "");
-  if (n <= 0) return;
-  if (std::fwrite(line, 1, static_cast<size_t>(n), stdout) != static_cast<size_t>(n) ||
-      std::fflush(stdout) != 0) {
-    InterlockedExchange(&g_pipeBroken, 1);
-    if (g_hookThreadId != 0) PostThreadMessage(g_hookThreadId, WM_QUIT, 0, 0);
+/// What the consumer has been told is down, by vk. Hook thread only. The re-sweep after a
+/// re-installed hook reports the difference between this and the hardware.
+bool g_reportedDown[256] = {};
+
+/// The hook thread's `GetTickCount` at the last hook callback, and at the last raw input
+/// key event. Hook thread only (both the callback and the window procedure run there).
+DWORD g_lastHookTick = 0;
+DWORD g_lastRawTick = 0;
+DWORD g_lastRearmTick = 0;
+bool g_rawInput = false;
+
+// ---------------------------------------------------------------------------------
+// The ring: hook thread → writer thread. Single producer, single consumer, no locks.
+// ---------------------------------------------------------------------------------
+
+enum class Kind : uint8_t { kDown, kUp, kState, kRehooked };
+
+struct Record {
+  Kind kind;
+  uint8_t flag;  // DOWN/UP: swallowed. STATE: held.
+  uint16_t vk;
+};
+
+constexpr uint32_t kRingSize = 4096;  // a power of two; ~12 minutes of autorepeat
+Record g_ring[kRingSize];
+std::atomic<uint32_t> g_head{0};  // written by the producer only
+std::atomic<uint32_t> g_tail{0};  // written by the consumer only
+std::atomic<uint32_t> g_overflow{0};
+std::atomic<bool> g_writerQuit{false};
+HANDLE g_wake = nullptr;      // auto-reset: something was enqueued, or it is time to go
+HANDLE g_writerDone = nullptr;
+
+/// Called from the hook callback: no I/O, no allocation, no lock — a store and a SetEvent.
+void Enqueue(Kind kind, DWORD vk, bool flag) {
+  const uint32_t head = g_head.load(std::memory_order_relaxed);
+  const uint32_t tail = g_tail.load(std::memory_order_acquire);
+  if (head - tail >= kRingSize) {
+    // The parent has not read for minutes. Dropping is the only answer that keeps the hook
+    // alive; the consumer's POLL recovers a lost key-up of the dictation key.
+    g_overflow.fetch_add(1, std::memory_order_relaxed);
+    return;
+  }
+  g_ring[head & (kRingSize - 1)] = Record{kind, static_cast<uint8_t>(flag ? 1 : 0), static_cast<uint16_t>(vk)};
+  g_head.store(head + 1, std::memory_order_release);
+  SetEvent(g_wake);
+}
+
+/// A transition, enqueued and remembered as reported.
+void Report(bool down, DWORD vk, bool swallowed = false) {
+  if (vk < 256) g_reportedDown[vk] = down;
+  Enqueue(down ? Kind::kDown : Kind::kUp, vk, swallowed);
+}
+
+int Format(const Record& record, char* out, size_t room) {
+  switch (record.kind) {
+    case Kind::kDown:
+    case Kind::kUp:
+      // ` S` marks a transition this helper swallowed. The consumer trusts it over its own
+      // record of which modifiers are down, because this helper read the real keyboard.
+      return std::snprintf(out, room, "%s %u%s\n", record.kind == Kind::kDown ? "DOWN" : "UP",
+                           static_cast<unsigned>(record.vk), record.flag != 0 ? " S" : "");
+    case Kind::kState:
+      return std::snprintf(out, room, "STATE %u %d\n", static_cast<unsigned>(record.vk),
+                           record.flag != 0 ? 1 : 0);
+    case Kind::kRehooked:
+      return std::snprintf(out, room, "REHOOKED\n");
+  }
+  return 0;
+}
+
+/// The writer thread: the only code that touches stdout. It may block on a full pipe for as
+/// long as the parent likes; the hook does not wait for it.
+void WriteLoop() {
+  char buffer[4096];
+  for (;;) {
+    WaitForSingleObject(g_wake, INFINITE);
+    for (;;) {
+      uint32_t tail = g_tail.load(std::memory_order_relaxed);
+      const uint32_t head = g_head.load(std::memory_order_acquire);
+      if (tail == head) break;
+      size_t used = 0;
+      while (tail != head && used + 32 < sizeof(buffer)) {
+        const int n = Format(g_ring[tail & (kRingSize - 1)], buffer + used, sizeof(buffer) - used);
+        if (n > 0) used += static_cast<size_t>(n);
+        ++tail;
+      }
+      g_tail.store(tail, std::memory_order_release);
+      if (used > 0 && (std::fwrite(buffer, 1, used, stdout) != used || std::fflush(stdout) != 0)) {
+        InterlockedExchange(&g_pipeBroken, 1);
+        if (g_hookThreadId != 0) PostThreadMessage(g_hookThreadId, WM_QUIT, 0, 0);
+        SetEvent(g_writerDone);
+        return;
+      }
+    }
+    const uint32_t dropped = g_overflow.exchange(0, std::memory_order_relaxed);
+    if (dropped != 0) {
+      std::fprintf(stderr, "kotiba-hook: the parent stopped reading; %u transitions dropped\n", dropped);
+      std::fflush(stderr);
+    }
+    if (g_writerQuit.load(std::memory_order_acquire)) {
+      SetEvent(g_writerDone);
+      return;
+    }
   }
 }
 
@@ -226,6 +353,8 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   // negative code — must be forwarded untouched and not examined.
   bool swallow = false;
   if (nCode == HC_ACTION && lParam != 0) {
+    // Proof of life for the watchdog, for EVERY event, Kotiba's own included.
+    g_lastHookTick = GetTickCount();
     const KBDLLHOOKSTRUCT* event = reinterpret_cast<const KBDLLHOOKSTRUCT*>(lParam);
     const bool ours = (event->flags & LLKHF_INJECTED) != 0 && event->dwExtraInfo == kKotibaInjectedTag;
     const DWORD vk = ours ? 0 : Sided(event->vkCode, *event);
@@ -234,14 +363,14 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
           // Auto-repeat is not filtered here — the consumer's tracker treats a DOWN for a
-          // key it already has down as a repeat. Modifier keys do not auto-repeat at all.
+          // key it already has down as a repeat. Held modifiers autorepeat too on Windows.
           swallow = ShouldSwallow(vk, true);
-          Report("DOWN", vk, swallow);
+          Report(true, vk, swallow);
           break;
         case WM_KEYUP:
         case WM_SYSKEYUP:
           swallow = ShouldSwallow(vk, false);
-          Report("UP", vk, swallow);
+          Report(false, vk, swallow);
           break;
         default:
           break;
@@ -254,36 +383,121 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
+/// Physically down now, as far as this helper can know. A SWALLOWED key never reaches the
+/// system's key state — `GetAsyncKeyState` reads 0 for it while it is held — so for the key
+/// this helper is holding back, the hook's own record is the answer. Reading the async state
+/// there ended every F13 dictation at the first poll.
+bool PhysicallyDown(DWORD vk) {
+  return (g_heldSwallowedVk != 0 && vk == g_heldSwallowedVk) ||
+         (GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0;
+}
+
 /// `STATE <vk> 0|1`: is the key physically down right now. The answer to `POLL <vk>`.
+void ReportState(DWORD vk) { Enqueue(Kind::kState, vk, PhysicallyDown(vk)); }
+
+/// Report every key whose physical state differs from what was last reported — at startup
+/// (nothing reported yet: every held key) and after a re-installed hook.
 ///
-/// A SWALLOWED key never reaches the system's key state — `GetAsyncKeyState` reads 0 for
-/// it while it is held — so for the key this helper is holding back, the hook's own
-/// record is the answer. Reading the async state there ended every F13 dictation at the
-/// first poll.
-void ReportState(DWORD vk) {
-  char line[32];
-  const bool held = (g_heldSwallowedVk != 0 && vk == g_heldSwallowedVk) ||
-                    (GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0;
-  const int down = held ? 1 : 0;
-  const int n = std::snprintf(line, sizeof(line), "STATE %lu %d\n", static_cast<unsigned long>(vk), down);
-  if (n <= 0) return;
-  if (std::fwrite(line, 1, static_cast<size_t>(n), stdout) != static_cast<size_t>(n) ||
-      std::fflush(stdout) != 0) {
-    InterlockedExchange(&g_pipeBroken, 1);
-    PostQuitMessage(0);
+/// The high bit of `GetAsyncKeyState` is "physically down now". The LOW bit is the toggle
+/// state (Caps Lock, Num Lock) and must not be read as held — that is the classic misuse of
+/// this API, and it would report Caps Lock as a stuck key on half the machines in the world.
+void SweepHeldKeys() {
+  for (DWORD vk = 1; vk < 255; ++vk) {
+    // The generic modifiers are never reported; their sided twins are. The mouse buttons
+    // share the VK space but are not keys: the hook never reports them, so a sweep that did
+    // would leave a "key" down forever — or, after a re-install mid-hold, cancel the
+    // dictation as a chord because the user was holding the mouse.
+    if (vk == VK_SHIFT || vk == VK_CONTROL || vk == VK_MENU) continue;
+    if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON || vk == VK_XBUTTON1 || vk == VK_XBUTTON2) {
+      continue;
+    }
+    const bool down = PhysicallyDown(vk);
+    if (down != g_reportedDown[vk]) Report(down, vk);
   }
 }
 
-/// Emit the current physical state of the whole keyboard, before the hook is installed.
-/// See "STARTUP RESYNC" above.
-void SweepHeldKeys() {
-  for (DWORD vk = 1; vk < 255; ++vk) {
-    // The high bit is "physically down now". The LOW bit is the toggle state (Caps
-    // Lock, Num Lock) and must not be read as held — that is the classic misuse of this
-    // API, and it would report Caps Lock as a stuck key on half the machines in the
-    // world.
-    if ((GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0) Report("DOWN", vk);
+/// Put the hook back. The new one is installed BEFORE the old one is removed, and both
+/// happen on this thread between two messages, so no key can fall between them (a hook is
+/// only ever called while this thread is inside `GetMessage`).
+void Rearm(bool announce) {
+  const HHOOK fresh = SetWindowsHookEx(WH_KEYBOARD_LL, HookProc, GetModuleHandle(nullptr), 0);
+  if (fresh == nullptr) {
+    std::fprintf(stderr, "kotiba-hook: re-installing the hook was refused, GetLastError=%lu\n", GetLastError());
+    std::fflush(stderr);
+    return;
   }
+  if (g_hook != nullptr) UnhookWindowsHookEx(g_hook);  // fails harmlessly if Windows removed it
+  g_hook = fresh;
+  g_lastRearmTick = GetTickCount();
+  g_lastHookTick = g_lastRearmTick;
+  if (!announce) return;
+  std::fprintf(stderr, "kotiba-hook: the hook had stopped receiving keys; re-installed\n");
+  std::fflush(stderr);
+  Enqueue(Kind::kRehooked, 0, false);
+  // A swallowed key whose up passed while the hook was gone has no state to read back, and
+  // the safe guess is "released": a held state nothing can end is a microphone left open.
+  g_heldSwallowedVk = 0;
+  SweepHeldKeys();
+}
+
+/// Once a second: has raw input seen a key the hook has not?
+void Watch() {
+  const DWORD now = GetTickCount();
+  if (now - g_lastRearmTick < kMinRearmGapMs) return;
+  if (!g_rawInput) {
+    if (now - g_lastRearmTick >= kBlindRearmMs) Rearm(false);
+    return;
+  }
+  if (g_lastRawTick == 0) return;
+  if (static_cast<LONG>(g_lastRawTick - g_lastHookTick) > static_cast<LONG>(kMissedSlackMs)) Rearm(true);
+}
+
+LRESULT CALLBACK WatchProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
+  switch (message) {
+    case WM_INPUT:
+      // Only that a key event happened. The payload — which key — is never read.
+      g_lastRawTick = GetTickCount();
+      break;  // DefWindowProc must still see WM_INPUT, to release the input
+    case WM_TIMER:
+      if (wParam == kWatchTimerId) {
+        Watch();
+        return 0;
+      }
+      break;
+    default:
+      break;
+  }
+  return DefWindowProcW(window, message, wParam, lParam);
+}
+
+/// The message-only window that receives raw input and the watchdog's timer.
+void StartWatching() {
+  WNDCLASSEXW cls = {};
+  cls.cbSize = sizeof(cls);
+  cls.lpfnWndProc = WatchProc;
+  cls.hInstance = GetModuleHandle(nullptr);
+  cls.lpszClassName = L"KotibaHookWatch";
+  RegisterClassExW(&cls);
+  const HWND window = CreateWindowExW(0, cls.lpszClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr,
+                                      cls.hInstance, nullptr);
+  if (window == nullptr) {
+    std::fprintf(stderr, "kotiba-hook: no watch window (GetLastError=%lu); the hook is not watched\n",
+                 GetLastError());
+    std::fflush(stderr);
+    return;
+  }
+  RAWINPUTDEVICE keyboard = {};
+  keyboard.usUsagePage = 0x01;  // generic desktop
+  keyboard.usUsage = 0x06;      // keyboard
+  keyboard.dwFlags = RIDEV_INPUTSINK;
+  keyboard.hwndTarget = window;
+  g_rawInput = RegisterRawInputDevices(&keyboard, 1, sizeof(keyboard)) != FALSE;
+  if (!g_rawInput) {
+    std::fprintf(stderr, "kotiba-hook: raw input refused (GetLastError=%lu); re-hooking every %lu s\n",
+                 GetLastError(), static_cast<unsigned long>(kBlindRearmMs / 1000));
+    std::fflush(stderr);
+  }
+  SetTimer(window, kWatchTimerId, kWatchIntervalMs, nullptr);
 }
 
 /// One command line from the parent. Unknown lines are ignored: a newer consumer talking
@@ -340,6 +554,11 @@ int main(int argc, char** argv) {
     setvbuf(stdout, nullptr, _IONBF, 0);
   }
 
+  // Above the speech engines, which hold every core at normal priority while the key is
+  // down. The hook thread is idle in `GetMessage` otherwise, so this costs nothing.
+  SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+
   g_hookThreadId = GetCurrentThreadId();
   // Create this thread's message queue NOW. A thread has none until its first USER call,
   // and a `PostThreadMessage` from the stdin reader before then fails silently — the
@@ -347,10 +566,19 @@ int main(int argc, char** argv) {
   MSG primer;
   PeekMessage(&primer, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
 
+  g_wake = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  g_writerDone = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (g_wake == nullptr || g_writerDone == nullptr) {
+    std::fprintf(stderr, "kotiba-hook: CreateEvent failed, GetLastError=%lu\n", GetLastError());
+    return 2;
+  }
+  std::thread writer(WriteLoop);
+  writer.detach();
+
   SweepHeldKeys();
 
-  const HHOOK hook = SetWindowsHookEx(WH_KEYBOARD_LL, HookProc, GetModuleHandle(nullptr), 0);
-  if (hook == nullptr) {
+  g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, HookProc, GetModuleHandle(nullptr), 0);
+  if (g_hook == nullptr) {
     // D-W8: this needs no granted permission, so a refusal here is a real fault —
     // usually a session with no interactive desktop (a service, an SSH shell) rather
     // than anything the user can fix. Say the code; the parent turns it into a
@@ -359,6 +587,9 @@ int main(int argc, char** argv) {
                  GetLastError());
     return 2;
   }
+  g_lastRearmTick = GetTickCount();
+  g_lastHookTick = g_lastRearmTick;
+  StartWatching();
 
   std::fprintf(stderr, "kotiba-hook %s: watching\n", kVersion);
   std::fflush(stderr);
@@ -384,6 +615,11 @@ int main(int argc, char** argv) {
     DispatchMessage(&message);
   }
 
-  UnhookWindowsHookEx(hook);
+  if (g_hook != nullptr) UnhookWindowsHookEx(g_hook);
+  // Let the writer put out what is queued (the parent may be waiting on a STATE), but never
+  // hang on a pipe nobody reads.
+  g_writerQuit.store(true, std::memory_order_release);
+  SetEvent(g_wake);
+  WaitForSingleObject(g_writerDone, 200);
   return InterlockedCompareExchange(&g_pipeBroken, 0, 0) != 0 ? 3 : 0;
 }

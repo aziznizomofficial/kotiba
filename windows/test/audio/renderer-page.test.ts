@@ -64,7 +64,17 @@ interface FakeInputs {
   default: string;
   readonly opened: { label: string; deviceId: unknown; stopped: boolean }[];
   fireDeviceChange(): void;
+  /** Fires the last opened track's `mute` listeners. */
+  muteLast?: () => void;
 }
+
+/** The page's AudioContext, as the test can see it. */
+interface FakeContextView {
+  state: string;
+  resumes: number;
+  suspends: number;
+}
+let lastContext: FakeContextView | null = null;
 
 function page(inputs?: FakeInputs): {
   readonly events: PageEvent[];
@@ -79,11 +89,17 @@ function page(inputs?: FakeInputs): {
     if (inputs === undefined) return stream;
     const record = { label: inputs.default, deviceId: constraints.audio.deviceId, stopped: false };
     inputs.opened.push(record);
+    const listeners: Record<string, (() => void)[]> = {};
+    inputs.muteLast = () => {
+      for (const listener of listeners['mute'] ?? []) listener();
+    };
     const t = {
       readyState: 'live',
       label: record.label,
       getSettings: () => ({ sampleRate: 48_000 }),
-      addEventListener: () => undefined,
+      addEventListener: (name: string, listener: () => void) => {
+        (listeners[name] ??= []).push(listener);
+      },
       stop: () => {
         record.stopped = true;
         t.readyState = 'ended';
@@ -91,9 +107,11 @@ function page(inputs?: FakeInputs): {
     };
     return { getAudioTracks: () => [t], getTracks: () => [t] };
   };
-  class FakeAudioContext {
+  class FakeAudioContext implements FakeContextView {
     readonly sampleRate: number;
     state = 'running';
+    resumes = 0;
+    suspends = 0;
     readonly audioWorklet = { addModule: async () => undefined };
     constructor(options: { sampleRate: number }) {
       this.sampleRate = options.sampleRate;
@@ -101,9 +119,24 @@ function page(inputs?: FakeInputs): {
     createMediaStreamSource() {
       return { connect: () => undefined, disconnect: () => undefined };
     }
-    async resume() {}
-    async close() {}
+    async resume() {
+      this.resumes += 1;
+      this.state = 'running';
+    }
+    async suspend() {
+      this.suspends += 1;
+      this.state = 'suspended';
+    }
+    async close() {
+      this.state = 'closed';
+    }
   }
+  // Every context the page builds is the one the test inspects.
+  const AudioContextSpy = function (options: { sampleRate: number }): FakeAudioContext {
+    const made = new FakeAudioContext(options);
+    lastContext = made;
+    return made;
+  };
   const sandbox: Record<string, unknown> = {
     navigator: {
       mediaDevices: {
@@ -115,7 +148,7 @@ function page(inputs?: FakeInputs): {
       },
       permissions: { query: async () => ({ state: 'granted' }) },
     },
-    AudioContext: FakeAudioContext,
+    AudioContext: AudioContextSpy,
     AudioWorkletNode: FakeWorkletNode,
     URL: { createObjectURL: () => 'blob:fake', revokeObjectURL: () => undefined },
     Blob: class {},
@@ -243,6 +276,29 @@ describe('the capture page, run for real', () => {
     expect(Array.from(joined(chunksOf(p.events, 2)))).toEqual(Array.from(block(256, 128)));
   });
 
+  describe('the context renders only while something listens', () => {
+    it('warm-up leaves it suspended, a press resumes it, the release suspends it again', async () => {
+      const p = page();
+      await p.command({ kind: 'warmUp' });
+      const context = lastContext as FakeContextView;
+      expect(context.state).toBe('suspended');
+      await p.command({ kind: 'start', segment: 1 });
+      expect(context.state).toBe('running');
+      p.node().render(block(0));
+      const reply = await p.command({ kind: 'stop', segment: 1 });
+      expect(reply['totalSamples']).toBe(128);
+      // The warm hold: the stream is still open, so a warm-up must not suspend under it.
+      await p.command({ kind: 'warmUp' });
+      expect(context.state).toBe('running');
+      await p.command({ kind: 'release' });
+      expect(context.state).toBe('suspended');
+      // The same context, not a rebuilt one, comes back for the next press.
+      await p.command({ kind: 'start', segment: 2 });
+      expect(lastContext).toBe(context);
+      expect(context.state).toBe('running');
+    });
+  });
+
   describe('follows the input selected in Windows at the moment of the press', () => {
     const machine = (): FakeInputs => ({
       default: 'Laptop Microphone',
@@ -273,6 +329,18 @@ describe('the capture page, run for real', () => {
       const second = await p.command({ kind: 'start', segment: 2 });
       expect(second['device']).toMatchObject({ label: 'Gaming Headset' });
       expect(inputs.opened).toHaveLength(2);
+    });
+
+    it('a stream that MUTED is not reused: it is live and would record silence', async () => {
+      const inputs = machine();
+      const p = page(inputs);
+      await p.command({ kind: 'warmUp' });
+      await p.command({ kind: 'start', segment: 1 });
+      await p.command({ kind: 'stop', segment: 1 });
+      inputs.muteLast?.();
+      await p.command({ kind: 'start', segment: 2 });
+      expect(inputs.opened).toHaveLength(2);
+      expect(inputs.opened[0]?.stopped).toBe(true);
     });
 
     it('no switch: the warm-held stream is reused, not reopened', async () => {

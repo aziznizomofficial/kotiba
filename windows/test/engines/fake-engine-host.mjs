@@ -5,7 +5,8 @@
 //   fake-engine-host.mjs <role> <behaviour>
 //
 // behaviours: ok | crash-on-work (SIGSEGV-style abort on the first real request) |
-// never-hello (exit before saying anything) | crash-on-load (parakeet: die while loading)
+// never-hello (exit before saying anything) | crash-on-load (parakeet: die while loading) |
+// hang-on-work (parakeet: never answer a transcription — a deadlocked decode)
 
 const [role, behaviour = 'ok'] = process.argv.slice(2);
 const send = (message) => process.send(message);
@@ -28,8 +29,10 @@ process.on('message', (request) => {
     }
     if (request.kind === 'transcribe') {
       if (behaviour === 'crash-on-work') die();
+      if (behaviour === 'hang-on-work') return;
       const ok = request.samples instanceof Float32Array;
-      send({ kind: 'text', id: request.id, text: `${ok ? 'f32' : typeof request.samples}:${request.samples.length}:${process.pid}` });
+      const bytes = ok ? request.samples.buffer.byteLength : 0;
+      send({ kind: 'text', id: request.id, text: `${ok ? 'f32' : typeof request.samples}:${request.samples.length}:${process.pid}:${bytes}` });
     }
     return;
   }

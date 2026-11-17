@@ -17,7 +17,6 @@
 // an assertion a test can hold.
 
 import type { SecretStore, Settings } from '../contracts/index.js';
-import { DEFAULT_SETTINGS } from '../contracts/index.js';
 
 import { t } from '../core/i18n/index.js';
 
@@ -45,8 +44,6 @@ export const MAIN_WINDOW_MIN_WIDTH = 720;
 export const MAIN_WINDOW_MIN_HEIGHT = 480;
 /** Below this window width the sidebar folds to an icon rail on its own. */
 export const RAIL_BELOW = 860;
-/** Content never grows wider than this; the rest is black margin. */
-export const READABLE_WIDTH = 860;
 /** The frameless title bar's height; the native caption buttons sit in it, right. */
 export const TITLE_BAR_HEIGHT = 40;
 
@@ -744,11 +741,6 @@ export const SETTINGS_WITHOUT_CONTROLS: readonly (keyof Settings)[] = [
   // P4: written by the language-ID model's download; found in the resources otherwise.
   'languageIDModelPath',
 ];
-
-/** Handy for the renderer: the shipped value of a key. */
-export function shippedDefault<K extends keyof Settings>(key: K): Settings[K] {
-  return DEFAULT_SETTINGS[key];
-}
 
 /** "Good morning" / "Good afternoon" / "Good evening", by the local hour. The Mac's bands. */
 export function greeting(hour: number): string {

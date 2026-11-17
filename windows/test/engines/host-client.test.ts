@@ -254,3 +254,18 @@ describe('death and restart', () => {
     expect(asEngineError(error)?.reason).toContain('shut down');
   });
 });
+
+describe('a write into a host that has just died', () => {
+  // EPIPE arrives as an `'error'` on the child's stdin, asynchronously, after the write call
+  // returned. Unlistened, Node throws it — in the app that is an uncaught exception in
+  // Electron's main process. 30 s of audio is ~1.9 MB, far past a pipe's buffer, so the write
+  // is still in flight when the reader is gone.
+  it('is a failed request, never an uncaught exception', async () => {
+    const client = host({ dieOnStart: true }, { requestTimeoutMs: REQUEST_TIMEOUT_MS });
+    const failure = await client.request({ id: 'big', op: 'transcribe' }, pcm(30)).catch((error: unknown) => error);
+    expect(asEngineError(failure)?.kind).toBe('hostUnavailable');
+    // Give the EPIPE time to surface: an unlistened one fails this file as an unhandled error.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  });
+});
+

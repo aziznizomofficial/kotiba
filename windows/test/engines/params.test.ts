@@ -8,6 +8,7 @@ import {
   padForDecode,
   resolveDecodeCores,
   resolveThreadCount,
+  resolveWhisperThreads,
   whisperParamsFor,
 } from '../../src/engines/index.js';
 import {
@@ -129,6 +130,20 @@ describe('the thread rule', () => {
       expect(threads).toBeGreaterThanOrEqual(1);
       expect(threads).toBeLessThanOrEqual(physical);
     }
+  });
+
+  it('a whisper engine decodes on one thread per physical core, from the LOGICAL count main hands it', () => {
+    const threads = (cpuCount: number): number =>
+      whisperParamsFor({ language: 'uz', family: 'uzbek', settings: settings(), initialPrompt: null, cpuCount }).nThreads;
+    expect(threads(2)).toBe(2); // the CI runner
+    expect(threads(4)).toBe(2); // 2C/4T
+    // A 4C/8T laptop: four, not the six it shipped with (8 − 2, two pairs sharing a core) and not
+    // the two the halve-then-subtract design gave (half the machine idle at key-up).
+    expect(threads(8)).toBe(4);
+    expect(threads(12)).toBe(6);
+    expect(threads(24)).toBe(8);
+    expect(threads(64)).toBe(8);
+    expect(resolveWhisperThreads(Number.NaN)).toBe(2);
   });
 
   it('is never 0 on the wire', () => {

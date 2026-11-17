@@ -128,8 +128,19 @@ export function mountOnboarding(host: HTMLElement, finished: () => void): () => 
     render();
   }
 
+  /**
+   * Once. "Skip setup" had no guard of its own (only Continue did), so a double-click wrote
+   * `onboardingDone` twice — two recheck passes, two resumes — and tore the overlay down twice.
+   * A main that refuses the write must not trap the user behind the overlay either: the window
+   * opens, and the next launch shows setup again because the flag never reached the disk.
+   */
+  let finishing = false;
   async function finish(): Promise<void> {
-    await invoke(IPC_INVOKE.onboardingDone, { alwaysOn });
+    if (finishing) return;
+    finishing = true;
+    await invoke(IPC_INVOKE.onboardingDone, { alwaysOn }).catch((error: unknown) => {
+      console.error('kotiba: finishing setup failed', error);
+    });
     root.classList.add('leaving');
     setTimeout(() => {
       dispose();
@@ -227,7 +238,20 @@ export function mountOnboarding(host: HTMLElement, finished: () => void): () => 
           primary.textContent = blocked ? t('onb.continueAnyway') : t('onb.continue');
         };
         scope.watch(['app'], paint);
-        const poll = window.setInterval(() => void invoke(IPC_INVOKE.recheck), 3_000);
+        // Only while the microphone is blocked, and never two at once. `blockers:recheck` is the
+        // EXPENSIVE check (it re-warms the microphone and re-prepares the engines), and it used to
+        // run every 3 s for as long as this step was open — granted or not — stacking up behind
+        // itself on a slow laptop while the core downloads were starting.
+        let checking = false;
+        const poll = window.setInterval(() => {
+          if (checking || !store.app.blockers.some((blocker) => blocker.id === 'microphone')) return;
+          checking = true;
+          void invoke(IPC_INVOKE.recheck)
+            .catch(() => undefined)
+            .finally(() => {
+              checking = false;
+            });
+        }, 3_000);
         timers.push(poll);
         return h('div', { class: 'step' }, [
           title(t('onb.mic.stepTitle'), t('onb.mic.stepDetail')),

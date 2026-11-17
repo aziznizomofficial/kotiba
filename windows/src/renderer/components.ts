@@ -3,7 +3,7 @@
 // status dots, key caps and stat tiles. Plain DOM; the motion is CSS on the Mac's springs.
 
 import type { Settings } from '../contracts/index.js';
-import { hotkeyName, inlineName } from '../core/hotkey/index.js';
+import { inlineName } from '../core/hotkey/index.js';
 import { COUNT_UP_MS, COUNT_UP_STAGGER_MS, countEase } from '../main/count-up.js';
 
 import { icon } from './icons.js';
@@ -341,9 +341,7 @@ export function hotkeyWords(vk: number): string {
   return inlineName(vk);
 }
 
-export function hotkeyTitle(vk: number): string {
-  return hotkeyName(vk);
-}
+
 
 /** A tile's number, and how to format any value on the way to it. */
 export interface Counting {

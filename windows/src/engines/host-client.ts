@@ -35,14 +35,18 @@ const PREFIX_BYTES = 21;
 const MAGIC = 'KSTT';
 
 /**
- * How long one decode may take before the host is presumed hung.
+ * How long one decode may take before the host is presumed hung — the floor; `send` adds two
+ * seconds per second of audio.
  *
- * Generous on purpose. `large-v3-turbo` on a cold CPU-only laptop is seconds, and the
- * cold-start load in front of it is more; a timeout that fires on a slow machine turns
- * "your first dictation is slow" into "your app is broken", which is the failure mode
- * the readiness rules exist to prevent.
+ * Generous on purpose: a timeout that fires on a slow machine turns "your first dictation is
+ * slow" into "your app is broken", and it kills a host that then reloads 539 MB. But it is not
+ * what the user waits for any more — the session bounds the transcription it is waiting on
+ * itself (`transcribeDeadlineMs`, 30 s floor) and aborts the decode — so this only has to find
+ * a host that is truly gone, and 120 s left a hung host holding every request queued behind it
+ * for two minutes. 60 s is still ~10× the audience's slowest expected decode (a 539 MB model,
+ * one 30 s window, 1–2 threads); the load has its own, longer, budget below.
  */
-export const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
+export const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
 
 /** Loading 539 MB from a spinning disk on first launch is not fast. */
 export const DEFAULT_LOAD_TIMEOUT_MS = 180_000;
@@ -284,6 +288,12 @@ export function createSttHost(options: SttHostOptions): SttHost {
         newline = stdout.indexOf('\n');
       }
     });
+
+    // A write into a pipe whose reader has just died (a crash, or the kill below) is an
+    // asynchronous EPIPE on `stdin` — and an `'error'` event with no listener is THROWN, which
+    // in Electron's main process is an uncaught exception: the app, not the dictation, would
+    // go. The death itself is reported by `close`; the write error has nothing to add.
+    process_.stdin.on('error', () => undefined);
 
     process_.stderr.setEncoding('utf8');
     process_.stderr.on('data', (chunk: string) => {

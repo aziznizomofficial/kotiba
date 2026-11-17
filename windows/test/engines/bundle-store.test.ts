@@ -124,9 +124,12 @@ suite('ensure', () => {
       catalogue: CATALOGUE,
       fetch: fakeFetch({ 'int8/a.onnx': payload('tampered'), 'b.txt': B }, requests),
     });
-    await expect(store.ensure('parakeet_ultra')).rejects.toThrow(/arrived corrupt/);
+    await expect(store.ensure('parakeet_ultra')).rejects.toThrow(/arrived damaged/);
     expect(await store.isInstalled('parakeet_ultra')).toBe(false);
     expect(await readdir(join(root, 'tiny'))).toEqual([]);
+    // Said as a value, for the app's queue: a corrupt body is not worth an automatic retry.
+    expect((store.lastFailure?.('parakeet_ultra') as { kind?: string } | null)?.kind).toBe('corrupt');
+    expect(store.notes.join('\n')).toMatch(/arrived corrupt/);
   });
 
   test('an HTTP failure says so', async () => {
@@ -226,12 +229,15 @@ function rangedFetch(
 suite('resuming', () => {
   test('a dropped connection leaves a partial, and the next attempt asks only for the rest', async () => {
     const log: { url: string; range: string | null }[] = [];
+    // One attempt only: the point here is what a LATER ensure (the next launch) does with it.
     const first = createBundleStore({
       modelsDirectory: root,
       catalogue: CATALOGUE,
+      policy: { attempts: 1 },
       fetch: rangedFetch({ 'int8/a.onnx': A, 'b.txt': B }, log, { cutAfter: 3000 }),
     });
     await expect(first.ensure('parakeet_ultra')).rejects.toThrow(/connection reset/);
+    expect((first.lastFailure?.('parakeet_ultra') as { retryLater?: boolean } | null)?.retryLater).toBe(true);
     expect((await readFile(join(root, 'tiny', 'a.onnx.partial'))).length).toBe(3000);
     expect(await first.isInstalled('parakeet_ultra')).toBe(false);
 
@@ -265,7 +271,7 @@ suite('resuming', () => {
     expect(await readFile(join(root, 'tiny', 'a.onnx'))).toEqual(A);
   });
 
-  test('a partial of different bytes fails the whole-file hash, is deleted, and the next attempt starts clean', async () => {
+  test('a partial of different bytes fails the whole-file hash, and the same call fetches it again from byte 0', async () => {
     await mkdir(join(root, 'tiny'), { recursive: true });
     await writeFile(join(root, 'tiny', 'a.onnx.partial'), Buffer.alloc(1000, 7));
     const log: { url: string; range: string | null }[] = [];
@@ -274,10 +280,14 @@ suite('resuming', () => {
       catalogue: CATALOGUE,
       fetch: rangedFetch({ 'int8/a.onnx': A, 'b.txt': B }, log),
     });
-    await expect(store.ensure('parakeet_ultra')).rejects.toThrow(/arrived corrupt/);
-    expect(await readdir(join(root, 'tiny'))).toEqual([]);
     await store.ensure('parakeet_ultra');
-    expect(log.at(-2)).toEqual({ url: 'int8/a.onnx', range: null });
+    expect(log).toEqual([
+      { url: 'int8/a.onnx', range: 'bytes=1000-' },
+      { url: 'int8/a.onnx', range: null },
+      { url: 'b.txt', range: null },
+    ]);
+    expect(await readFile(join(root, 'tiny', 'a.onnx'))).toEqual(A);
+    expect(store.notes.join('\n')).toMatch(/did not verify/);
   });
 
   test('a complete partial from a run that died before the rename is verified, not refetched', async () => {
@@ -337,3 +347,51 @@ suite('shipped bundles (Silero, in the installer)', () => {
     expect(store.notes.join('\n')).toMatch(/does not match its pinned sha256/);
   });
 });
+
+suite('a bundle over a bad line', () => {
+  test('a drop is retried inside one ensure, resumed, and the bar never goes backwards', async () => {
+    const log: { url: string; range: string | null }[] = [];
+    let calls = 0;
+    const flaky = rangedFetch({ 'int8/a.onnx': A, 'b.txt': B }, log, { cutAfter: 2500 });
+    const clean = rangedFetch({ 'int8/a.onnx': A, 'b.txt': B }, log);
+    const sleeps: number[] = [];
+    const store = createBundleStore({
+      modelsDirectory: root,
+      catalogue: CATALOGUE,
+      // The first request drops after 2 500 bytes; everything after it is clean.
+      fetch: ((url: string | URL | Request, init?: RequestInit) => (calls++ === 0 ? flaky : clean)(url, init)) as typeof fetch,
+      io: { sleep: async (ms) => void sleeps.push(ms), freeBytes: async () => null, random: () => 0.5 },
+    });
+    const seen: { receivedBytes: number; retrying?: boolean }[] = [];
+    await store.ensure('parakeet_ultra', (p) => seen.push(p));
+    expect(log).toEqual([
+      { url: 'int8/a.onnx', range: null },
+      { url: 'int8/a.onnx', range: 'bytes=2500-' },
+      { url: 'b.txt', range: null },
+    ]);
+    expect(sleeps).toHaveLength(1);
+    expect(await store.isInstalled('parakeet_ultra')).toBe(true);
+    for (let i = 1; i < seen.length; i += 1) expect(seen[i]!.receivedBytes).toBeGreaterThanOrEqual(seen[i - 1]!.receivedBytes);
+    expect(seen.at(-1)?.receivedBytes).toBe(A.length + B.length);
+    expect(seen.some((p) => p.retrying === true)).toBe(true);
+    expect(store.lastFailure?.('parakeet_ultra')).toBeNull();
+  });
+
+  test('cancelAll (quit) stops the download, keeps the partial, and starts nothing new', async () => {
+    const log: { url: string; range: string | null }[] = [];
+    const store = createBundleStore({
+      modelsDirectory: root,
+      catalogue: CATALOGUE,
+      fetch: rangedFetch({ 'int8/a.onnx': A, 'b.txt': B }, log, { cutAfter: 2500 }),
+      io: { sleep: () => new Promise(() => undefined), freeBytes: async () => null },
+    });
+    const running = store.ensure('parakeet_ultra');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    store.cancelAll?.();
+    await expect(running).rejects.toThrow(/stopped/);
+    expect((await readFile(join(root, 'tiny', 'a.onnx.partial'))).length).toBe(2500);
+    await expect(store.ensure('qwen3_1_7b')).rejects.toThrow(/stopped/);
+    expect(log).toHaveLength(1);
+  });
+});
+

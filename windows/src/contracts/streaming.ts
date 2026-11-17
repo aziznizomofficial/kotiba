@@ -40,6 +40,13 @@ export interface TranscriptionStream {
    * that commits nothing early simply never calls it.
    */
   onCommit?(listener: (text: string) => void): Unsubscribe;
+
+  /**
+   * The transcript so far — everything committed plus the newest pause decode — raw, whenever a
+   * pause decode lands. PROVISIONAL: the next pause or key-up may revise it. What the modes
+   * prime their polish with during the hold (the Mac's `progress()`). Optional.
+   */
+  onProgress?(listener: (text: string) => void): Unsubscribe;
 }
 
 /** An engine that can start work while the user is still speaking. */

@@ -28,6 +28,7 @@ import {
   isTerminal,
   peakAmplitude,
   rerouteDeadlineMs,
+  transcribeDeadlineMs,
 } from '../contracts/index.js';
 import type {
   AcousticClassifier,
@@ -503,6 +504,26 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     return deps.languages === undefined || deps.languages.length === 0 || deps.languages.includes(language);
   }
 
+  /**
+   * The language a stream of `family` is finished in before the route is known: the family's
+   * one language, or — Parakeet, which writes English or Russian per token — the speculated
+   * one when it is English or Russian, else English. Only Parakeet's letterless text reads it.
+   */
+  function streamLanguage(family: EngineFamily): Language {
+    switch (family) {
+      case 'uzbek':
+        return 'uz';
+      case 'turkish':
+        return 'tr';
+      case 'arabic':
+        return 'ar';
+      case 'unified': {
+        const speculated = deps.pinAtPress ?? deps.speculativeLanguage ?? null;
+        return speculated === 'ru' ? 'ru' : 'en';
+      }
+    }
+  }
+
   function openLiveStream(): void {
     const subscribe = deps.audio.onChunk;
     if (subscribe === undefined) return;
@@ -519,6 +540,9 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     const stopCommits = stream.onCommit?.((text) => {
       committedDuringHold(text);
     });
+    const stopProgress = stream.onProgress?.((text) => {
+      progressDuringHold(text);
+    });
     const stopChunks = subscribe((samples) => {
       // A copy: the stream keeps what it is handed, and a chunk is not ours to keep.
       stream.append(samples.slice());
@@ -529,8 +553,48 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       stopFeeding: () => {
         stopChunks();
         stopCommits?.();
+        stopProgress?.();
       },
     };
+  }
+
+  /** The language a live polish session is for: the pin, else what the stream wrote in. */
+  function livePolishLanguage(raw: string): Language {
+    const pinned = deps.pinAtPress ?? null;
+    if (pinned !== null) return pinned;
+    const family = live?.family ?? 'unified';
+    // Parakeet writes English or Russian per token; the whisper streams write their one language.
+    return family === 'unified' ? writtenLanguage<Language>(raw, 'en') : streamLanguage(family);
+  }
+
+  /**
+   * A pause decode landed: the transcript so far. Prime the mode's polish with it (the Mac's
+   * `primeLivePolish`), so the sentences said before the last pause are polished during the hold
+   * and key-up is left with what changed or came last. Nothing primed is delivered on its own
+   * authority — `finish` reuses a sentence only when the final transcript still has it, by exact
+   * text — so a stream that changes its mind costs time, never correctness.
+   *
+   * Not the unfinished last sentence on a whisper stream (the Mac's rule for Uzbek): there the
+   * same CPU is decoding the next pause, which is what key-up waits for.
+   */
+  function progressDuringHold(raw: string): void {
+    const polisher = deps.livePolisher?.() ?? null;
+    if (polisher === null || !isIncrementalPolisher(polisher)) return;
+    const language = livePolishLanguage(raw);
+    if (!polisher.supportedLanguages.has(language)) return;
+    if (livePolish !== null && livePolish.session.language !== language) {
+      // A new language: what was primed for the other is worthless — unless text was already
+      // committed in it, which the key-up check settles.
+      if (livePolish.committed.length > 0) return;
+      livePolish.session.cancel();
+      livePolish = null;
+    }
+    if (livePolish === null) {
+      livePolish = { polisher, session: polisher.begin(language), committed: [], prefix: '', broken: false };
+    }
+    const polish = livePolish;
+    if (polish.broken || polish.session.prime === undefined) return;
+    polish.session.prime(deps.normalise(raw, language), live?.family === 'unified');
   }
 
   /** The stream committed text during the hold. Polish it now, if this dictation can. */
@@ -543,8 +607,7 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       // The language is the engine's own answer — Parakeet writes English or Russian per
       // token; the Uzbek stream writes Uzbek — unless the press was pinned, which beats it
       // here as everywhere.
-      const pinned = deps.pinAtPress ?? null;
-      const language = pinned ?? (live?.family === 'uzbek' ? 'uz' : writtenLanguage<Language>(raw, 'en'));
+      const language = livePolishLanguage(raw);
       if (!polisher.supportedLanguages.has(language)) return;
       livePolish = { polisher, session: polisher.begin(language), committed: [], prefix: '', broken: false };
     }
@@ -570,6 +633,26 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     if (current === null) return null;
     current.stopFeeding();
     return current;
+  }
+
+  /**
+   * Start the parked stream's finish NOW, beside the language decision, and park a stream whose
+   * `finish` hands back that same answer to whoever asks next — the routed family at step 4, or
+   * step 4L's second opinion. The Mac's `speculativeFinishes` with the language-ID model (P4):
+   * the likely family's stream finishes while the detection runs, so key-up waits for the
+   * longer of the two rather than their sum. `cancel` still reaches the stream underneath.
+   */
+  function finishParkedEarly(buffer: AudioBuffer, language: Language): void {
+    const stream = parked;
+    if (stream === null) return;
+    const result = stream.finish(buffer, language);
+    // Nobody may be waiting on it (the route went elsewhere and the decision never asked).
+    result.catch(() => undefined);
+    parked = {
+      append: () => undefined,
+      cancel: () => stream.cancel(),
+      finish: () => result,
+    };
   }
 
   /** The parked stream, now the caller's to finish or cancel. */
@@ -884,6 +967,19 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
     }
 
     // 3. Route. A pin costs nothing and beats everything.
+    //
+    //    With the language-ID model routing (P4), the stream this press speculated on finishes
+    //    BESIDE the detection when its engine is resident — the detection runs in its own
+    //    process, so the two overlap instead of adding up. When the route agrees, nearly always,
+    //    that finish is the transcript; when it does not, it is the second opinion step 4L may
+    //    ask for, or it is cancelled on the way out. Never for a cold engine: a load is not a
+    //    speculation.
+    if (options.pin === null && (deps.languageID ?? null) !== null && streamed !== null && parked !== null) {
+      const engine = deps.engineFor(streamed.family);
+      if (engine !== null && (await engine.isReady())) {
+        finishParkedEarly(buffer, streamLanguage(streamed.family));
+      }
+    }
     transition({ kind: 'routing' });
     let routed = await measure('routing', () => deps.router.route(buffer, options.pin));
     // 3b. A Turkish candidate is settled by turbo's language head (`TurkishCheck`): Turkish only
@@ -1012,9 +1108,27 @@ export function createDictationSession(deps: SessionDeps): DictationSession {
       const usesStream = streamed !== null && streamed.family === routed.family;
       const stream = usesStream ? takeParked() : null;
       if (!usesStream && !(checksTranscript && streamed?.family === 'uzbek') && !decidesLanguage) takeParked()?.cancel();
-      transcribed = await measure('transcribing', () =>
-        stream === null ? engine.transcribe(buffer, language) : stream.finish(buffer, language),
+      // BOUNDED (Windows): an engine process that hangs must cost this dictation, with a
+      // sentence, not leave the pill on "Transcribing…" for minutes. `transcribeDeadlineMs`.
+      const transcribeMs = transcribeDeadlineMs(duration, deps.config.transcribeDeadlineMs);
+      const giveUp = new AbortController();
+      const outcome = await measure('transcribing', () =>
+        withDeadline(clock, transcribeMs, () =>
+          stream === null ? engine.transcribe(buffer, language, giveUp.signal) : stream.finish(buffer, language),
+        ),
       );
+      if (outcome.kind === 'timedOut') {
+        giveUp.abort();
+        stream?.cancel();
+        const why = `${engine.engineId} did not answer within ${secondsText(transcribeMs)}`;
+        fail(dictationError.transcriptionFailed(why), why);
+        return snapshot();
+      }
+      if (outcome.kind === 'failed') {
+        fail(dictationError.transcriptionFailed(outcome.message), outcome.message);
+        return snapshot();
+      }
+      transcribed = outcome.value;
     } catch (error: unknown) {
       const why = describe(error);
       fail(dictationError.transcriptionFailed(why), why);

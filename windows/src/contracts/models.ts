@@ -193,4 +193,6 @@ export interface ModelDownloadProgress {
   readonly receivedBytes: number;
   /** `null` when the server did not send a length. */
   readonly totalBytes: number | null;
+  /** The connection was lost; the download waits to try again and continues where it stopped. */
+  readonly retrying?: boolean;
 }

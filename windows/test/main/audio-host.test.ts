@@ -12,10 +12,12 @@
 // standing in for the one thing a Mac cannot have, and the real `MicrophoneCapture` on
 // top to prove the two halves actually meet.
 
+import { runInNewContext } from 'node:vm';
+
 import { describe, expect, it } from 'vitest';
 
 import type { AudioHostEvent, AudioHostReply } from '../../src/audio/index.js';
-import { createMicrophoneCapture } from '../../src/audio/index.js';
+import { CAPTURE_RENDERER_SOURCE, createMicrophoneCapture } from '../../src/audio/index.js';
 import {
   BRIDGE_WAIT_MS,
   LEVEL_INTERVAL_MS,
@@ -148,6 +150,43 @@ describe('the bootstrap injected into the capture window', () => {
     // Everything that is NOT a level goes straight through — a device change delayed is
     // a graph that stays stale for another press.
     expect(script).toMatch(/__kotibaLevelSentAt[\s\S]*kotibaAudio\.send/);
+  });
+
+  it('sends the Mac meter at 20 Hz — instant attack, per-block release — not one block in six', () => {
+    let clock = 1_000;
+    const sent: { kind: string; peak?: number }[] = [];
+    const sandbox: Record<string, unknown> = {
+      Date: { now: () => clock },
+      setTimeout,
+      Promise,
+      Map,
+      Float32Array,
+      kotiba: { on: () => () => undefined },
+      kotibaAudio: { send: (_channel: string, event: { kind: string; peak?: number }) => sent.push(event) },
+    };
+    sandbox['window'] = sandbox;
+    runInNewContext(captureBootstrap('', CAPTURE_RENDERER_SOURCE), sandbox);
+    const send = sandbox['__kotibaSend'] as (event: unknown) => void;
+    send({ kind: 'level', peak: 0.5 }); // opens a window: sent
+    // A syllable's tail: six quiet blocks inside the next 50 ms. The old throttle sent the
+    // first one raw (0.0) and threw the loud history away.
+    for (let i = 0; i < 6; i += 1) {
+      clock += 8;
+      send({ kind: 'level', peak: 0 });
+    }
+    clock += 8; // 56 ms after the first send
+    send({ kind: 'level', peak: 0 });
+    expect(sent).toHaveLength(2);
+    expect(sent[0]?.peak).toBeCloseTo(0.5, 6);
+    // 0.5 decayed by 0.8 for each of the seven quiet blocks — the meter, not a sample of it.
+    expect(sent[1]?.peak).toBeCloseTo(0.5 * 0.8 ** 7, 6);
+    // Attack is instant.
+    clock += 60;
+    send({ kind: 'level', peak: 0.9 });
+    expect(sent[2]?.peak).toBeCloseTo(0.9, 6);
+    // Not a level: straight through.
+    send({ kind: 'deviceChanged', why: 'x' });
+    expect(sent[3]).toEqual({ kind: 'deviceChanged', why: 'x' });
   });
 
   it('embeds the worklet source as a literal, not as a fetch', () => {

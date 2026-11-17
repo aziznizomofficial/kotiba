@@ -93,6 +93,8 @@ function noticeIcon(id: string): string {
 export function blockersView(scope: Scope, emptyText: string | null): HTMLElement {
   const list = h('div', { class: 'notices' });
   const rows = new Map<string, HTMLElement>();
+  /** What each row shows, so a push that changed nothing about it leaves it alone. */
+  const drawn = new Map<string, string>();
   const check = button(t('blockers.checkAgain'), 'link', undefined, true);
   check.addEventListener('click', () => {
     check.disabled = true;
@@ -115,10 +117,16 @@ export function blockersView(scope: Scope, emptyText: string | null): HTMLElemen
     for (const [id, row] of rows) {
       if (ids.has(id)) continue;
       rows.delete(id);
+      drawn.delete(id);
       row.classList.add('leaving');
       setTimeout(() => row.remove(), 200);
     }
     for (const blocker of blockers) {
+      // Every app push reaches here — one per download percent, every status change — and a
+      // row rebuilt each time snapped its opened detail shut under the user's pointer.
+      const signature = `${blocker.headline}\u0000${blocker.detail ?? ''}`;
+      if (drawn.get(blocker.id) === signature && rows.has(blocker.id)) continue;
+      drawn.set(blocker.id, signature);
       const detail = h('div', { class: 'detail selectable' }, [blocker.detail ?? '']);
       detail.hidden = blocker.detail === null;
       detail.addEventListener('click', () => detail.classList.toggle('open'));
@@ -417,7 +425,8 @@ export function historyPage(): Page {
     },
     customs: {
       historyList: (scope) => {
-        const input = h('input', { attrs: { type: 'search', placeholder: t('copy.historySearch'), spellcheck: 'false' } });
+        // `dir="auto"`: an Arabic search reads right to left as it is typed, like the rows it finds.
+        const input = h('input', { attrs: { type: 'search', placeholder: t('copy.historySearch'), spellcheck: 'false', dir: 'auto' } });
         const clear = h('button', { class: 'btn link', attrs: { type: 'button', 'aria-label': t('common.clear') } }, [icon('close', 14, 1.8)]);
         clear.hidden = true;
         const searchBox = h('div', { class: 'search' }, [icon('search', 14, 2), input, clear]);
@@ -465,6 +474,12 @@ export function historyPage(): Page {
           list.replaceChildren(...shown.map((entry) => historyRow(entry, index)));
         };
         scope.watch(['history', 'records', 'settings'], paint);
+        // A search's results are a snapshot of the history at the time it ran. Deleting a row
+        // from them used to bring it straight back (the repaint drew the old results), and a
+        // dictation finished mid-search never appeared in them. The history changing re-asks.
+        scope.watch(['history'], () => {
+          if (query.length > 0) runSearch();
+        }, false);
         const keep = boundToggle(scope, 'keepHistory', t('history.keep'), null);
         keep.style.flex = 'none';
         keep.style.gap = '10px';
@@ -505,7 +520,12 @@ function historyRow(entry: HistoryEntry, index: ReturnType<typeof indexBySecond>
     iconButton('trash', t('common.delete'), () => {
       row.classList.add('removing');
       setTimeout(() => {
-        void invoke(IPC_INVOKE.historyDelete, entry.id).then(() => store.reloadHistory());
+        // Reloaded either way: a refused delete puts the row back instead of leaving it faded out.
+        void invoke(IPC_INVOKE.historyDelete, entry.id)
+          .catch((error: unknown) => {
+            console.error('kotiba: deleting a history entry failed', error);
+          })
+          .finally(() => store.reloadHistory());
       }, 180);
     }, 'danger'),
   );

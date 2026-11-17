@@ -82,6 +82,22 @@ export function gemma4Turn(input: string): string {
 export const CONTEXT_TOKENS = 4096;
 export const MAX_SEQUENCES = 4;
 export const BATCH_TOKENS = 512;
+/**
+ * How long the modes' model stays loaded unused. WINDOWS: 15 minutes, against the Mac's 180 s.
+ *
+ * The Mac reloads in a few hundred milliseconds (Metal, a warm page cache) and its key-down
+ * prefill is ~0.1 s. A Windows laptop pays the reload (map 1.28 GB, build the context, upload to
+ * an integrated GPU's memory or stay on the CPU) AND the prompts' prefill on the CPU — ~300–600
+ * tokens per mode at a few hundred tokens a second — at the next key-down: one to several
+ * seconds, which a short dictation does not cover. Then every sentence missed the 1.5–2 s polish
+ * deadline and went in as spoken, after the user had waited the whole deadline for it. At 180 s
+ * that was the first Message, Note or Uzbek Super dictation after any three-minute pause; 15
+ * minutes is Parakeet's idle rule (`DEFAULT_PARAKEET_IDLE_UNLOAD_MS`) — the same trade, the
+ * same number. The weights are a file mapping the OS can page out under pressure; what stays
+ * private is the ~0.3–0.5 GB of K/V cache and compute buffers.
+ */
+export const DEFAULT_LLAMA_IDLE_UNLOAD_MS = 15 * 60_000;
+
 /** Drafted tokens per pass. 0 → 200/483, 8 → 119/242, 16 → 106/189, 32 → 113/226 ms (C3 §5). */
 export const DRAFT_TOKENS = 16;
 
@@ -90,7 +106,7 @@ export interface LlamaPolisherOptions {
   readonly modelPath: () => Promise<string | null>;
   readonly id?: string;
   readonly languages?: ReadonlySet<Language>;
-  /** The Mac's 180 s: the idle-RAM lesson from the whisper contexts applies here too. */
+  /** Give the weights back after this long unused. `DEFAULT_LLAMA_IDLE_UNLOAD_MS`; `null` never. */
   readonly idleUnloadMs?: number | null;
   /** CPU threads. See `resolveLlamaThreads`. */
   readonly threads?: number;
@@ -218,7 +234,7 @@ export class LlamaPolisher implements PromptedPolisher {
   }
 
   private scheduleUnload(): void {
-    const after = this.options.idleUnloadMs === undefined ? 180_000 : this.options.idleUnloadMs;
+    const after = this.options.idleUnloadMs === undefined ? DEFAULT_LLAMA_IDLE_UNLOAD_MS : this.options.idleUnloadMs;
     if (after === null) return;
     if (this.unloadTimer !== null) clearTimeout(this.unloadTimer);
     this.unloadTimer = setTimeout(() => {

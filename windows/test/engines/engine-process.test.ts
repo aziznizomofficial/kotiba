@@ -148,6 +148,30 @@ describe('Parakeet in its own process', () => {
     expect(Number(pid)).not.toBe(process.pid);
   });
 
+  it('a view of a longer recording crosses as its own samples, not with the whole buffer behind it', async () => {
+    const runtime = await startParakeetProcess('/dir', { threads: 1 }, fake('ok'));
+    disposers.push(() => runtime.dispose());
+    const recording = new Float32Array(16_000 * 60);
+    const tail = recording.subarray(16_000 * 58);
+    const [, length, , bytes] = (await runtime.transcribeSamples(tail)).split(':');
+    expect(Number(length)).toBe(32_000);
+    expect(Number(bytes)).toBe(32_000 * 4);
+  });
+
+  it('a decode that never answers is a hung process: rejected at its deadline, the process ended and reported', async () => {
+    const exits: EngineProcessExit[] = [];
+    const runtime = await startParakeetProcess('/dir', { threads: 1 }, fake('hang-on-work'), (exit) => exits.push(exit), 150);
+    disposers.push(() => runtime.dispose());
+    const started = Date.now();
+    await expect(runtime.transcribeSamples(new Float32Array(1_600))).rejects.toThrow(/did not answer within/u);
+    // The floor plus two seconds per second of audio: 150 ms + 0.2 s.
+    expect(Date.now() - started).toBeGreaterThanOrEqual(300);
+    for (let i = 0; i < 100 && runtime.alive?.() !== false; i += 1) await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(runtime.alive?.()).toBe(false);
+    // Reported as a death, so the engine's crash limiter counts it and the next prepare restarts.
+    expect(exits).toHaveLength(1);
+  });
+
   it('a host that never says hello is a start failure, not a crash', async () => {
     const error = await startParakeetProcess('/dir', { threads: 1 }, fake('never-hello')).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(EngineProcessExit);

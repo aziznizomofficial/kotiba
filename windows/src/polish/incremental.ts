@@ -113,6 +113,8 @@ export interface PolishOutcome {
   readonly modelSentences: number;
   /** What `finish` spent waiting, i.e. what the user saw after release. */
   readonly tailMs: number;
+  /** Sentences whose result came from `prime` — polished while the key was held. */
+  readonly primed?: number;
 }
 
 interface SentenceResult {
@@ -152,6 +154,13 @@ export class IncrementalPolish {
   private chain: Promise<void> = Promise.resolve();
   private heading: { readonly result: Promise<string | null>; readonly abort: AbortController } | null = null;
   private finished = false;
+  /** Sentences polished by `prime`, by their exact text, and those still being polished. */
+  private readonly memo = new Map<string, SentenceResult>();
+  private readonly priming = new Map<string, { readonly result: Promise<SentenceResult | null>; readonly abort: AbortController }>();
+  /** A heading primed over the first three sentences, keyed by those sentences. */
+  private primedHeading: { readonly key: string; readonly result: Promise<string | null>; readonly abort: AbortController } | null = null;
+  /** Sentences whose result came from `prime`. */
+  private primedHits = 0;
 
   constructor(options: IncrementalPolishOptions) {
     this.behaviour = options.behaviour;
@@ -209,6 +218,72 @@ export class IncrementalPolish {
     this.startHeadingIfDue(false);
   }
 
+  /** Whether a model is involved for this mode and language at all — what priming could save. */
+  get wantsModel(): boolean {
+    return this.usesModel;
+  }
+
+  /**
+   * Polish, in the background, every complete sentence of `text` — the transcript SO FAR,
+   * normalised exactly as the final one will be — that has not been polished yet. The Mac's
+   * `IncrementalPolish.prime`.
+   *
+   * How the modes get ahead of key-up with a transcriber whose text is still provisional (a
+   * pause decode). Nothing primed is ever delivered on its own authority: `finish` looks each
+   * sentence of the FINAL transcript up by its exact text, so a sentence revised after it was
+   * primed is simply never asked for, and is polished at key-up like any other. Call it as often
+   * as the text changes; a sentence is primed once.
+   *
+   * `includingLast` primes the unfinished last sentence too, split exactly as `finish` would
+   * split it: most pauses before key-up are the end of it, and then it is the only one left.
+   */
+  prime(text: string, includingLast = false): void {
+    if (this.finished || !this.usesModel) return;
+    const { sentences } = splitSentences(text, !includingLast);
+    for (const sentence of sentences) {
+      if (this.memo.has(sentence) || this.priming.has(sentence)) continue;
+      const previous = this.chain;
+      const abort = new AbortController();
+      const engine = this.engine;
+      const result = (async (): Promise<SentenceResult | null> => {
+        await previous;
+        if (abort.signal.aborted) return null;
+        const processed = await processSentence(sentence, this.behaviour, this.language, engine, abort.signal);
+        return abort.signal.aborted ? null : processed;
+      })();
+      this.chain = result.then(
+        () => undefined,
+        () => undefined,
+      );
+      this.priming.set(sentence, { result, abort });
+      void result.then(
+        (value) => {
+          this.priming.delete(sentence);
+          if (value !== null) this.memo.set(sentence, value);
+        },
+        () => this.priming.delete(sentence),
+      );
+    }
+    // Note: a heading over the first three sentences, as `startHeadingIfDue` would make it.
+    const engine = this.engine;
+    if (this.behaviour === 'note' && this.primedHeading === null && sentences.length >= 3 && engine !== null) {
+      const key = sentences.slice(0, 3).join(' ');
+      const previous = this.chain;
+      const abort = new AbortController();
+      const language = this.language;
+      const result = (async (): Promise<string | null> => {
+        await previous;
+        if (abort.signal.aborted) return null;
+        return headingFor(key, language, engine, abort.signal);
+      })();
+      this.primedHeading = { key, result, abort };
+      this.chain = result.then(
+        () => undefined,
+        () => undefined,
+      );
+    }
+  }
+
   /**
    * Everything after the last commit, then wait — at most `deadlineMs` — for every
    * sentence. A sentence still running at the deadline goes in its deterministic form.
@@ -224,6 +299,14 @@ export class IncrementalPolish {
       this.pending += tail;
       const split = splitSentences(this.pending, false);
       this.pending = '';
+      // A primed sentence the final transcript no longer contains is dead work: stop it, so the
+      // sentences still to do do not queue behind it.
+      const wanted = new Set(split.sentences);
+      for (const [sentence, running] of this.priming) if (!wanted.has(sentence)) running.abort.abort();
+      if (this.primedHeading !== null && split.sentences.slice(0, 3).join(' ') !== this.primedHeading.key) {
+        this.primedHeading.abort.abort();
+        this.primedHeading = null;
+      }
       for (const sentence of split.sentences) this.enqueue(sentence);
       this.startHeadingIfDue(true);
     }
@@ -246,6 +329,11 @@ export class IncrementalPolish {
       this.heading.abort.abort();
     }
     for (const job of this.jobs) job.abort.abort();
+    // Whatever the hold primed and the deadline did not wait for is dead work now: left running
+    // it kept the one model context generating after this dictation was pasted, and the next
+    // dictation's sentences queued behind it (the Mac's note on the same line).
+    for (const running of this.priming.values()) running.abort.abort();
+    this.primedHeading?.abort.abort();
     for (const result of results) if (result.note !== null) notes.push(result.note);
 
     return {
@@ -254,6 +342,7 @@ export class IncrementalPolish {
       sentences: results.length,
       modelSentences: results.filter((result) => result.usedModel).length,
       tailMs: this.clock.now() - started,
+      primed: this.primedHits,
     };
   }
 
@@ -267,11 +356,35 @@ export class IncrementalPolish {
     this.finished = true;
     this.heading?.abort.abort();
     for (const job of this.jobs) job.abort.abort();
+    for (const running of this.priming.values()) running.abort.abort();
+    this.primedHeading?.abort.abort();
   }
 
   // ---- jobs -------------------------------------------------------------------------
 
   private enqueue(sentence: string): void {
+    // Primed during the hold: done, or nearly — never queued behind anything.
+    const hit = this.memo.get(sentence);
+    if (hit !== undefined) {
+      this.primedHits += 1;
+      this.jobs.push({ sentence, result: Promise.resolve(hit), abort: new AbortController() });
+      return;
+    }
+    const running = this.priming.get(sentence);
+    if (running !== undefined) {
+      this.primedHits += 1;
+      const abort = new AbortController();
+      const engine = this.usesModel ? this.engine : null;
+      // Aborting this job reaches the prime it waits on, not only itself.
+      abort.signal.addEventListener('abort', () => running.abort.abort(), { once: true });
+      const result = (async (): Promise<SentenceResult> => {
+        const primed = await running.result.catch(() => null);
+        if (primed !== null) return primed;
+        return processSentence(sentence, this.behaviour, this.language, engine, abort.signal);
+      })();
+      this.jobs.push({ sentence, result, abort });
+      return;
+    }
     const previous = this.chain;
     const abort = new AbortController();
     const engine = this.usesModel ? this.engine : null;
@@ -299,26 +412,18 @@ export class IncrementalPolish {
       .slice(0, 3)
       .map((job) => job.sentence)
       .join(' ');
+    const primed = this.primedHeading;
+    if (primed !== null && primed.key === text) {
+      this.heading = { result: primed.result, abort: primed.abort };
+      return;
+    }
     const previous = this.chain;
     const abort = new AbortController();
     const language = this.language;
     const result = (async (): Promise<string | null> => {
       await previous;
       if (abort.signal.aborted) return null;
-      let raw: string;
-      try {
-        raw = await engine.generate(text, language, headingPrompt(language), 16, abort.signal);
-      } catch {
-        return null;
-      }
-      const heading = cleanHeading(raw);
-      if (!acceptsHeading(heading, text)) return null;
-      // Uzbek takes the same bar the whole note is held to before it is inserted (the Uzbek
-      // polish guard, which admits no new word at all). The stem rule above accepts
-      // `Ertangi rejalar` over `Ertaga rejalarimizni…`; the note guard then refused the whole
-      // note for the one inflected heading word, and every checkbox went with it.
-      if (language === 'uz' && checkUzbekPolishGuard(heading, text) !== null) return null;
-      return heading;
+      return headingFor(text, language, engine, abort.signal);
     })();
     this.heading = { result, abort };
     this.chain = result.then(
@@ -360,6 +465,24 @@ export class IncrementalPolish {
       results.map((result) => noteLine(result.text, result.kind ?? 'point', this.language)),
     );
   }
+}
+
+/** A note's heading over its first sentences, or `null` when the model's answer is not one. */
+async function headingFor(text: string, language: Language, engine: PromptedPolisher, signal: AbortSignal): Promise<string | null> {
+  let raw: string;
+  try {
+    raw = await engine.generate(text, language, headingPrompt(language), 16, signal);
+  } catch {
+    return null;
+  }
+  const heading = cleanHeading(raw);
+  if (!acceptsHeading(heading, text)) return null;
+  // Uzbek takes the same bar the whole note is held to before it is inserted (the Uzbek
+  // polish guard, which admits no new word at all). The stem rule above accepts
+  // `Ertangi rejalar` over `Ertaga rejalarimizni…`; the note guard then refused the whole
+  // note for the one inflected heading word, and every checkbox went with it.
+  if (language === 'uz' && checkUzbekPolishGuard(heading, text) !== null) return null;
+  return heading;
 }
 
 function heuristicKind(sentence: string, language: Language): NoteKind {

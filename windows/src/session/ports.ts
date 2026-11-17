@@ -212,6 +212,12 @@ export interface IncrementalPolishSession {
   prepare(): Promise<void>;
   /** Normalised text the transcriber will not revise. */
   commit(segment: string): void;
+  /**
+   * The transcript SO FAR, normalised as the final one will be: its complete sentences (and the
+   * unfinished last one with `includingLast`) are polished now, and `finish` reuses any the final
+   * transcript still contains, by exact text. Optional: a session without it polishes at key-up.
+   */
+  prime?(text: string, includingLast?: boolean): void;
   /** Everything after the last commit; waits at most its own deadline for the model. */
   finish(tail: string): Promise<{ readonly text: string; readonly notes: readonly string[] }>;
   cancel(): void;

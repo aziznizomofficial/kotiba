@@ -111,22 +111,6 @@ export function isBusy(status: DictationStatus): boolean {
   return status.kind === 'preparing' || status.kind === 'listening' || status.kind === 'working';
 }
 
-/** The HUD copy, so the shell and the session agree on it without duplicating strings. */
-export const STATUS_COPY = {
-  idle: 'Ready',
-  /** `Loading the ${what}…` */
-  preparingPrefix: 'Loading the ',
-  preparingSuffix: '…',
-  listening: 'Listening',
-  /** `${stage capitalised}…` */
-  workingSuffix: '…',
-  /** Deliberately not phrased as an error. */
-  heardNothing: 'I did not hear anything',
-  heardNothingDetail: 'Hold the key while you speak, then let go.',
-  // `stillRunning` ("Still finishing the last one.") is gone with the refusal it named:
-  // since 1.0 a press during processing starts a new take, as on the Mac.
-} as const;
-
 /**
  * The 10 s ceiling on step 4b's second transcription, after a script check overturns
  * the route toward Uzbek. Not overridable and there is NO settings key for it — a port
@@ -151,6 +135,29 @@ export function rerouteDeadlineMs(audioSeconds: number, floorMs: number = REROUT
   return Math.max(floorMs, Math.trunc(audioSeconds * REROUTE_DEADLINE_PER_SECOND * 1000));
 }
 
+/**
+ * WINDOWS-ONLY. The ceiling on the routed engine's own transcription at key-up — the floor; a
+ * long recording gets `TRANSCRIBE_DEADLINE_PER_SECOND` per second of audio on top of nothing
+ * (`transcribeDeadlineMs`).
+ *
+ * The Mac has none: its engines are in-process and answer or throw. Here every engine is a
+ * separate process (kotiba-stt.exe, the Parakeet / language-ID / Arabic utility processes), and
+ * one that hangs — a deadlocked decode, a stalled pipe — left the pill on "Transcribing…" for the
+ * host client's 120 s, or for ever on the utility processes, which had no timeout at all. A
+ * normal decode is far inside it: Parakeet ~0.2–0.8 s for a 14 s window on a laptop CPU, the
+ * Uzbek model's whole-recording batch ~0.1–0.3 s per second of audio. The load in front of it is
+ * not covered (it is the `loading` stage, bounded by each engine's own load budget).
+ */
+export const TRANSCRIBE_DEADLINE_MS = 30_000;
+
+/** …or this much per second of audio, whichever is longer: ~7–20× a laptop CPU's batch rate. */
+export const TRANSCRIBE_DEADLINE_PER_SECOND = 2;
+
+/** The transcription ceiling for a recording of `audioSeconds`. */
+export function transcribeDeadlineMs(audioSeconds: number, floorMs: number = TRANSCRIBE_DEADLINE_MS): number {
+  return Math.max(floorMs, Math.trunc(audioSeconds * TRANSCRIBE_DEADLINE_PER_SECOND * 1000));
+}
+
 /** `DictationSession.Config` — three of the four come from settings. */
 export interface SessionConfig {
   /** From `settings.silenceThreshold`. Default 0.012. */
@@ -163,6 +170,8 @@ export interface SessionConfig {
    * (`rerouteDeadlineMs`).
    */
   readonly rerouteDeadlineMs: number;
+  /** The floor of `transcribeDeadlineMs`. Absent: `TRANSCRIBE_DEADLINE_MS`. Present so a test can shorten it. */
+  readonly transcribeDeadlineMs?: number;
 }
 
 export const DEFAULT_SESSION_CONFIG: SessionConfig = {

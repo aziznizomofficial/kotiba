@@ -302,3 +302,47 @@ describe('a damaged file', () => {
     await fresh.close();
   });
 });
+
+describe('file operations in flight together (1.0.3 review)', () => {
+  it('a dictation that finishes while a delete rewrites the file is still on disk afterwards', async () => {
+    // The append used to land in the OLD file while the rewrite renamed a temp file built
+    // from the index over it: the new entry was in the pane and gone on the next launch.
+    await store.insert(entry({ id: 'old' }));
+    await store.insert(entry({ id: 'doomed' }));
+    await Promise.all([store.delete('doomed'), store.insert(entry({ id: 'new' }))]);
+    const reopened = createFileHistoryStore({ path: file });
+    await reopened.open();
+    expect((await reopened.recent()).map((row) => row.id).sort()).toEqual(['new', 'old']);
+    await reopened.close();
+  });
+
+  it('many appends racing a rewrite all survive, each on its own line', async () => {
+    await store.insert(entry({ id: 'seed' }));
+    const work: Promise<unknown>[] = [store.delete('seed')];
+    for (let i = 0; i < 20; i += 1) work.push(store.insert(entry({ id: `n${String(i)}` })));
+    work.push(store.prune(100));
+    await Promise.all(work);
+    const reopened = createFileHistoryStore({ path: file });
+    await reopened.open();
+    expect(await reopened.count()).toBe(20);
+    expect(reopened.notes).toEqual([]);
+    await reopened.close();
+  });
+});
+
+describe('a crash mid-append (1.0.3 review)', () => {
+  it('the next append does not glue its line onto the cut-off fragment', async () => {
+    // A power cut leaves `{"id":"half…` with no newline; the next line appended straight
+    // after it made ONE unreadable line out of two, and the new dictation was lost too.
+    await fs.writeFile(file, `${JSON.stringify(entry({ id: 'kept' }))}\n{"id":"half`, 'utf8');
+    const reopened = createFileHistoryStore({ path: file });
+    await reopened.open();
+    await reopened.insert(entry({ id: 'after' }));
+    await reopened.close();
+    const again = createFileHistoryStore({ path: file });
+    await again.open();
+    expect((await again.recent()).map((row) => row.id).sort()).toEqual(['after', 'kept']);
+    expect(again.notes.join(' ')).toContain('1 unreadable');
+    await again.close();
+  });
+});

@@ -157,6 +157,19 @@ export function createFileDiagnosticsSink(options: FileDiagnosticsSinkOptions): 
     await writeFileAtomic(file, keep.length === 0 ? '' : `${keep.join('\n')}\n`);
   }
 
+  /**
+   * One file operation at a time, in order. Two dictations finishing close together —
+   * the Mac's overlapping takes are the Windows port's too — each append then trim; an
+   * append landing between another's read and its atomic rewrite was dropped by the
+   * rewrite. The same shape as the history store's `serially`.
+   */
+  let queue: Promise<void> = Promise.resolve();
+  function serially(operation: () => Promise<void>): Promise<void> {
+    const run = queue.then(operation);
+    queue = run.catch(() => undefined);
+    return run;
+  }
+
   return {
     async open(): Promise<void> {
       await fs.mkdir(path.dirname(file), { recursive: true });
@@ -171,9 +184,11 @@ export function createFileDiagnosticsSink(options: FileDiagnosticsSinkOptions): 
     },
 
     async append(record: DictationRecord): Promise<void> {
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.appendFile(file, `${encodeDiagnosticsLine(environment, record)}\n`, 'utf8');
-      await trimIfNeeded();
+      await serially(async () => {
+        await fs.mkdir(path.dirname(file), { recursive: true });
+        await fs.appendFile(file, `${encodeDiagnosticsLine(environment, record)}\n`, 'utf8');
+        await trimIfNeeded();
+      });
     },
 
     async records(): Promise<readonly DictationRecord[]> {
@@ -255,7 +270,7 @@ export function createFileDiagnosticsSink(options: FileDiagnosticsSinkOptions): 
 
     async clear(): Promise<void> {
       // Empty, but still THERE. A missing file reads as "diagnostics are off".
-      await writeFileAtomic(file, '');
+      await serially(() => writeFileAtomic(file, ''));
     },
 
     async close(): Promise<void> {

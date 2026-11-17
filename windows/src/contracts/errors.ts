@@ -275,4 +275,12 @@ export const INSERTION_REFUSALS = {
   couldNotSendKeys: 'could not send the paste keystroke',
   moved: 'the text moved or was edited after Kotiba typed it',
   notEditable: 'this app does not expose its text field to Kotiba',
+  /**
+   * kotiba-input 1.3.0. The window in front runs as administrator, and Windows (UIPI) drops
+   * every keystroke a normal app sends it — usually without an error. The helper leaves the
+   * text on the clipboard instead, so the user's own Ctrl+V still delivers it.
+   */
+  elevated: 'this app runs as administrator, and Windows does not let Kotiba type into it — the text is on the clipboard, press Ctrl+V',
+  /** The same, when even the clipboard refused the text. */
+  elevatedNoClipboard: 'this app runs as administrator, and Windows does not let Kotiba type into it',
 } as const;

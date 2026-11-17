@@ -29,7 +29,13 @@ export type DownloadState =
   /** Shipped inside the installer — nothing to fetch. */
   | { readonly kind: 'included' }
   | { readonly kind: 'notDownloaded' }
-  | { readonly kind: 'downloading'; readonly receivedBytes: number; readonly totalBytes: number }
+  | {
+      readonly kind: 'downloading';
+      readonly receivedBytes: number;
+      readonly totalBytes: number;
+      /** The connection was lost; it waits to try again, and continues where it stopped. */
+      readonly retrying?: boolean;
+    }
   | { readonly kind: 'failed'; readonly reason: string }
   /** Missing, and there is no public copy to fetch it from. */
   | { readonly kind: 'unavailable'; readonly reason: string };
@@ -134,6 +140,13 @@ export function megabytes(bytes: number): string {
     : t('unit.mb', { value: String(Math.round(bytes / 1_000_000)) });
 }
 
+/** How far a model-store download (Uzbek, whisper turbo) has got. */
+export interface StoreProgress {
+  readonly receivedBytes: number;
+  readonly totalBytes: number;
+  readonly retrying?: boolean;
+}
+
 /** A first-use bundle's state, as a row. */
 export function bundleRowState(state: BundleState): DownloadState {
   switch (state.kind) {
@@ -158,7 +171,7 @@ export function uzbekRowState(options: {
   readonly status: ModelStatus;
   readonly inInstaller: boolean;
   readonly downloadable: boolean;
-  readonly downloading: { readonly receivedBytes: number; readonly totalBytes: number } | null;
+  readonly downloading: StoreProgress | null;
   readonly error: string | null;
 }): DownloadState {
   if (options.status === 'ready') return options.inInstaller ? { kind: 'included' } : { kind: 'installed' };
@@ -182,7 +195,7 @@ export function uzbekRowState(options: {
  */
 export function modelRowState(options: {
   readonly status: ModelStatus;
-  readonly downloading: { readonly receivedBytes: number; readonly totalBytes: number } | null;
+  readonly downloading: StoreProgress | null;
   readonly error: string | null;
 }): DownloadState {
   if (options.status === 'ready') return { kind: 'installed' };
@@ -240,6 +253,8 @@ export interface CoreReadiness {
   readonly fraction: number;
   /** Something failed and nothing is downloading — the reason, for the Try again line. */
   readonly failed: string | null;
+  /** A core download lost its connection and waits to try again — "reconnecting", not a frozen bar. */
+  readonly retrying: boolean;
 }
 
 /**
@@ -270,6 +285,7 @@ export function coreReadiness(rows: readonly DownloadRow[], enabled: readonly st
     remainingBytes: Math.max(0, total - done),
     fraction: total > 0 ? Math.min(1, done / total) : 1,
     failed: !busy && failure !== undefined && failure.state.kind === 'failed' ? failure.state.reason : null,
+    retrying: core.some((row) => row.state.kind === 'downloading' && row.state.retrying === true),
   };
 }
 
@@ -343,4 +359,46 @@ export function downloadWanted(id: AcceptedDownload, enabled: readonly string[])
     case 'qwen3_1_7b':
       return true;
   }
+}
+
+// ---- Trying again by itself (1.0.3) ---------------------------------------------------------
+//
+// The downloader retries a dropped or stalled connection within one attempt for about a minute
+// (`src/engines/download-file.ts`). Past that the row says why — and the app tries again LATER,
+// on its own: the owner's "kept failing" was a row that stayed `failed` until someone clicked.
+
+/**
+ * Whether a failure is worth an automatic retry: a dead line, a busy server, a full disk the user
+ * may clear, a file antivirus held. Not a 404 or a corrupt body — those would refetch gigabytes
+ * for the same answer — and not a quit. Read from the flag the downloader set (D-W10), duck-typed
+ * because the error crossed from `src/engines`.
+ */
+export function worthRetrying(error: unknown): boolean {
+  return (error as { retryLater?: unknown } | null)?.retryLater === true;
+}
+
+/** Waits between the app's own retries: a minute, then longer, then every 15 minutes. */
+export const AUTO_RETRY_DELAYS_MS: readonly number[] = [60_000, 120_000, 300_000, 600_000, 900_000];
+/**
+ * Online rounds per launch before the app stops on its own (≈ 2.5 h of a line that connects and
+ * fails). Rounds spent offline do not count, and waking from sleep starts the count again — so a
+ * PC that is offline for a day still finishes when it comes back. Try again always works.
+ */
+export const AUTO_RETRY_ROUNDS = 12;
+/** While offline, how often to look again — no network is touched, `net.isOnline()` is local. */
+export const OFFLINE_POLL_MS = 30_000;
+
+export function autoRetryDelayMs(round: number): number {
+  return AUTO_RETRY_DELAYS_MS[Math.min(Math.max(0, round), AUTO_RETRY_DELAYS_MS.length - 1)] ?? 900_000;
+}
+
+/** The downloads to try again now: wanted, failed, and failed for a reason that can pass. */
+export function autoRetryIds(
+  rows: readonly DownloadRow[],
+  enabled: readonly string[],
+  lastFailure: (id: AcceptedDownload) => unknown,
+): AcceptedDownload[] {
+  return rows
+    .filter((row) => row.state.kind === 'failed' && downloadWanted(row.id, enabled) && worthRetrying(lastFailure(row.id)))
+    .map((row) => row.id);
 }

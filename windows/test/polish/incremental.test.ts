@@ -213,3 +213,80 @@ suite('the prompt the GGUF receives', () => {
     expect(turn('hi')).toBe('<|im_start|>user\nhi<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n');
   });
 });
+
+// `prime`: sentences polished while the key is held, reused at key-up only if they survived.
+// The Mac's PrimedPolishTests, ported.
+suite('priming during the hold', () => {
+  test('a sentence primed during the hold is not asked again at key-up', async () => {
+    const model = new FakeModel((text) => text);
+    const session = new IncrementalPolish({ behaviour: 'message', language: 'en', engine: model });
+    session.prime('So we planted the seeds today. Water them');
+    await session.idle();
+    expect(model.calls.map((call) => call.text)).toEqual(['So we planted the seeds today.']);
+    const outcome = await session.finish('So we planted the seeds today. Water them every morning.', 30_000);
+    expect(outcome.primed).toBe(1);
+    expect(model.calls).toHaveLength(2);
+    expect(outcome.text).toContain('Water them every morning.');
+  });
+
+  test('a sentence the transcriber revised is polished again, never pasted stale', async () => {
+    const model = new FakeModel((text) => text);
+    const session = new IncrementalPolish({ behaviour: 'message', language: 'en', engine: model });
+    session.prime('The roses bloom early this year. And');
+    await session.idle();
+    const outcome = await session.finish('The roses bloomed early this year.', 30_000);
+    expect(outcome.text).toBe('The roses bloomed early this year.');
+    expect(outcome.primed).toBe(0);
+  });
+
+  test('the unfinished last sentence is primed too when asked, for a release after a pause', async () => {
+    const model = new FakeModel((text) => text);
+    const session = new IncrementalPolish({ behaviour: 'message', language: 'en', engine: model });
+    session.prime('Can you water the roses today?', true);
+    await session.idle();
+    const outcome = await session.finish('Can you water the roses today?', 30_000);
+    expect(outcome.primed).toBe(1);
+    expect(model.calls).toHaveLength(1);
+  });
+
+  test('a prime still running at key-up is waited for, not repeated', async () => {
+    const model = new FakeModel((text) => text, 40);
+    const session = new IncrementalPolish({ behaviour: 'message', language: 'en', engine: model });
+    session.prime('Can you water the roses today?', true);
+    const outcome = await session.finish('Can you water the roses today?', 30_000);
+    expect(outcome.primed).toBe(1);
+    expect(model.calls).toHaveLength(1);
+    expect(outcome.text).toBe('Can you water the roses today?');
+  });
+
+  test('primes the deadline did not wait for stop at key-up, so the next dictation does not queue behind them', async () => {
+    const sentences = ['The roses need water today.', 'The mulch arrived this morning.', 'The seeds go in on Friday.'];
+    const model = new FakeModel((text) => text, 150);
+    const session = new IncrementalPolish({ behaviour: 'message', language: 'en', engine: model });
+    session.prime(sentences.join(' '), true);
+    const outcome = await session.finish(sentences.join(' '), 20);
+    expect(outcome.text).toBe(sentences.join(' '));
+    // Long enough for all three generations to have run had they been left going.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(model.calls.length).toBeLessThanOrEqual(1);
+  });
+
+  test('priming costs nothing where no model is involved', async () => {
+    const model = new FakeModel((text) => text);
+    const session = new IncrementalPolish({ behaviour: 'super', language: 'en', engine: model });
+    session.prime('The roses bloomed early. And then', true);
+    await session.idle();
+    expect(model.calls).toEqual([]);
+    expect(session.wantsModel).toBe(false);
+  });
+
+  test('a revised sentence no longer in the transcript is stopped at key-up instead of run', async () => {
+    const model = new FakeModel((text) => text, 30);
+    const session = new IncrementalPolish({ behaviour: 'message', language: 'en', engine: model });
+    // Two primes queued; the second is revised before it runs.
+    session.prime('The roses need water. The mulch arives today.', true);
+    const outcome = await session.finish('The roses need water. The mulch arrived today.', 30_000);
+    expect(outcome.text).toBe('The roses need water. The mulch arrived today.');
+    expect(model.calls.map((call) => call.text)).not.toContain('The mulch arives today.');
+  });
+});

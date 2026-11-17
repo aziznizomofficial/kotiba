@@ -41,25 +41,76 @@ import {
  * Exported because history and diagnostics rewrite whole files for the same reason.
  */
 export function writeFileAtomic(target: string, contents: string): Promise<void> {
-  // ONE WRITE AT A TIME PER FILE, IN CALL ORDER — so the last call's contents are the ones
-  // left on disk. Two writes in flight used to share one temp name: each truncated the
-  // other's temp file, one rename failed with ENOENT, and the file left behind could be a
-  // splice of the two that is not JSON at all (23 of 60 overlapping pairs in a test). Two
-  // `settings:set` calls overlap easily — arrow keys on a slider, a toggle flipped twice —
-  // and the next launch then read "could not be read" and started on defaults.
-  const previous = writesInFlight.get(target) ?? Promise.resolve();
-  const run = previous.then(() => writeOnce(target, contents));
-  const settled = run.catch(() => undefined);
-  writesInFlight.set(target, settled);
-  void settled.then(() => {
-    if (writesInFlight.get(target) === settled) writesInFlight.delete(target);
+  // ONE WRITE AT A TIME PER FILE, AND THE LAST CALL'S CONTENTS ARE THE ONES LEFT ON DISK.
+  // Two writes in flight used to share one temp name: each truncated the other's temp file,
+  // one rename failed with ENOENT, and the file left behind could be a splice of the two
+  // that is not JSON at all (23 of 60 overlapping pairs in a test). Two `settings:set`
+  // calls overlap easily — arrow keys on a slider, a toggle flipped twice — and the next
+  // launch then read "could not be read" and started on defaults.
+  //
+  // COALESCED, NOT MERELY QUEUED. Every caller hands over the WHOLE file, so while one
+  // write is on its way to the disk, any number of later calls collapse into one: the
+  // newest contents, written once, and every one of those callers settles with it. Ten
+  // arrow-key presses on a slider used to be ten temp files and ten fsyncs in a row —
+  // on a laptop disk with an antivirus scanning each new file, a queue that took seconds
+  // to drain, during which a quit could cut it short.
+  let queue = writeQueues.get(target);
+  if (queue === undefined) {
+    queue = { running: false, next: null };
+    writeQueues.set(target, queue);
+  }
+  if (queue.next !== null) {
+    queue.next.contents = contents;
+    return queue.next.done;
+  }
+  let settle: { resolve: () => void; reject: (error: unknown) => void } = { resolve: () => {}, reject: () => {} };
+  const done = new Promise<void>((resolve, reject) => {
+    settle = { resolve, reject };
   });
-  return run;
+  queue.next = { contents, done, ...settle };
+  if (!queue.running) void drain(target, queue);
+  return done;
 }
 
-/** The tail of each file's write queue. Emptied as each queue drains. */
-const writesInFlight = new Map<string, Promise<void>>();
+interface PendingWrite {
+  contents: string;
+  readonly done: Promise<void>;
+  readonly resolve: () => void;
+  readonly reject: (error: unknown) => void;
+}
+
+interface WriteQueue {
+  running: boolean;
+  /** The write waiting behind the running one; later calls overwrite its contents. */
+  next: PendingWrite | null;
+}
+
+/** One queue per file, removed as each drains. */
+const writeQueues = new Map<string, WriteQueue>();
 let temporaryCounter = 0;
+
+async function drain(target: string, queue: WriteQueue): Promise<void> {
+  queue.running = true;
+  while (queue.next !== null) {
+    // Taken BEFORE the first await, so a call made while this one is on the disk queues
+    // a fresh write instead of joining one whose bytes are already fixed.
+    const job = queue.next;
+    queue.next = null;
+    try {
+      await writeOnce(target, job.contents);
+      job.resolve();
+    } catch (error: unknown) {
+      job.reject(error);
+    }
+  }
+  queue.running = false;
+  writeQueues.delete(target);
+}
+
+/** Overridable by tests, which cannot make a real file busy on a POSIX runner. */
+export const atomicWriteFs = {
+  rename: (from: string, to: string): Promise<void> => fs.rename(from, to),
+};
 
 async function writeOnce(target: string, contents: string): Promise<void> {
   const directory = path.dirname(target);
@@ -67,26 +118,64 @@ async function writeOnce(target: string, contents: string): Promise<void> {
 
   // `process.pid` keeps two Kotiba processes — one being replaced by an upgrade, say —
   // from racing on the same temp name and each renaming the other's half-written file;
-  // the counter does the same for two writes inside this one.
+  // the counter does the same for two files written inside this one.
   temporaryCounter += 1;
   const temporary = path.join(
     directory,
     `.${path.basename(target)}.${process.pid}.${String(temporaryCounter)}.tmp`,
   );
 
-  const handle = await fs.open(temporary, 'w');
   try {
-    await handle.writeFile(contents, 'utf8');
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-
-  try {
-    await fs.rename(temporary, target);
+    const handle = await fs.open(temporary, 'w');
+    try {
+      await handle.writeFile(contents, 'utf8');
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await renameWithRetry(temporary, target);
   } catch (error) {
-    await fs.rm(temporary, { force: true });
+    // Any failure — a full disk mid-write as much as a refused rename — takes the temp
+    // file with it. Left behind, each failed save on a full disk is one more file on it.
+    await fs.rm(temporary, { force: true }).catch(() => undefined);
     throw error;
+  }
+}
+
+/** The codes Windows answers a rename with while another process holds the target open. */
+const TRANSIENT_RENAME_CODES: ReadonlySet<string> = new Set(['EPERM', 'EACCES', 'EBUSY']);
+
+/** Waits between rename attempts: about two seconds in all. */
+export const RENAME_RETRY_DELAYS_MS: readonly number[] = [10, 20, 40, 80, 160, 320, 640, 640];
+
+/**
+ * `rename`, retried while Windows says the target is busy.
+ *
+ * Replacing a file on Windows fails with EPERM / EACCES / EBUSY for as long as any process
+ * has it open without FILE_SHARE_DELETE — and the processes that do that are Defender
+ * scanning the file we wrote a moment ago, the search indexer, a backup or sync client
+ * (OneDrive syncs %APPDATA% on some managed machines). Each holds it for milliseconds to a
+ * second. Failing on the first refusal threw away a settings write, a history rewrite or a
+ * diagnostics trim for a lock that would have been gone by the next attempt; graceful-fs
+ * retries the same codes for the same reason. A refusal that outlasts the schedule is real
+ * and is thrown.
+ */
+export async function renameWithRetry(
+  from: string,
+  to: string,
+  rename: (from: string, to: string) => Promise<void> = (f, t) => atomicWriteFs.rename(f, t),
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await rename(from, to);
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException | null)?.code;
+      const delay = RENAME_RETRY_DELAYS_MS[attempt];
+      if (code === undefined || !TRANSIENT_RENAME_CODES.has(code) || delay === undefined) throw error;
+      await sleep(delay);
+    }
   }
 }
 

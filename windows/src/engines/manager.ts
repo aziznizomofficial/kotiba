@@ -404,6 +404,7 @@ function createFamilyEngine(
         append: (samples) => inner?.append(samples),
         cancel: () => inner?.cancel(),
         onCommit: (listener) => inner?.onCommit?.(listener) ?? (() => undefined),
+        onProgress: (listener) => inner?.onProgress?.(listener) ?? (() => undefined),
         finish: async (audio, language) => {
           if (streaming !== undefined && inner !== null && streaming.languages.includes(language)) {
             try {
@@ -811,13 +812,34 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
       const wanted: EngineFamily[] = options.eagerly
         ? [...subsetFamilies(on)]
         : [engineFamilyFor(subsetFallback(on, options.language ?? settings.defaultLanguage))];
+      // Parakeet too, whatever the default language — the Mac's rule (`prepareEngines` at launch,
+      // and on every press unless it is pinned elsewhere): it is the engine for English and
+      // Russian, which the language decision can route any unpinned press to. Only the LEAD: the
+      // whisper members behind it stay cold unless it cannot load. Without this an Uzbek-default
+      // user's first English dictation — and every one after Parakeet's idle unload — loaded
+      // ~700 MB on the key-up path, behind the words. A no-op when it is resident.
+      const lead = deps.unifiedLead;
+      const leadWanted =
+        lead !== undefined &&
+        !wanted.includes('unified') &&
+        subsetFamilies(on).has('unified') &&
+        (options.language === undefined || engineFamilyFor(options.language) === 'unified');
+      const preloadLead = async (): Promise<void> => {
+        if (!leadWanted) return;
+        try {
+          await lead.engine.prepare();
+        } catch (error) {
+          note(`unified: ${lead.engine.engineId} not ready — ${error instanceof Error ? error.message : String(error)}`);
+        }
+      };
 
       // Concurrently, for the same reason the family slot prepares its members that way:
       // the two families are two independent sets of host processes, and `eagerly` is the
       // path where BOTH whisper models are read off disk. Serially that is the sum of two
       // model reads before the app calls itself ready.
-      await Promise.all(
-        wanted.map(async (family) => {
+      await Promise.all([
+        preloadLead(),
+        ...wanted.map(async (family) => {
           const slot = families.get(family);
           if (slot === undefined || slot.members.length === 0) return;
           try {
@@ -830,7 +852,7 @@ export function createEngineManagerWith(deps: EngineManagerDeps): ManagedEngines
             );
           }
         }),
-      );
+      ]);
     },
 
     async reconfigure(next: Settings): Promise<void> {

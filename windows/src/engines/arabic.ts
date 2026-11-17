@@ -181,6 +181,14 @@ export interface ArabicEngineOptions {
 export const DEFAULT_ARABIC_IDLE_UNLOAD_MS = 15 * 60_000;
 export const DEFAULT_ARABIC_LOAD_BUDGET_MS = 20_000;
 
+/** Two `downloading` states the window would draw the same: same whole percent, same `retrying`. */
+function sameProgress(a: BundleState, b: BundleState): boolean {
+  if (a.kind !== 'downloading' || b.kind !== 'downloading') return false;
+  const percent = (state: Extract<BundleState, { kind: 'downloading' }>): number =>
+    state.totalBytes > 0 ? Math.floor((100 * state.receivedBytes) / state.totalBytes) : 0;
+  return percent(a) === percent(b) && (a.retrying === true) === (b.retrying === true);
+}
+
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -293,9 +301,13 @@ export class ArabicEngine implements StreamingSttEngine {
   }
 
   private setBundleState(kind: ArabicEngineKind, state: BundleState): void {
+    const previous = this.bundleStates[kind];
     this.bundleStates[kind] = state;
     this.options.onBundleState?.(BUNDLE_FOR[kind], state);
-    this.publish();
+    // Progress arrives per network chunk — ~100 000 of them over Cohere's 1.77 GB — and every
+    // `onStatus` is a full snapshot pushed to every window. Only a new kind, a new whole
+    // percent or a change of `retrying` is news.
+    if (!sameProgress(previous, state)) this.publish();
   }
 
   private readVerdict(): Promise<void> {
@@ -465,11 +477,17 @@ export class ArabicEngine implements StreamingSttEngine {
     if (this.downloads.has(kind) || this.disposed) return;
     const bundle = BUNDLE_FOR[kind];
     const total = bundleBytes(BUNDLE_CATALOGUE[bundle]);
+    this.lastError = null;
     this.setBundleState(kind, { kind: 'downloading', receivedBytes: 0, totalBytes: total });
     this.note(`downloading ${kind} (${Math.round(total / 1_000_000)} MB)`);
     const task = this.options.store
       .ensure(bundle, (progress) => {
-        this.setBundleState(kind, { kind: 'downloading', receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes });
+        this.setBundleState(kind, {
+          kind: 'downloading',
+          receivedBytes: progress.receivedBytes,
+          totalBytes: progress.totalBytes,
+          ...(progress.retrying === true ? { retrying: true } : {}),
+        });
       })
       .then(
         () => {

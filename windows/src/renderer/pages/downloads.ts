@@ -65,7 +65,9 @@ function row(item: DownloadRow, options: DownloadListOptions): HTMLElement {
         ]),
         h('div', { class: 'detail-text' }, [
           state.kind === 'downloading'
-            ? t('dl.progress', { received: megabytes(state.receivedBytes), total: megabytes(state.totalBytes) })
+            ? t('dl.progress', { received: megabytes(state.receivedBytes), total: megabytes(state.totalBytes) }) +
+              // Lost the connection: the bar is waiting, not frozen — say so.
+              (state.retrying === true ? ` · ${t('dl.reconnecting')}` : '')
             : state.kind === 'included'
               ? t('dl.insideInstaller', { size: megabytes(copy.bytes) })
               : megabytes(copy.bytes),
@@ -123,7 +125,7 @@ export function readinessCard(scope: Scope, retry: () => void): HTMLElement {
     if (ready === null) return;
     const percent = Math.floor(100 * ready.fraction);
     title.textContent = t('ready.title', { size: megabytes(ready.remainingBytes) });
-    detail.textContent = t('ready.detail');
+    detail.textContent = ready.retrying ? t('dl.reconnecting') : t('ready.detail');
     fill.style.width = `${percent}%`;
     bar.setAttribute('aria-valuenow', String(percent));
     if (ready.failed === null) {

@@ -2,6 +2,7 @@
 // generic renderer for a table-driven control (`src/main/settings-model.ts`).
 
 import type { Language, Settings } from '../../contracts/index.js';
+import { DEFAULT_REPLACEMENT_FLAGS } from '../../contracts/index.js';
 import { builtInModeName, formatDecimal, formatLongDate, formatShortDateTime, speechPickerName, t } from '../../core/i18n/index.js';
 import type { SettingsControl } from '../../main/settings-model.js';
 import { IPC_INVOKE } from '../../main/ipc.js';
@@ -16,6 +17,7 @@ import {
   h,
   iconButton,
   segmented,
+  settingRow,
 } from '../components.js';
 import { icon } from '../icons.js';
 import { pageLanguageOrder } from '../language-order.js';
@@ -149,7 +151,7 @@ export function renderControl(scope: Scope, control: SettingsControl): HTMLEleme
         scope.watch(['settings'], () => {
           select.value = String(store.settings[key]);
         });
-        return rowWith(control.label, control.caption, select);
+        return settingRow(control.label, control.caption, select);
       }
       // The fallback-language picker lists languages in the page's order (default, then use).
       const languageOrdered = control.id === 'languages.defaultLanguage';
@@ -191,16 +193,6 @@ export function renderControl(scope: Scope, control: SettingsControl): HTMLEleme
     case 'custom':
       return null;
   }
-}
-
-function rowWith(title: string, detail: string | null, control: Node): HTMLElement {
-  return h('div', { class: 'row' }, [
-    h('div', { class: 'words' }, [
-      h('div', { class: 'title' }, [title]),
-      detail === null ? null : h('div', { class: 'detail-text' }, [detail]),
-    ]),
-    h('div', { class: 'control' }, [control]),
-  ]);
 }
 
 /**
@@ -336,7 +328,7 @@ function replacementsEditor(scope: Scope, caption: string | null): HTMLElement {
   add.addEventListener('click', () => {
     if (find.value.length === 0) return;
     // The two flags the Mac's UI never varies: always written false / true.
-    const rule = { find: find.value, replaceWith: replaceWith.value, matchCase: false, wholeWord: true };
+    const rule = { find: find.value, replaceWith: replaceWith.value, ...DEFAULT_REPLACEMENT_FLAGS };
     find.value = '';
     replaceWith.value = '';
     add.disabled = true;

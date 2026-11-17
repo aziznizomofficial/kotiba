@@ -105,6 +105,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 
 import {
   HOOK_LINE_PATTERN,
+  HOOK_REHOOKED_LINE,
   HOOK_STATE_PATTERN,
   hotkeyStartFailure,
   type CreateHotkeySource,
@@ -209,11 +210,15 @@ export function createHotkeySource(options: HotkeySourceOptions): HotkeySource {
   let stdout = '';
   let stderrTail = '';
   let restartTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Clears `failure` once a relaunched helper has stayed up `healthyAfterMs`. */
+  let healthyTimer: ReturnType<typeof setTimeout> | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let consecutiveFailures = 0;
   let startedAt = 0;
   let stopped = true;
   let failure: string | null = null;
+  /** How many times the helper has reported re-installing a hook Windows removed. */
+  let rehooks = 0;
 
   const listeners = new Set<(event: HotkeyEvent) => void>();
 
@@ -329,6 +334,15 @@ export function createHotkeySource(options: HotkeySourceOptions): HotkeySource {
       deliver(event);
       return;
     }
+    if (trimmed === HOOK_REHOOKED_LINE) {
+      // kotiba-hook 1.3.0: Windows had removed the hook (`LowLevelHooksTimeout`) and the
+      // helper put it back. The keyboard re-sweep that follows arrives as ordinary DOWN/UP
+      // lines — a dictation key held through the gap opens now, one released closes. Said,
+      // because "it stopped reacting for a moment" is otherwise unexplainable from a log.
+      rehooks += 1;
+      note(`kotiba-hook: Windows had removed the keyboard hook; re-installed (${String(rehooks)} this session)`);
+      return;
+    }
     // Anything that is not a transition is a bug in the helper. It is recorded
     // without its content: a stray line could hold anything, and this stream is the
     // one place in the app where "anything" includes a password.
@@ -379,6 +393,8 @@ export function createHotkeySource(options: HotkeySourceOptions): HotkeySource {
     process_.stdout.setEncoding('utf8');
     process_.stdout.on('data', (chunk: string) => {
       if (child !== process_) return;
+      // A helper that is reporting keys is working, whatever it did before.
+      failure = null;
       stdout += chunk;
       let newline = stdout.indexOf('\n');
       while (newline >= 0) {
@@ -429,13 +445,26 @@ export function createHotkeySource(options: HotkeySourceOptions): HotkeySource {
     // with none, and an F13 binding whose helper has forgotten it types into the app.
     tell(swallowCommand(binding, recorder !== null));
 
-    // Optimistic: `spawn` has not failed yet, and a spawn that is going to fail reports
-    // it on the `error` event a tick from now, which puts the sentence back. The tray
-    // showing healthy for one tick is worth more than the tray showing broken every
-    // time the helper is restarted successfully.
+    // Optimistic on a FIRST launch: `spawn` has not failed yet, and a spawn that is going to
+    // fail reports it on the `error` event a tick from now, which puts the sentence back.
+    //
+    // NOT on a relaunch. Clearing it there made a helper that dies on every start — exit 2,
+    // SetWindowsHookEx refused, every 5 s for ever — read as healthy in the tray and on Home
+    // for all but a few milliseconds of each cycle, so a dead gesture was never announced.
+    // A relaunched helper earns the clean bill by reporting a key, or by staying up as long
+    // as `HOTKEY_HEALTHY_AFTER_MS` says a working helper does.
     //
     // `consecutiveFailures` is NOT cleared here. See HOTKEY_HEALTHY_AFTER_MS.
-    failure = null;
+    if (consecutiveFailures === 0) {
+      failure = null;
+    } else {
+      if (healthyTimer !== null) clearTimeout(healthyTimer);
+      healthyTimer = setTimeout(() => {
+        healthyTimer = null;
+        if (child === process_) failure = null;
+      }, healthyAfterMs);
+      healthyTimer.unref?.();
+    }
   }
 
   function stopRecording(): void {
@@ -458,6 +487,10 @@ export function createHotkeySource(options: HotkeySourceOptions): HotkeySource {
       if (restartTimer !== null) {
         clearTimeout(restartTimer);
         restartTimer = null;
+      }
+      if (healthyTimer !== null) {
+        clearTimeout(healthyTimer);
+        healthyTimer = null;
       }
       const process_ = child;
       child = null;

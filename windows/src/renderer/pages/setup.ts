@@ -80,6 +80,7 @@ export function modesPage(): Page {
       },
       modeCards: (scope) => {
         const root = h('div');
+        let drawn = '';
         scope.watch(['settings', 'app'], () => {
           const defaultKey = store.settings.defaultModeKey;
           const follows = store.settings.modeFollowsApp;
@@ -89,6 +90,11 @@ export function modesPage(): Page {
             store.settings.polishEnabled &&
             store.settings.preferOnDeviceModel &&
             (modesModel.kind === 'downloaded' || modesModel.kind === 'loaded');
+          // Every app push lands here — one per percent while Qwen downloads on this very page —
+          // and the cards depend on none of it but these three facts.
+          const key = JSON.stringify([defaultKey, follows, modelReady]);
+          if (key === drawn) return;
+          drawn = key;
           root.replaceChildren(
             grid(
               250,

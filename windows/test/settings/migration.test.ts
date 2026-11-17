@@ -128,3 +128,80 @@ describe('serialisation', () => {
     expect(serialiseSettings(WINDOWS_DEFAULT_SETTINGS).endsWith('\n')).toBe(true);
   });
 });
+
+// What the shipped 1.0.0 build wrote (its `serialiseSettings` over its own field set, one user
+// change on each line that matters). Upgrading must not reset anybody to defaults: no key may
+// be dropped, and the two keys 1.0.x had that this build replaced must carry their meaning.
+describe('a 1.0.0 settings file, read by this build (1.0.3 review)', () => {
+  const shipped100 = {
+    schemaVersion: 1,
+    acceptedDownloads: ['parakeet_ultra', 'uzbek_stt_v1', 'qwen3_1_7b'],
+    alwaysOn: true,
+    autoCapitalise: true,
+    autoDetectLanguage: true,
+    defaultLanguage: 'uz',
+    defaultModeKey: 'note',
+    detectorModelPath: 'C:\\Users\\a\\AppData\\Roaming\\Kotiba\\models\\ggml-base.bin',
+    diagnosticsEnabled: true,
+    duckLevel: 0.4,
+    duckingEnabled: false,
+    fastEnglish: false,
+    historyLimit: 0,
+    hotkey: { label: 'Right Alt', vk: 165 },
+    keepHistory: true,
+    launchAtLogin: false,
+    modeFollowsApp: true,
+    onboardingCompleted: true,
+    pinnedLanguage: 'ru',
+    polishBaseURL: 'https://api.groq.com/openai/v1',
+    polishEnabled: true,
+    polishFallbackModel: 'openai/gpt-oss-20b',
+    polishKeyAccount: 'polish-default',
+    polishModel: 'openai/gpt-oss-120b',
+    polishTimeoutSeconds: 8,
+    polishUzbek: false,
+    preferOnDeviceModel: true,
+    preloadAllLanguages: true,
+    replacements: [{ find: 'kotib', matchCase: false, replaceWith: 'Kotiba', wholeWord: true }],
+    russianModelPath: 'C:\\models\\ggml-large-v3-turbo.bin',
+    silenceThreshold: 0.012,
+    soundFeedback: true,
+    turkicThreshold: 0.05,
+    uzbekModelPath: 'C:\\models\\uzbek.bin',
+    vocabulary: { uz: ['Toshkent'] },
+    whisperBeamSize: 5,
+    whisperUseGPU: true,
+  };
+
+  it('loads with nothing dropped and every user choice kept', () => {
+    const load = parseSettings(`${JSON.stringify(shipped100, null, 2)}\n`);
+    expect(load.failure).toBeNull();
+    expect(load.dropped).toEqual([]);
+    const s = load.settings;
+    expect(s.hotkey).toEqual({ vk: 165, label: 'Right Alt' });
+    expect(s.pinnedLanguage).toBe('ru');
+    expect(s.defaultLanguage).toBe('uz');
+    expect(s.uzbekModelPath).toBe('C:\\models\\uzbek.bin');
+    expect(s.acceptedDownloads).toEqual(['parakeet_ultra', 'uzbek_stt_v1', 'qwen3_1_7b']);
+    expect(s.alwaysOn).toBe(true);
+    expect(s.onboardingCompleted).toBe(true);
+    expect(s.duckLevel).toBe(0.4);
+    expect(s.replacements).toHaveLength(1);
+    // Keys 1.0.0 did not have take their defaults.
+    expect(s.enabledLanguages).toEqual(WINDOWS_DEFAULT_SETTINGS.enabledLanguages);
+    expect(s.arabicEngine).toBe(WINDOWS_DEFAULT_SETTINGS.arabicEngine);
+  });
+
+  it('turns 1.0.0 "auto-detect off" into a pin on the default language', () => {
+    const load = parseSettings({ ...shipped100, autoDetectLanguage: false, pinnedLanguage: null });
+    expect(load.failure).toBeNull();
+    expect(load.settings.pinnedLanguage).toBe('uz');
+  });
+
+  it('writes back without the retired keys and reads its own output identically', () => {
+    const load = parseSettings(shipped100);
+    const written = serialiseSettings(load.settings);
+    expect(written).not.toContain('autoDetectLanguage');
+    expect(parseSettings(written).settings).toEqual(load.settings);
+  });
+});

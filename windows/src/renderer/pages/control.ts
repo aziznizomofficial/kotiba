@@ -366,7 +366,12 @@ export function settingsPage(onRunSetup: () => void): Page {
   // "Open at login" reads on and disabled while Always on includes it, and "Lower to" is
   // there only while ducking is.
   const scope = new Scope();
+  // A page left (or rebuilt by a language switch) before this frame must not register its
+  // watchers afterwards: nothing would ever drop them, and they would repaint a dead page on
+  // every settings change for the rest of the session.
+  let disposed = false;
   requestAnimationFrame(() => {
+    if (disposed) return;
     const login = page.root.querySelector<HTMLButtonElement>('[data-setting="launchAtLogin"]');
     const loginDetail = login?.closest('.row')?.querySelector<HTMLElement>('.detail-text') ?? null;
     const duck = page.root.querySelector<HTMLInputElement>('input[data-setting="duckLevel"]')?.closest<HTMLElement>('.slider-row') ?? null;
@@ -393,6 +398,7 @@ export function settingsPage(onRunSetup: () => void): Page {
   return {
     root: page.root,
     dispose: () => {
+      disposed = true;
       scope.dispose();
       page.dispose();
     },

@@ -45,6 +45,7 @@ import {
   type TranscriptResult,
 } from '../contracts/index.js';
 import { DEFAULT_SEGMENTER, segmentCut, type StreamSegmenter } from '../core/stt/segmenter.js';
+import { EnergyFrameClassifier, type SpeechFrameClassifier } from '../core/stt/speech-segmenter.js';
 import { writtenLanguage, type WrittenLanguage } from '../core/stt/tdt.js';
 
 import type { BundleStore } from './bundle-store.js';
@@ -300,11 +301,19 @@ export class ParakeetEngine implements StreamingSttEngine {
   private startDownload(): void {
     if (this.downloading !== null || this.disposed) return;
     const total = bundleBytes(PARAKEET_ULTRA);
+    // A new attempt (Try again, the app's own retry, a press) is not the old failure: a press
+    // while it runs says "still downloading", not "the last attempt failed".
+    this.lastError = null;
     this.setState({ kind: 'downloading', receivedBytes: 0, totalBytes: total });
     this.note(`downloading ${Math.round(total / 1_000_000)} MB`);
     this.downloading = this.options.store
       .ensure('parakeet_ultra', (progress) => {
-        this.setState({ kind: 'downloading', receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes });
+        this.setState({
+          kind: 'downloading',
+          receivedBytes: progress.receivedBytes,
+          totalBytes: progress.totalBytes,
+          ...(progress.retrying === true ? { retrying: true } : {}),
+        });
       })
       .then(
         () => {
@@ -366,7 +375,10 @@ export class ParakeetEngine implements StreamingSttEngine {
   }
 
   openStream(): TranscriptionStream {
-    return new ParakeetStream(this, this.segmenter);
+    // The energy gate decides when to speculate (the Mac's fallback when Silero is absent):
+    // Silero runs only inside `kotiba-stt.exe` here, and only WHEN to decode at a pause and
+    // WHETHER that decode may be adopted depend on it — never what is decoded.
+    return new ParakeetStream(this, this.segmenter, new EnergyFrameClassifier());
   }
 
   /**
@@ -457,16 +469,37 @@ function describe(error: unknown): string {
 
 /**
  * A dictation in progress. Commits whole windows while the key is held, so key-up is left
- * with at most one. `ParakeetStream` in the Swift, line for line.
+ * with at most one — and decodes what is pending at each pause, so key-up is usually left with
+ * nothing at all. `ParakeetStream` in the Swift, line for line.
  *
- * The stream must never change WHICH audio was transcribed. So `finish` throws the
- * committed text away and decodes the whole recording in batch whenever the two could
- * disagree: a commit failed, the recording lost samples, or it is shorter than what the
- * stream already committed.
+ * **Speculation** (the Mac's, ported 2026-11-17 — the Windows stream had only the 14 s commits,
+ * so every dictation shorter than that was decoded in one batch AFTER key-up: ~0.2–0.8 s of a
+ * laptop CPU on the critical path for the commonest dictation there is). The speaker went quiet
+ * for `speculativePause` after saying something new: the pending audio (≤ one window) is
+ * decoded now. If they let go without saying anything more, `finish` adopts that decode and
+ * key-up costs a join; if they carry on, the next pause replaces it. It never changes WHAT is
+ * transcribed: it is adopted only when the speech detector heard no speech after it, and the
+ * audio it decoded is exactly the pending audio key-up would otherwise decode, minus trailing
+ * silence.
+ *
+ * The stream must never change WHICH audio was transcribed. So `finish` throws the committed
+ * text away and decodes the whole recording in batch whenever the two could disagree: a commit
+ * failed, the recording lost samples, the stream was fed something other than the recording,
+ * or it is shorter than what the stream already committed.
  */
 export class ParakeetStream implements TranscriptionStream {
   private readonly engine: ParakeetEngine;
   private readonly segmenter: StreamSegmenter;
+  private readonly classifier: SpeechFrameClassifier;
+  /**
+   * Silence after new speech that is worth a speculative decode — the Uzbek stream's 0.2 s. A
+   * Parakeet window decode cannot be aborted, so one started on a breath inside a sentence still
+   * holds the queue for its duration; at 0.3 s, though, the Mac measured the decode not landing
+   * by a release 300 ms after the last word in 7 of 16 English dictations.
+   */
+  private readonly speculativePause: number;
+  /** Less speech than this since the last speculation is not worth another. */
+  private readonly minimumNewSpeech: number;
   /** Samples not yet committed, starting at `committedSamples` into the recording. */
   private pending: Float32Array = new Float32Array(SAMPLE_RATE * 16);
   private pendingLength = 0;
@@ -479,16 +512,43 @@ export class ParakeetStream implements TranscriptionStream {
    * Set first thing in `finish`. From then on nothing starts a window of its own: the commit
    * that lands while key-up waits used to start the next one (`committed` → `commitIfDue`),
    * advance `committedSamples` past it and leave `finish` holding the text without it — up
-   * to 14 s of speech missing from the paste, and nothing said (core review 2026-09-30).
+   * to 14 s of speech missing from the paste, and nothing said (core review 2026-09-30). A
+   * speculation landing during `finish`'s own awaits could do the same.
    */
   private finishing = false;
   /** `pendingLength` below which no commit is attempted. See `commitIfDue`. */
   private retryAt = 0;
   private readonly listeners = new Set<(text: string) => void>();
+  private readonly progressListeners = new Set<(text: string) => void>();
 
-  constructor(engine: ParakeetEngine, segmenter: StreamSegmenter) {
+  // Speech tracking, in absolute sample indices.
+  private fed = 0;
+  private unclassified: Float32Array = new Float32Array(0);
+  private classifiedUpTo = 0;
+  private inSpeech = false;
+  /** Where the last speech frame ended; 0 before any speech. */
+  private lastSpeechEnd = 0;
+  private speechSinceSpeculation = 0;
+  /** The pause decode under way: its span, `lastSpeechEnd` when it was taken, and its text. */
+  private speculation: { readonly start: number; readonly end: number; readonly lastSpeech: number; readonly result: Promise<string | null> } | null =
+    null;
+  /** The newest finished pause decode. */
+  private provisional: { readonly start: number; readonly end: number; readonly lastSpeech: number; readonly text: string } | null = null;
+  /** How key-up was settled — `speculation`, `decoded`, `batch` or `none`. For the probe and tests. */
+  settlement: 'none' | 'speculation' | 'decoded' | 'batch' = 'none';
+
+  constructor(
+    engine: ParakeetEngine,
+    segmenter: StreamSegmenter,
+    classifier: SpeechFrameClassifier = new EnergyFrameClassifier(),
+    options: { readonly speculativePause?: number; readonly minimumNewSpeech?: number } = {},
+  ) {
     this.engine = engine;
     this.segmenter = segmenter;
+    classifier.reset();
+    this.classifier = classifier;
+    this.speculativePause = options.speculativePause ?? 0.2;
+    this.minimumNewSpeech = options.minimumNewSpeech ?? 0.3;
   }
 
   onCommit(listener: (text: string) => void): () => void {
@@ -498,10 +558,34 @@ export class ParakeetStream implements TranscriptionStream {
     };
   }
 
+  onProgress(listener: (text: string) => void): () => void {
+    this.progressListeners.add(listener);
+    return () => {
+      this.progressListeners.delete(listener);
+    };
+  }
+
+  /** Committed text and the newest pause decode of what follows it: the transcript so far. */
+  private progressed(): void {
+    const tentative = this.provisional !== null && this.provisional.start === this.committedSamples ? this.provisional.text : '';
+    const text = [...this.committedText, tentative].filter((part) => part !== '').join(' ');
+    if (text === '') return;
+    for (const listener of [...this.progressListeners]) {
+      try {
+        listener(text);
+      } catch {
+        // A listener must never cost the stream its text.
+      }
+    }
+  }
+
   append(samples: Float32Array): void {
-    if (this.cancelled) return;
+    if (this.cancelled || samples.length === 0) return;
     this.push(samples);
+    this.fed += samples.length;
+    this.classify(samples);
     this.commitIfDue();
+    this.speculateIfDue();
   }
 
   private push(samples: Float32Array): void {
@@ -515,6 +599,76 @@ export class ParakeetStream implements TranscriptionStream {
     this.pendingLength = needed;
   }
 
+  // ---- speech frames ------------------------------------------------------------------
+
+  private classify(samples: Float32Array): void {
+    const frame = this.classifier.frameSamples;
+    let joined = samples;
+    if (this.unclassified.length > 0) {
+      joined = new Float32Array(this.unclassified.length + samples.length);
+      joined.set(this.unclassified);
+      joined.set(samples, this.unclassified.length);
+    }
+    const whole = Math.floor(joined.length / frame) * frame;
+    this.unclassified = joined.slice(whole);
+    if (whole === 0) return;
+    for (const probability of this.classifier.probabilities(joined.subarray(0, whole))) {
+      // Silero's own hysteresis, as `SpeechSegmenter` uses it.
+      const speech = probability >= (this.inSpeech ? 0.35 : 0.5);
+      this.inSpeech = speech;
+      this.classifiedUpTo += frame;
+      if (speech) {
+        this.lastSpeechEnd = this.classifiedUpTo;
+        this.speechSinceSpeculation += frame;
+      }
+    }
+  }
+
+  private speculateIfDue(): void {
+    const rate = this.segmenter.sampleRate;
+    if (
+      this.speculation !== null ||
+      this.inFlight !== null ||
+      this.broken ||
+      this.cancelled ||
+      this.finishing ||
+      this.lastSpeechEnd === 0 ||
+      this.speechSinceSpeculation < this.minimumNewSpeech * rate ||
+      this.classifiedUpTo - this.lastSpeechEnd < this.speculativePause * rate ||
+      this.pendingLength === 0
+    ) {
+      return;
+    }
+    this.speechSinceSpeculation = 0;
+    const start = this.committedSamples;
+    const end = this.committedSamples + this.pendingLength;
+    const lastSpeech = this.lastSpeechEnd;
+    const piece = this.pending.slice(0, this.pendingLength);
+    const engine = this.engine;
+    const result = (async (): Promise<string | null> => {
+      // Never the thing that loads a cold engine, or that waits for one: a speculation is
+      // worth having only while it is cheap.
+      if (!(await engine.isReady())) return null;
+      try {
+        return await engine.decode(piece);
+      } catch {
+        return null;
+      }
+    })();
+    const speculation = { start, end, lastSpeech, result };
+    this.speculation = speculation;
+    void result.then((text) => {
+      if (this.speculation === speculation) this.speculation = null;
+      if (text !== null && start === this.committedSamples && (this.provisional?.end ?? 0) < end) {
+        this.provisional = { start, end, lastSpeech, text };
+        if (!this.cancelled && !this.finishing) this.progressed();
+      }
+      this.commitIfDue();
+    });
+  }
+
+  // ---- commits --------------------------------------------------------------------------
+
   private commitIfDue(): void {
     if (this.inFlight !== null || this.broken || this.cancelled || this.finishing) return;
     // After a cold engine sent a piece back, ask again only once another two seconds have
@@ -526,6 +680,7 @@ export class ParakeetStream implements TranscriptionStream {
     this.pending.copyWithin(0, cut, this.pendingLength);
     this.pendingLength -= cut;
     this.committedSamples += cut;
+    this.provisional = null;
     const engine = this.engine;
     this.inFlight = (async () => {
       // The first commit of a cold engine loads it here — behind the user's speech, the
@@ -585,17 +740,57 @@ export class ParakeetStream implements TranscriptionStream {
     // the answer to that too (`usable` below is false), which decoded the whole recording
     // for nobody and queued the next dictation's windows behind it.
     if (this.cancelled) throw new EngineFailure(engineError.transcriptionFailed('the stream was cancelled'));
+    // Whatever the pump did not get to — the recording is authoritative — is classified too,
+    // so "no speech after the speculation" is asked of everything the user said.
+    if (this.fed < audio.samples.length && audio.droppedSamples === 0) {
+      const rest = audio.samples.subarray(this.fed);
+      this.push(rest);
+      this.fed += rest.length;
+      this.classify(rest);
+    }
     await this.engine.prepare();
     const usable =
-      !this.broken && !this.cancelled && audio.droppedSamples === 0 && this.committedSamples <= audio.samples.length;
-    if (!usable || this.committedSamples === 0) return this.engine.transcribe(audio, language);
+      !this.broken &&
+      !this.cancelled &&
+      audio.droppedSamples === 0 &&
+      this.committedSamples <= audio.samples.length &&
+      this.fed === audio.samples.length;
+    if (!usable) {
+      this.settlement = 'batch';
+      await this.speculation?.result;
+      return this.engine.transcribe(audio, language);
+    }
 
     const parts = [...this.committedText];
-    const rest = audio.samples.subarray(this.committedSamples);
-    // Under 0.3 s of tail is a breath or the key's own click, not speech.
-    if (rest.length >= Math.floor((this.segmenter.sampleRate * 3) / 10)) {
-      const text = await this.engine.decode(rest);
-      if (text !== '') parts.push(text);
+    // A pause decode over exactly the pending audio, with no speech after it: that decode is
+    // the tail. One still running is waited for — it is the same decode key-up would start.
+    let adopted: string | null = null;
+    const running = this.speculation;
+    const done = this.provisional;
+    if (running !== null && running.start === this.committedSamples && running.lastSpeech === this.lastSpeechEnd) {
+      adopted = await running.result;
+    } else if (done !== null && done.start === this.committedSamples && done.lastSpeech === this.lastSpeechEnd) {
+      adopted = done.text;
+    }
+    if (adopted !== null) {
+      this.settlement = 'speculation';
+      if (adopted !== '') parts.push(adopted);
+    } else if (this.committedSamples === 0) {
+      // Nothing committed and nothing to adopt: exactly the batch decode.
+      await this.speculation?.result;
+      this.settlement = 'decoded';
+      return this.engine.transcribe(audio, language);
+    } else {
+      await this.speculation?.result;
+      const rest = audio.samples.subarray(this.committedSamples);
+      // Under 0.3 s of tail is a breath or the key's own click, not speech.
+      if (rest.length >= Math.floor((this.segmenter.sampleRate * 3) / 10)) {
+        this.settlement = 'decoded';
+        const text = await this.engine.decode(rest);
+        if (text !== '') parts.push(text);
+      } else {
+        this.settlement = 'none';
+      }
     }
     const raw = parts.join(' ');
     return { raw, language: writtenLanguage(raw, language), engineId: this.engine.engineId };
@@ -605,5 +800,6 @@ export class ParakeetStream implements TranscriptionStream {
     this.cancelled = true;
     this.pendingLength = 0;
     this.listeners.clear();
+    this.progressListeners.clear();
   }
 }

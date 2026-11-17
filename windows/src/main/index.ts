@@ -17,7 +17,7 @@ import { existsSync, mkdirSync, writeFileSync, writeSync } from 'node:fs';
 import { readdir, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { BrowserWindow, app, clipboard, ipcMain, shell } from 'electron';
+import { BrowserWindow, app, clipboard, ipcMain, net, powerMonitor, shell } from 'electron';
 
 import { appLanguage, resolveAppLanguage, setAppLanguage, t } from '../core/i18n/index.js';
 import { defaultLanguageOrder, languageCounts, orderLanguages } from '../core/languages/order.js';
@@ -92,11 +92,16 @@ import { shouldShowOnboarding } from './onboarding-model.js';
 import { secretIsPresent } from './settings-model.js';
 import { SOUND_SETTINGS_URI } from '../core/input-device/index.js';
 import { isAllowedExternalLink } from './about-model.js';
-import type { AcceptedDownload, DownloadRow, DownloadState } from './downloads-model.js';
+import type { AcceptedDownload, DownloadRow, DownloadState, StoreProgress } from './downloads-model.js';
 import { withoutHealing } from './live-status.js';
 import {
+  AUTO_RETRY_ROUNDS,
+  OFFLINE_POLL_MS,
+  autoRetryDelayMs,
+  autoRetryIds,
   bundleRowState,
   gettingReadyPercent,
+  isPresent,
   launchResume,
   modelRowState,
   parseDownloadIds,
@@ -107,8 +112,10 @@ import {
 import { removableModelFiles } from './languages-model.js';
 import { autoDetectReady } from '../core/settings/models.js';
 import { settleLanguages } from '../core/settings/parse.js';
+import { validateSettingsField } from '../core/settings/schema.js';
 import { utilityLauncher } from './utility-launcher.js';
 import { ARABIC_SPEED_CHECK_FILE, arabicBackend, arabicMayDownload, speedCheckFileStore } from './arabic-wiring.js';
+import { downloadTransport } from './download-transport.js';
 import {
   arabicSpeedClipSearch,
   bundledModelsDirectory,
@@ -256,6 +263,10 @@ interface Shell {
   downloadQueue: Promise<void>;
   /** What is queued or running, so a second accept does not fetch the same model twice. */
   queued: Set<AcceptedDownload>;
+  /** The app's own next Try again for a download that failed for a passing reason. */
+  retryTimer: ReturnType<typeof setTimeout> | null;
+  /** Online retry rounds so far this launch (reset by a success or a wake from sleep). */
+  retryRound: number;
 }
 
 function newShell(): Shell {
@@ -294,6 +305,8 @@ function newShell(): Shell {
     models: null,
     downloadQueue: Promise.resolve(),
     queued: new Set(),
+    retryTimer: null,
+    retryRound: 0,
   };
 }
 
@@ -324,13 +337,43 @@ export async function main(): Promise<void> {
     return;
   }
 
+  // The installer's shortcuts carry this AppUserModelID (electron-builder.yml `appId`).
+  // Without the same one here, Windows attributes this process's notifications to no
+  // shortcut — the second copy's "already running" toast is then dropped or shown as
+  // "electron.app.Kotiba".
+  if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID);
+
   if (!acquireSingleInstance()) {
     await refuseSecondInstance();
     return;
   }
 
+  keepRunningThroughStrayErrors();
   await app.whenReady();
   await start(options);
+}
+
+/** `appId` in electron-builder.yml. */
+export const APP_USER_MODEL_ID = 'uz.kotiba.win';
+
+/**
+ * A stray exception or rejection in main is LOGGED, never a modal and never the end of the app.
+ *
+ * Without a listener, Electron answers an uncaught exception in the main process with a
+ * blocking "A JavaScript error occurred in the main process" dialog — in front of whatever
+ * the user is typing into, from a tray app they did not know was there — and Node turns an
+ * unhandled rejection into the same uncaught exception. A tray app whose one job is to sit
+ * behind a key has no business opening a stack trace over the user's work for an error that
+ * cost one dictation, and the gesture keeps working underneath it anyway. Not installed for
+ * `--check`, where an error must still fail the run.
+ */
+export function keepRunningThroughStrayErrors(target: Pick<NodeJS.Process, 'on'> = process): void {
+  const say = (what: string, error: unknown): void => {
+    const why = error instanceof Error ? (error.stack ?? error.message) : String(error);
+    diagnosticNote(`${what}: ${why}`);
+  };
+  target.on('uncaughtException', (error: Error) => say('uncaught exception', error));
+  target.on('unhandledRejection', (reason: unknown) => say('unhandled rejection', reason));
 }
 
 /**
@@ -501,6 +544,9 @@ async function start(options: LaunchOptions): Promise<void> {
     // llama.cpp costs that engine a restart, not the app — and neither's model load can
     // stall this process's event loop at key-down.
     engineLauncher: utilityLauncher(),
+    // Chromium's network stack for the model downloads — the Windows proxy and certificate
+    // store — with Node's `fetch` behind it. See `./download-transport.ts`.
+    fetch: downloadTransport((input, init) => net.fetch(input as string, init), (input, init) => globalThis.fetch(input, init)),
     onBundleState: (id, next) => setBundleState(state, id, next),
     // D-W25: Parakeet is core — it may fetch itself when a dictation wants it once onboarding
     // is over (finished or skipped), as the launch resume does. Asked at that moment.
@@ -528,6 +574,9 @@ async function start(options: LaunchOptions): Promise<void> {
   void refreshBundles(state)
     .then(() => refreshModelRows(state))
     .then(() => resumeDownloads(state));
+  // A laptop that slept mid-download wakes with a dead connection: the downloader notices within
+  // its stall timeout; a download that had already given up is tried again shortly after waking.
+  powerMonitor.on('resume', () => retryDownloadsAfterWake(state));
   // Silero for the streaming Uzbek session (C2) SHIPS IN THE INSTALLER (885 KB) — it is
   // never downloaded. Missing means a broken install or a dev tree without
   // `fetch-models.mjs`; each Uzbek stream then cuts on the energy gate, and the log says so.
@@ -712,6 +761,29 @@ async function start(options: LaunchOptions): Promise<void> {
   mainWindow.on('focus', () => {
     void state.controller?.recheck().then(() => refreshReadiness(state));
   });
+  // And after the machine wakes or the session is unlocked: the audio devices may have been
+  // re-enumerated under the capture page and the engines' warm state is a guess. A tray app is
+  // rarely brought to the front, so without these the first press after opening the lid was
+  // the one that found out. `recheck` returns at once while a dictation is running.
+  const recheckSoon = (): void => {
+    setTimeout(() => {
+      void state.controller?.recheck().then(() => refreshReadiness(state)).catch(() => undefined);
+    }, POWER_RECHECK_DELAY_MS);
+  };
+  powerMonitor.on('resume', recheckSoon);
+  powerMonitor.on('unlock-screen', recheckSoon);
+
+  // A dead hook must be SAID. `hotkey.failure` changes inside the hook client — a helper that
+  // will not start, one that keeps dying — and nothing pushed the tray or Home when it did,
+  // so "The push-to-talk key is not working" appeared only if something else happened to
+  // redraw. Read every few seconds; a string compare.
+  let shownHotkeyFailure: string | null = null;
+  setInterval(() => {
+    const now = state.hotkey?.failure ?? null;
+    if (now === shownHotkeyFailure) return;
+    shownHotkeyFailure = now;
+    state.push();
+  }, HOTKEY_FAILURE_POLL_MS).unref();
 
   // Windows is signing out, restarting or shutting down: that always wins, and the
   // watchdog must not bring the app back into a session that is ending.
@@ -749,6 +821,11 @@ async function start(options: LaunchOptions): Promise<void> {
     event.preventDefault();
     void (async () => {
       if (hideTimer !== null) clearTimeout(hideTimer);
+      if (state.retryTimer !== null) clearTimeout(state.retryTimer);
+      state.retryTimer = null;
+      // Downloads stop now, each `.partial` closed where it is — what the next launch resumes.
+      pipeline.onDevice?.bundles.cancelAll?.();
+      pipeline.models.cancelDownloads?.();
       unsubscribe?.();
       tray.destroy();
       const cap = <T>(work: Promise<T>): Promise<unknown> =>
@@ -768,6 +845,15 @@ async function start(options: LaunchOptions): Promise<void> {
  * a quit — or a Windows sign-out — hostage for longer than this.
  */
 const QUIT_CLEANUP_MS = 2_000;
+
+/**
+ * How long after a resume or an unlock the pipeline is re-checked. Windows re-enumerates audio
+ * endpoints for a moment after waking; asking at once warms up against the old list.
+ */
+const POWER_RECHECK_DELAY_MS = 2_000;
+
+/** How often the shell looks at `hotkey.failure` to put a dead hook in the tray. */
+const HOTKEY_FAILURE_POLL_MS = 3_000;
 
 /** "Record new key" gives up on its own after this, and push-to-talk comes back. */
 const HOTKEY_RECORDING_TIMEOUT_MS = 30_000;
@@ -930,7 +1016,7 @@ function setBundleState(state: Shell, id: BundleId, next: BundleState): void {
     previous.kind !== next.kind ||
     (previous.kind === 'downloading' &&
       next.kind === 'downloading' &&
-      percent(previous) !== percent(next));
+      (percent(previous) !== percent(next) || (previous.retrying === true) !== (next.retrying === true)));
   if (moved) {
     state.push();
     if (next.kind === 'downloaded' || next.kind === 'loaded') void refreshReadiness(state);
@@ -978,7 +1064,12 @@ async function downloadBundle(state: Shell, id: BundleId): Promise<void> {
   setBundleState(state, id, { kind: 'downloading', receivedBytes: 0, totalBytes: total });
   try {
     const directory = await onDevice.bundles.ensure(id, (progress) =>
-      setBundleState(state, id, { kind: 'downloading', receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes }),
+      setBundleState(state, id, {
+        kind: 'downloading',
+        receivedBytes: progress.receivedBytes,
+        totalBytes: progress.totalBytes,
+        ...(progress.retrying === true ? { retrying: true } : {}),
+      }),
     );
     setBundleState(state, id, { kind: 'downloaded' });
     if (id === 'ecapa_lid') {
@@ -1071,8 +1162,10 @@ const UZBEK_DOWNLOADABLE =
 
 /** The two model files fetched through the model store, rather than as bundles. */
 type StoreDownload = 'uzbek_stt_v1' | 'large_v3_turbo';
-const storeProgress: Partial<Record<StoreDownload, { receivedBytes: number; totalBytes: number }>> = {};
+const storeProgress: Partial<Record<StoreDownload, StoreProgress>> = {};
 const storeErrors: Partial<Record<StoreDownload, string>> = {};
+/** The error itself, for `worthRetrying` — the row keeps only its sentence. */
+const storeFailures: Partial<Record<StoreDownload, unknown>> = {};
 
 /** Re-read the Uzbek and turbo rows from disk: installed by the installer, by a download, or not. */
 async function refreshModelRows(state: Shell): Promise<void> {
@@ -1110,13 +1203,15 @@ async function downloadModel(state: Shell, id: StoreDownload): Promise<void> {
   const total = MODEL_CATALOGUE[id].bytes ?? 0;
   storeProgress[id] = { receivedBytes: 0, totalBytes: total };
   delete storeErrors[id];
-  let lastPercent = -1;
+  delete storeFailures[id];
+  let lastShown = '';
   try {
     const path = await models.ensure(id, (progress) => {
-      storeProgress[id] = { receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes ?? total };
-      const percent = total > 0 ? Math.floor((100 * progress.receivedBytes) / total) : 0;
-      if (percent !== lastPercent) {
-        lastPercent = percent;
+      const retrying = progress.retrying === true;
+      storeProgress[id] = { receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes ?? total, ...(retrying ? { retrying } : {}) };
+      const shown = `${total > 0 ? Math.floor((100 * progress.receivedBytes) / total) : 0}|${String(retrying)}`;
+      if (shown !== lastShown) {
+        lastShown = shown;
         void refreshModelRows(state);
       }
     });
@@ -1125,6 +1220,7 @@ async function downloadModel(state: Shell, id: StoreDownload): Promise<void> {
     await state.controller?.settingsChanged();
   } catch (error: unknown) {
     storeErrors[id] = error instanceof Error ? error.message : String(error);
+    storeFailures[id] = error;
   } finally {
     delete storeProgress[id];
     await refreshModelRows(state);
@@ -1144,6 +1240,13 @@ function startDownloads(state: Shell, ids: readonly AcceptedDownload[]): void {
       try {
         // Turned off while it waited in the queue: Arabic's 1.77 GB is not fetched for nobody.
         if (!wantedDownloads(state.settings.enabledLanguages).includes(id)) return;
+        // Here already. Onboarding's languages step and the readiness card's Try again queue
+        // EVERY wanted id — the Uzbek model included, which the installer carries outside the
+        // models directory, so the model store (which looks only there) fetched 539 MB of it
+        // again, invisibly (its row stays "Included"), ahead of the modes' model.
+        if (id === 'uzbek_stt_v1' || id === 'large_v3_turbo') await refreshModelRows(state);
+        const row = downloadRows(state).find((each) => each.id === id);
+        if (row !== undefined && isPresent(row.state)) return;
         if (id === 'uzbek_stt_v1' || id === 'large_v3_turbo') await downloadModel(state, id);
         else await downloadBundle(state, id);
       } catch (error: unknown) {
@@ -1152,11 +1255,72 @@ function startDownloads(state: Shell, ids: readonly AcceptedDownload[]): void {
         state.queued.delete(id);
         await refreshBundles(state);
         await refreshReadiness(state);
+        afterDownload(state, id);
       }
     });
   }
   state.push();
 }
+
+/** Why `id`'s last download failed — the error, as the store that ran it kept it — or `null`. */
+function lastDownloadFailure(state: Shell, id: AcceptedDownload): unknown {
+  if (id === 'uzbek_stt_v1' || id === 'large_v3_turbo') return storeFailures[id] ?? null;
+  return state.onDevice?.bundles.lastFailure?.(id) ?? null;
+}
+
+/**
+ * After each queued download: a success resets the app's retry count; a failure that can pass
+ * (the line, the server, the disk, antivirus — `worthRetrying`) schedules the next Try again.
+ */
+function afterDownload(state: Shell, id: AcceptedDownload): void {
+  const row = downloadRows(state).find((each) => each.id === id);
+  if (row !== undefined && isPresent(row.state)) {
+    state.retryRound = 0;
+    return;
+  }
+  if (autoRetryIds(downloadRows(state), state.settings.enabledLanguages, (each) => lastDownloadFailure(state, each)).length > 0) {
+    scheduleDownloadRetry(state);
+  }
+}
+
+/**
+ * The app's own Try again, so the core finishes without anyone watching. One timer; offline it
+ * only looks (`net.isOnline()` is local), online it re-queues exactly the downloads whose failure
+ * can pass. Bounded per launch by `AUTO_RETRY_ROUNDS`; a wake from sleep starts the count again.
+ */
+function scheduleDownloadRetry(state: Shell, delayMs?: number): void {
+  if (state.retryTimer !== null) return;
+  if (state.retryRound >= AUTO_RETRY_ROUNDS) {
+    diagnosticNote(`downloads: ${AUTO_RETRY_ROUNDS} automatic retries this launch; waiting for Try again or the next start`);
+    return;
+  }
+  const wait = delayMs ?? autoRetryDelayMs(state.retryRound);
+  state.retryTimer = setTimeout(() => {
+    state.retryTimer = null;
+    if (!net.isOnline()) {
+      scheduleDownloadRetry(state, OFFLINE_POLL_MS);
+      return;
+    }
+    const ids = autoRetryIds(downloadRows(state), state.settings.enabledLanguages, (id) => lastDownloadFailure(state, id)).filter(
+      (id) => !state.queued.has(id),
+    );
+    if (ids.length === 0) return;
+    state.retryRound += 1;
+    diagnosticNote(`downloads: trying again by itself (${state.retryRound} of ${AUTO_RETRY_ROUNDS}): ${ids.join(', ')}`);
+    startDownloads(state, ids);
+  }, wait);
+}
+
+/** Woken from sleep: the line is probably back in a few seconds — try then, with a fresh count. */
+function retryDownloadsAfterWake(state: Shell): void {
+  state.retryRound = 0;
+  if (state.retryTimer !== null) clearTimeout(state.retryTimer);
+  state.retryTimer = null;
+  scheduleDownloadRetry(state, WAKE_RETRY_DELAY_MS);
+}
+
+/** After a wake, before the first retry: Wi-Fi reassociates and DHCP answers in about this long. */
+const WAKE_RETRY_DELAY_MS = 10_000;
 
 /**
  * Fetch what the languages that are on need and is not here yet (D-W25): at launch, when
@@ -1420,6 +1584,15 @@ function registerIpc(deps: {
         defaultLanguage: settled.defaultLanguage,
       };
     }
+    // The SAME per-key check the next launch's load applies. A value it would drop (a string
+    // where a number goes, a duck level past 1) is refused here, while the page can still put
+    // its control back — persisted, it would come back next launch as "some settings could
+    // not be read" and that key at its default.
+    for (const [name, value] of Object.entries(patch)) {
+      if (!validateSettingsField(name as keyof Settings, value).ok) {
+        throw new Error(`settings: that is not a valid value for ${name}`);
+      }
+    }
     state.settings = (await settingsStore?.update(patch)) ?? { ...state.settings, ...patch };
     // The interface language: everything main words — tray, tooltip, blockers, pill — is
     // re-worded by the `state.push()` below, and the pages re-render from `settingsChanged`.
@@ -1579,9 +1752,15 @@ function registerIpc(deps: {
     // FastConformer is Arabic's second engine: the Arabic yes covers it (`cohere_arabic`).
     const [accepted] = parseDownloadIds([id === 'fastconformer_ar' ? 'cohere_arabic' : id]);
     if (accepted !== undefined) await acceptDownloads(state, settingsStore, [accepted]);
-    await downloadBundle(state, id as BundleId);
-    await refreshBundles(state);
-    await refreshReadiness(state);
+    try {
+      await downloadBundle(state, id as BundleId);
+    } finally {
+      // A failed button press is retried by the app as a queued one is, and the rows are re-read
+      // either way (they used to be skipped when the download threw).
+      await refreshBundles(state);
+      await refreshReadiness(state);
+      if (accepted !== undefined) afterDownload(state, accepted);
+    }
   });
 
   // Start these now: onboarding's languages step (everything the chosen languages need — the

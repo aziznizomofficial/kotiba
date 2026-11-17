@@ -282,7 +282,13 @@ export function bundleBytes(spec: ModelBundleSpec): number {
 /** Where a bundle is, as the user reads it. One value, set by the component that knows. */
 export type BundleState =
   | { readonly kind: 'notDownloaded' }
-  | { readonly kind: 'downloading'; readonly receivedBytes: number; readonly totalBytes: number }
+  | {
+      readonly kind: 'downloading';
+      readonly receivedBytes: number;
+      readonly totalBytes: number;
+      /** The connection was lost and the download waits to try again, from where it stopped. */
+      readonly retrying?: boolean;
+    }
   | { readonly kind: 'downloaded' }
   | { readonly kind: 'loaded' }
   | { readonly kind: 'failed'; readonly reason: string };

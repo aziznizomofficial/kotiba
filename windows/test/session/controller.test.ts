@@ -21,6 +21,7 @@ import {
   pinFor,
   polishPolicyFor,
 } from '../../src/session/index.js';
+import { ModePolisher, type PromptedPolisher } from '../../src/polish/index.js';
 import type { ControllerDeps, PlaybackDucking, PolishChain } from '../../src/session/index.js';
 import {
   FakeAudio,
@@ -935,6 +936,40 @@ suite('lifecycle', () => {
     expect(r.diagnostics.opened).toBe(true);
     expect(r.audio.warmUps).toBe(1);
     expect(r.hotkey.started).toBe(true);
+  });
+
+  test('WINDOWS: launch pages the modes model in for the default mode, and only when that mode uses it', async () => {
+    const prepared: (readonly string[])[] = [];
+    const engine: PromptedPolisher = {
+      id: 'qwen',
+      supportedLanguages: new Set<Language>(['en', 'ru', 'uz']),
+      generate: async (text) => text,
+      prepare: async (prompts) => {
+        prepared.push(prompts.map((prompt) => prompt.system.slice(0, 12)));
+      },
+    };
+    const chain = (mode: Mode): PolishChain => ({
+      polisher: new ModePolisher({ behaviour: mode.key as 'super' | 'message' | 'note', engine }),
+      notConfigured: false,
+      reason: null,
+    });
+    // Message in English uses the model: its prompt is prefilled before any press.
+    const message = rig({ settings: { defaultModeKey: 'message', defaultLanguage: 'en' }, polishChain: chain });
+    await message.controller.start();
+    await flush();
+    expect(prepared).toHaveLength(1);
+    await message.controller.dispose();
+    // English Super is rules only: nothing is loaded for it.
+    prepared.length = 0;
+    const superEn = rig({ settings: { defaultModeKey: 'super', defaultLanguage: 'en' }, polishChain: chain });
+    await superEn.controller.start();
+    await flush();
+    expect(prepared).toHaveLength(0);
+    // Polish off: not even a chain.
+    const off = rig({ settings: { defaultModeKey: 'message', polishEnabled: false }, polishChain: chain });
+    await off.controller.start();
+    await flush();
+    expect(prepared).toHaveLength(0);
   });
 
   test('a diagnostics store that will not open does not stop startup', async () => {

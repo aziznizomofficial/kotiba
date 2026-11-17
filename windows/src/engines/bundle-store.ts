@@ -4,29 +4,30 @@
 //
 // Ported from `ModelStore.ensure(bundle)` (Sources/KotibaModels/ModelStore.swift) — the
 // Mac's first-use fetch for Parakeet — and written beside `model-store.ts` rather than
-// inside it because that store's `ensure` is built for one ggml file and buffers the whole
-// download in memory before hashing it. That is survivable at 574 MB once; for a 650 MB
-// encoder plus a 1.28 GB GGUF on an 8 GB laptop it is not, so this one STREAMS: bytes go
-// to a uniquely named temporary file and through the hash in the same pass, and the file is
-// fsynced and renamed only after its size and sha256 both match the pin.
+// inside it because that store's `ensure` is built for one ggml file with its own three-step
+// resolution. Both stream through the same downloader: bytes go to `<file>.partial` and through
+// the hash in the same pass, and the file is fsynced and renamed only after its size and sha256
+// both match the pin.
 //
 // A verification STAMP (`.kotiba-verified.json`) records what was checked, so a launch does
 // not re-hash 1.9 GB to answer "is it installed". The stamp is written last, after every
 // file is in place; a file whose size no longer matches the stamp is treated as absent.
 //
-// RESUMABLE. A download that stops — the network drops, the laptop sleeps, Kotiba is quit
-// half-way through 1.28 GB on Uzbek mobile data — leaves `<file>.partial` behind ON PURPOSE,
-// and the next attempt hashes what is there and asks the server only for the rest (`Range`).
-// Safe because every URL is pinned to one upstream commit and the WHOLE file is hashed before
-// it is renamed into place: a partial that belonged to different bytes fails that check, is
-// deleted, and the attempt after starts clean. Only a verified file ever loses `.partial`.
+// RESUMABLE AND RETRIED (`./download-file.ts`, shared with the model store). A download that
+// stops — the network drops or stalls, the laptop sleeps, Kotiba is quit half-way through
+// 1.28 GB on Uzbek mobile data — leaves `<file>.partial` behind ON PURPOSE; the downloader
+// retries with backoff, each time asking the server only for the rest (`Range`), and a later
+// `ensure` (the next launch, the app's own retry) continues from it too. Safe because every URL
+// is pinned to one upstream commit and the WHOLE file is hashed before it is renamed into place:
+// a partial that belonged to different bytes fails that check and is fetched again from byte 0.
+// Only a verified file ever loses `.partial`.
 //
 // SHIPPED BUNDLES (Silero, `ModelBundleSpec.shipped`) sit in the installer's read-only
 // `resources/models/<directory>/` with no stamp; a small one is hashed once per launch instead.
 
-import { createHash, type Hash } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import {
@@ -38,14 +39,17 @@ import {
   type ModelBundleSpec,
 } from '../contracts/index.js';
 
+import { DownloadError, downloadFile, type DownloadIo, type DownloadPolicy } from './download-file.js';
+
 const STAMP = '.kotiba-verified.json';
-/** What an unfinished download is called while it waits to be resumed. */
-export const PARTIAL_SUFFIX = '.partial';
 
 export interface BundleProgress {
   readonly id: BundleId;
+  /** Never goes backwards and never exceeds `totalBytes`. */
   readonly receivedBytes: number;
   readonly totalBytes: number;
+  /** The connection was lost; the download waits to try again and continues where it stopped. */
+  readonly retrying?: boolean;
 }
 
 export interface BundleStore {
@@ -59,6 +63,10 @@ export interface BundleStore {
   locate(id: BundleId): Promise<string | null>;
   /** Fetch whatever is missing, verify everything, stamp. Resolves to the directory. */
   ensure(id: BundleId, onProgress?: (progress: BundleProgress) => void): Promise<string>;
+  /** Why the last fetch of `id` failed (a `DownloadError` when it was the network or the disk), or `null`. */
+  lastFailure?(id: BundleId): unknown;
+  /** Stop every download now and refuse new ones (quit). Each partial stays and is resumed next launch. */
+  cancelAll?(): void;
   /** Every decision and refusal, in order, for the diagnostics pane. */
   readonly notes: readonly string[];
 }
@@ -71,19 +79,22 @@ export interface BundleStoreOptions {
    * used as-is. Never written to.
    */
   readonly readOnlyDirectory?: string;
-  /** Injected by the tests. */
+  /**
+   * The transport. The app passes Electron's `net.fetch` (Chromium's stack: the system proxy and
+   * the Windows certificate store, which antivirus HTTPS scanning installs its root into); tests
+   * pass a double. Absent: Node's own `fetch`, looked up at call time.
+   */
   readonly fetch?: typeof fetch;
+  /** Injected by the tests: the clock, the free-space probe, the rename. */
+  readonly io?: Partial<Omit<DownloadIo, 'fetch'>>;
+  readonly policy?: Partial<DownloadPolicy>;
   readonly catalogue?: Readonly<Record<BundleId, ModelBundleSpec>>;
 }
 
 async function sha256OfFile(path: string): Promise<string> {
-  return (await hashInto(createHash('sha256'), path)).digest('hex');
-}
-
-/** Feed a file through `hash`; the caller decides whether to finish it or keep going. */
-async function hashInto(hash: Hash, path: string): Promise<Hash> {
+  const hash = createHash('sha256');
   for await (const chunk of createReadStream(path, { highWaterMark: 1 << 20 })) hash.update(chunk as Buffer);
-  return hash;
+  return hash.digest('hex');
 }
 
 async function sizeOf(path: string): Promise<number | null> {
@@ -103,7 +114,6 @@ interface StampFile {
 
 export function createBundleStore(options: BundleStoreOptions): BundleStore {
   const catalogue = options.catalogue ?? BUNDLE_CATALOGUE;
-  const fetcher = options.fetch ?? fetch;
   const notes: string[] = [];
   const record = (note: string): void => {
     notes.push(note);
@@ -111,6 +121,11 @@ export function createBundleStore(options: BundleStoreOptions): BundleStore {
   };
   /** One download per bundle at a time: a second caller joins the first. */
   const inFlight = new Map<BundleId, Promise<string>>();
+  /** Why the last `ensure` of each bundle failed — the app's queue asks whether to try again later. */
+  const failures = new Map<BundleId, unknown>();
+  /** Aborted by `cancelAll` (quit). Never replaced: after a quit nothing new may start. */
+  const stopping = new AbortController();
+  const io: DownloadIo = { ...options.io, fetch: options.fetch ?? ((input, init) => fetch(input, init)) };
 
   const writableDirectory = (id: BundleId): string => join(options.modelsDirectory, catalogue[id].directory);
 
@@ -167,97 +182,33 @@ export function createBundleStore(options: BundleStoreOptions): BundleStore {
     return (await verifiedIn(ours, spec)) ? ours : null;
   }
 
+  /**
+   * Files this process already hashed and found pinned, by path → modification time. A bundle
+   * whose LAST file keeps failing on a bad line is retried by the app every few minutes; without
+   * this, every retry re-read Parakeet's 650 MB encoder to re-prove what it proved last time.
+   */
+  const verifiedFiles = new Map<string, number>();
+
   /** Hash a file that is already the right size. `true` iff it is the pinned file. */
   async function alreadyGood(path: string, file: BundleFile): Promise<boolean> {
-    if ((await sizeOf(path)) !== file.bytes) return false;
-    return (await sha256OfFile(path)) === file.sha256;
+    let info;
+    try {
+      info = await stat(path);
+    } catch {
+      return false;
+    }
+    if (!info.isFile() || info.size !== file.bytes) return false;
+    if (verifiedFiles.get(path) === info.mtimeMs) return true;
+    const good = (await sha256OfFile(path)) === file.sha256;
+    if (good) verifiedFiles.set(path, info.mtimeMs);
+    return good;
   }
 
-  /**
-   * One file, resumed from `<destination>.partial` when a previous attempt left one. The hash
-   * runs over the bytes already on disk first and then over the rest as it arrives, so the
-   * whole file is verified exactly once whichever way it was assembled.
-   */
-  async function download(
-    spec: ModelBundleSpec,
-    file: BundleFile,
-    destination: string,
-    progress: (bytes: number) => void,
-  ): Promise<void> {
-    const url = spec.baseUrl + file.remotePath;
-    const partial = `${destination}${PARTIAL_SUFFIX}`;
-    let have = (await sizeOf(partial)) ?? 0;
-    if (have > file.bytes) {
-      await unlink(partial).catch(() => undefined);
-      have = 0;
-    }
-    const hash = createHash('sha256');
-    let received = 0;
-    if (have > 0) {
-      await hashInto(hash, partial);
-      received = have;
-    }
-
-    if (received < file.bytes) {
-      record(`${spec.name}: downloading ${file.remotePath}${have > 0 ? ` from byte ${have}` : ''}`);
-      const response = await fetcher(url, have > 0 ? { headers: { Range: `bytes=${have}-` } } : undefined);
-      // 206 continues the partial. 200 to a ranged request is a server that ignored the
-      // range (or a stale partial): start over rather than append a second copy.
-      const resumed = have > 0 && response.status === 206;
-      if (!response.ok || response.body === null) {
-        throw new Error(`${spec.name}: ${file.remotePath} failed to download: HTTP ${response.status}`);
-      }
-      let restart = false;
-      if (have > 0 && !resumed) {
-        record(`${spec.name}: ${file.remotePath}: the server did not resume (HTTP ${response.status}); starting over`);
-        restart = true;
-      }
-      const handle = await open(partial, restart || have === 0 ? 'w' : 'a');
-      const fresh = restart ? createHash('sha256') : hash;
-      if (restart) received = 0;
-      else if (have > 0) progress(have);
-      try {
-        for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
-          fresh.update(chunk);
-          await handle.write(chunk);
-          received += chunk.byteLength;
-          progress(chunk.byteLength);
-        }
-        await handle.sync();
-      } finally {
-        // The partial STAYS on any failure here: it is what the next attempt resumes from.
-        await handle.close();
-      }
-      await finishFile(spec, file, destination, partial, fresh, received);
-      return;
-    }
-    progress(have);
-    await finishFile(spec, file, destination, partial, hash, received);
-  }
-
-  /** Size and sha256 against the pin; rename into place, or delete the partial and say why. */
-  async function finishFile(
-    spec: ModelBundleSpec,
-    file: BundleFile,
-    destination: string,
-    partial: string,
-    hash: Hash,
-    received: number,
-  ): Promise<void> {
-    const actual = hash.digest('hex');
-    if (received !== file.bytes || actual !== file.sha256) {
-      // Corrupt is not resumable: these bytes can never become the pinned file.
-      await unlink(partial).catch(() => undefined);
-      record(`${spec.name}: ${file.remotePath} arrived corrupt (${received} bytes, sha256 ${actual.slice(0, 12)}…), discarded`);
-      throw new Error(
-        `${spec.name}: ${file.remotePath} arrived corrupt — expected ${file.bytes} bytes with sha256 ` +
-          `${file.sha256.slice(0, 12)}…, got ${received} bytes with ${actual.slice(0, 12)}…`,
-      );
-    }
-    await rename(partial, destination);
-  }
-
-  async function fetchBundle(id: BundleId, onProgress?: (progress: BundleProgress) => void): Promise<string> {
+  async function fetchBundle(
+    id: BundleId,
+    onProgress: ((progress: BundleProgress) => void) | undefined,
+    signal: AbortSignal,
+  ): Promise<string> {
     const spec = catalogue[id];
     const existing = await installedDirectory(id);
     if (existing !== null) return existing;
@@ -265,10 +216,13 @@ export function createBundleStore(options: BundleStoreOptions): BundleStore {
     const directory = writableDirectory(id);
     await mkdir(directory, { recursive: true });
     const totalBytes = bundleBytes(spec);
-    let receivedBytes = 0;
-    const tick = (bytes: number): void => {
-      receivedBytes += bytes;
-      onProgress?.({ id, receivedBytes, totalBytes });
+    /** Bytes of the files already in place; the current file's own count is added to it. */
+    let doneBytes = 0;
+    let reported = 0;
+    const tell = (fileBytes: number, retrying: boolean): void => {
+      // Never backwards: a file that restarts from byte 0 holds the bar, it does not empty it.
+      reported = Math.min(totalBytes, Math.max(reported, doneBytes + fileBytes));
+      onProgress?.({ id, receivedBytes: reported, totalBytes, retrying });
     };
 
     for (const file of spec.files) {
@@ -276,11 +230,29 @@ export function createBundleStore(options: BundleStoreOptions): BundleStore {
       await mkdir(dirname(destination), { recursive: true });
       if (await alreadyGood(destination, file)) {
         record(`${spec.name}: ${file.localName} present and verified`);
-        tick(file.bytes);
-        continue;
+      } else {
+        await unlink(destination).catch(() => undefined);
+        record(`${spec.name}: downloading ${file.remotePath}`);
+        await downloadFile(
+          {
+            url: spec.baseUrl + file.remotePath,
+            destination,
+            label: `${spec.name}: ${file.remotePath}`,
+            bytes: file.bytes,
+            sha256: file.sha256,
+            signal,
+            note: record,
+            onProgress: (progress) => tell(progress.bytes, progress.retrying),
+            ...(options.policy === undefined ? {} : { policy: options.policy }),
+          },
+          io,
+        );
+        // Verified on the way in: the next `ensure` need not read it again.
+        const landed = await stat(destination).catch(() => null);
+        if (landed !== null) verifiedFiles.set(destination, landed.mtimeMs);
       }
-      await unlink(destination).catch(() => undefined);
-      await download(spec, file, destination, tick);
+      doneBytes += file.bytes;
+      tell(0, false);
     }
 
     const stamp = { verified: new Date().toISOString(), files: spec.files.map(({ localName, bytes, sha256 }) => ({ localName, bytes, sha256 })) };
@@ -305,9 +277,24 @@ export function createBundleStore(options: BundleStoreOptions): BundleStore {
     ensure(id, onProgress) {
       const running = inFlight.get(id);
       if (running !== undefined) return running;
-      const task = fetchBundle(id, onProgress).finally(() => inFlight.delete(id));
+      failures.delete(id);
+      const task = fetchBundle(id, onProgress, stopping.signal)
+        .catch((error: unknown) => {
+          failures.set(id, error);
+          if (error instanceof DownloadError) record(error.detail);
+          throw error;
+        })
+        .finally(() => inFlight.delete(id));
       inFlight.set(id, task);
       return task;
+    },
+    lastFailure(id) {
+      return failures.get(id) ?? null;
+    },
+    cancelAll() {
+      // Every transfer stops where it is; its partial stays, and the next launch resumes it.
+      // For good: the app's queue may start its next link while the quit is still running.
+      stopping.abort();
     },
     get notes() {
       return notes;

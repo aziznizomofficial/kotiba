@@ -531,6 +531,7 @@ export function createDictationController(deps: ControllerDeps): DictationContro
 
     await prepareEngines({ eagerly: deps.settings.current().preloadAllLanguages });
     settleReadiness();
+    warmModesModel();
     // The language decision's word lists (~40 ms to split), built now rather than by the first
     // key-up that reads a transcript — the Mac's `Lexicon.warmUp` at launch.
     if ((deps.engines.languageIdentifier?.() ?? null) !== null) warmLexicons();
@@ -569,6 +570,36 @@ export function createDictationController(deps: ControllerDeps): DictationContro
     }
     await syncHotkeyBinding();
     await warmUp;
+  }
+
+  /**
+   * WINDOWS: the modes' model for the mode a press would use now, paged in and its prompts
+   * prefilled at launch — the same `prepare` key-down runs, started earlier.
+   *
+   * The Mac has no need: its model loads on Metal in a few hundred milliseconds at the first
+   * key-down. A Windows laptop needs seconds — the engine process, the GGUF, the context and the
+   * prompts' prefill on the CPU — so the first Message, Note or Uzbek Super dictation after
+   * launch waited out the whole polish deadline and went in on its rules. A mode or language that
+   * uses no model (Raw, English Super) prepares nothing; the model gives its memory back after
+   * its idle timeout like any other load. Built-in modes only: a custom mode's chain reads a
+   * credential, which launch has no business doing. Never awaited, never a failure.
+   */
+  function warmModesModel(): void {
+    const settings = deps.settings.current();
+    if (!settings.polishEnabled || !settings.preferOnDeviceModel) return;
+    const decision = ports.modes.resolveMode({
+      modes: deps.modes as BuiltInModeTable,
+      settings,
+      userPickedModeKey,
+      foregroundApp: null,
+    });
+    if (modeBehaviour(decision.mode) === null) return;
+    const language = pinAtPressFor(decision.mode, settings) ?? settings.defaultLanguage;
+    warmTask = makePolishChain(decision.mode, null)
+      .then(async (chain) => {
+        if (isIncrementalPolisher(chain.polisher)) await chain.polisher.begin(language).prepare();
+      })
+      .catch(() => undefined);
   }
 
   async function prepareEngines(options: { readonly eagerly: boolean }): Promise<void> {
@@ -702,6 +733,8 @@ export function createDictationController(deps: ControllerDeps): DictationContro
    * transcribed the room. Kept only so `dispose()` can let it finish.
    */
   let preloadTask: Promise<void> | null = null;
+  /** `warmModesModel`'s launch prefill. Kept only so `dispose()` can let it finish. */
+  let warmTask: Promise<void> | null = null;
 
   function heldPress(): HeldPress | null {
     return held;
@@ -799,8 +832,10 @@ export function createDictationController(deps: ControllerDeps): DictationContro
       // Page the model in behind the user's speech. An OPTIMISATION and nothing more —
       // the session loads a cold engine itself rather than refusing it — and NOT part of
       // arming, for the reason `preloadTask` states.
+      // The pinned language's family when the press is pinned (an Uzbek-default user's Russian
+      // mode, say), the default's otherwise — and Parakeet unless it is pinned elsewhere.
       preloadTask = deps.engines
-        .prepare({ eagerly: settings.preloadAllLanguages })
+        .prepare({ eagerly: settings.preloadAllLanguages, ...(pinAtPress === null ? {} : { language: pinAtPress }) })
         .catch(() => undefined);
 
       await built.arm();
@@ -1228,6 +1263,7 @@ export function createDictationController(deps: ControllerDeps): DictationContro
       settingsOff = null;
       await Promise.allSettled([...runs.values()]);
       if (preloadTask !== null) await preloadTask.catch(() => undefined);
+      if (warmTask !== null) await warmTask.catch(() => undefined);
       listeners.clear();
       await Promise.allSettled([
         deps.hotkey.stop(),

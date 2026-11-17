@@ -187,6 +187,7 @@ export class StreamingWhisperSession implements TranscriptionStream {
   private fittedAllowed: boolean | null = null;
   private generation = 0;
   private readonly listeners = new Set<(text: string) => void>();
+  private readonly progressListeners = new Set<(text: string) => void>();
 
   constructor(options: {
     readonly engine: SegmentDecoder;
@@ -211,6 +212,27 @@ export class StreamingWhisperSession implements TranscriptionStream {
     return () => {
       this.listeners.delete(listener);
     };
+  }
+
+  /** The commits so far and the newest pause decode after them, whenever one lands. */
+  onProgress(listener: (text: string) => void): () => void {
+    this.progressListeners.add(listener);
+    return () => {
+      this.progressListeners.delete(listener);
+    };
+  }
+
+  private progressed(tentative: string): void {
+    if (!this.running) return;
+    const text = joinSegments([...this.texts, tentative]);
+    if (text.trim() === '') return;
+    for (const listener of [...this.progressListeners]) {
+      try {
+        listener(text);
+      } catch {
+        // A listener must never cost the stream its text.
+      }
+    }
   }
 
   // ---- TranscriptionStream ----------------------------------------------------------
@@ -503,6 +525,7 @@ export class StreamingWhisperSession implements TranscriptionStream {
       ) {
         this.prefix = { span, text };
         this.finishedPauses.push({ span, text });
+        this.progressed(text);
       }
       // The newest pause waited for this one (`coalesceSpeculations`): its turn now.
       const waiting = this.waitingPause;

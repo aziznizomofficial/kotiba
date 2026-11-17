@@ -321,7 +321,7 @@ export class HotkeyTracker {
   #handleModifier(input: HookInput, isRepeat: boolean, now: number): TrackerEvent | null {
     if (input.vk === this.vk) {
       if (input.kind === 'down') {
-        if (this.#held) return null; // the edge guard; modifiers do not autorepeat anyway
+        if (this.#held) return null; // the edge guard: a held modifier autorepeats on Windows
         this.#held = true;
         this.#chorded = false;
         this.#heldSince = now;

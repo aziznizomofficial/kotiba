@@ -84,7 +84,21 @@ Implementation: `BEAM_SIZE_BY_FAMILY` in `src/contracts/transcript.ts` is the au
 `beamSizeFor` in `params.ts` applies it. The `whisperBeamSize` setting moves the **unified**
 number only and cannot raise the Uzbek one — three tests assert that at 1, 5 and 8.
 
-### 2.2 Thread count — **SAME FORMULA, DIFFERENT INPUT**
+### 2.2 Thread count — **SUPERSEDED 2026-11-17: one thread per physical core**
+
+**What shipped until then was neither the Mac's formula nor this section's design.** The
+composition root hands the manager the LOGICAL count (`logicalProcessorCount()`), and
+`whisperParamsFor` fed it straight into `max(1, min(8, n − 2))`: a 4C/8T laptop decoded on **6**
+threads (two pairs on one core's vector units, ggml's spinning barriers waiting on the slowest)
+and kept two logical processors for the UI, the audio and the hotkey. The design below would have
+given it **2** — half the machine idle while the user waits for Uzbek. The rule now
+(`resolveWhisperThreads`): the physical-core estimate below (`resolveDecodeCores`), capped at 8,
+with no subtraction — the rule Parakeet's encoder and the modes' model already use. The SMT
+siblings it leaves free are the headroom the Mac's "− 2" buys on Apple silicon, which has none.
+2 logical → 2, 4 → 2, 8 → 4, 12 → 6, 24 → 8. **Not measured on Windows**; the hello's
+`physicalCores` / `performanceCores` remain the refinement for hybrid parts. The original text:
+
+#### (historical) SAME FORMULA, DIFFERENT INPUT
 
 | | Swift | Windows |
 |---|---|---|
@@ -433,13 +447,15 @@ decoder, same streaming policy. Decision D-W18.
 | short audio | padded to 1 s | padded to 1 s | `ParakeetEngine.decode` |
 | decode queue | serialised | serialised (one promise chain, assigned before the first await) | `ParakeetEngine.decode` |
 | streaming | `StreamSegmenter` 14 s / 6 s / 20 ms / 200 ms, latest-quietest cut | identical, pinned by tests on synthetic audio | `src/core/stt/segmenter.ts`, `ParakeetStream` |
-| stream fallback | batch when a commit failed, samples were dropped, or the recording is shorter than what was committed | identical | `ParakeetStream.finish` |
+| pause decode | the pending audio decoded at every 0.2 s pause after ≥ 0.3 s of new speech; adopted at key-up when no speech followed it (Silero, else the energy gate) | identical, on the energy gate (Silero runs only inside `kotiba-stt.exe`) — **ported 2026-11-17**; before it, every dictation under 14 s was one batch decode after key-up | `ParakeetStream.speculateIfDue` / `finish` |
+| stream fallback | batch when a commit failed, samples were dropped, the stream was fed other than the recording, or the recording is shorter than what was committed | identical | `ParakeetStream.finish` |
 | tail floor | < 0.3 s of tail is not decoded | identical | same |
 | family | first in `.unified`, whisper behind it (`CompositeEngine`) | first in `unified`, whisper large-v3-turbo behind it | `manager.ts` `unifiedLead` |
 | 4a relabel | written language beats the router's en/ru guess; a pin wins | identical | `session.ts` step 4a |
 | first use | background download through `ModelStore`, `prepare()` throws "downloading" | identical; streamed to a temp file, hashed in the same pass | `src/engines/bundle-store.ts` |
 | load budget | 1 s (a first load compiles a Neural Engine plan for ~20 s) | 15 s: an ONNX Runtime load is ~1 s every time, so waiting beats falling back to a slower whisper | `DEFAULT_PARAKEET_LOAD_BUDGET_MS` |
 | idle | unloads on memory pressure only | **unloads after 15 min idle** (Windows addition) | `DEFAULT_PARAKEET_IDLE_UNLOAD_MS` |
+| preload | at launch and on every press unless pinned elsewhere, whatever the default language | identical since 2026-11-17 (it used to follow the default language only, so an Uzbek-default user's English loaded at key-up) | `manager.ts` `prepare` |
 
 **Two deliberate differences from onnx-asr**: `<unk>`, `<pad>` and `<|…|>` control tokens
 are dropped from the text (the decoder emitted `<unk>` once in 400 FLEURS utterances,
@@ -512,9 +528,10 @@ C3 §7's recipe. Decision D-W19.
 | model | Qwen3-1.7B Q4_K_M via llama.cpp b11249, Metal | the same GGUF (pinned, sha256) via `node-llama-cpp` 3.22.1 — Metal here, Vulkan or the CPU on Windows — in its own utility process (D-W22, §15) | `src/polish/llama.ts`, `src/polish/remote-llama.ts` |
 | prompt bytes | ChatML, examples as turns, empty `<think>` block, head and turn tokenised separately, no BOS | identical — node-llama-cpp's chat wrapper is NOT used | `chatML`, `turn` |
 | decoding | greedy, prompt-lookup draft 16, q8_0 K/V, 4096 context, 4 cached sequences LRU | greedy (`temperature: 0`), `InputLookupTokenPredictor` max 16, q8_0 K/V, 4096, 4 sequences LRU | — |
-| idle | unload after 180 s | unload after 180 s | — |
+| idle | unload after 180 s | **unload after 15 min** (2026-11-17: a CPU reload + prefill is seconds, and the next key-down does not cover it) | `DEFAULT_LLAMA_IDLE_UNLOAD_MS` |
+| first load | at the first key-down | **at launch** too, for the default mode when it uses the model (Windows addition) | `controller.warmModesModel` |
 | session | `normalise` runs clean-up for every mode but Raw; built-in modes insert once | identical (`controller.normaliserFor`, `polishPolicyFor`) | controller tests |
-| incremental | IncrementalPolish exists; the Mac session does not yet feed it during capture | **fed during capture**: text the Parakeet stream commits is normalised with an open final sentence and committed; key-up hands the tail over only if the finished transcript's normalised form still starts with what was committed, else polishes the whole | `test/session/streaming.test.ts` |
+| incremental | IncrementalPolish, fed during capture, and **primed** at every pause decode with the transcript so far (`prime`, reused at key-up by exact sentence text) | **the same since 2026-11-17**: commits as before, and `onProgress` from both streams primes it (`progressDuringHold`; the unfinished last sentence only on Parakeet's stream). Before, only the 14 s / 20 s commits reached it, so nearly every dictation's model work began after key-up | `test/session/streaming.test.ts`, `test/polish/incremental.test.ts` |
 
 **Model outputs against the Mac's** (`windows/scripts/measure/modes-compare.mjs` against
 `kotiba-probe modes`, same GGUF, same inputs, commit-then-tail as the probe does it):

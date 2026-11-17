@@ -110,7 +110,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "1.2.0";
+constexpr const char* kVersion = "1.3.0";
 
 /// Stamped into `dwExtraInfo` of EVERY keystroke this helper synthesises, and the one value
 /// kotiba-hook skips (the same literal lives in kotiba-hook/src/main.cpp). Since 1.0 a paste
@@ -121,10 +121,18 @@ constexpr const char* kVersion = "1.2.0";
 /// reported, so remapped hotkeys keep working.
 constexpr ULONG_PTR kKotibaInjectedTag = 0x4B4F5442;
 
-/// Parity with `PasteboardSink.restoreDelay` (250 ms). The user's text is already
-/// delivered when this timer starts; the delay exists to let the target application
-/// finish reading the clipboard before we put the user's own contents back.
-constexpr int kDefaultRestoreDelayMs = 250;
+/// How long the dictated text stays on the clipboard after Ctrl+V before the user's own
+/// contents are put back. The user's text is already delivered when this timer starts; the
+/// delay exists to let the target application READ the clipboard first.
+///
+/// A DELIBERATE DIVERGENCE from the Mac's 250 ms (`PasteboardSink.restoreDelay`). Ctrl+V is
+/// queued, not performed: the target reads the clipboard when its UI thread reaches the
+/// event, and on Windows that thread belongs to Telegram, Chrome or Word on a machine whose
+/// cores Kotiba's own engines are saturating at that very moment (the next dictation's
+/// decode, the polish). A restore that wins the race pastes the user's OLD clipboard — a
+/// password, a card number — into the chat instead of the dictation. Waiting longer costs
+/// only a back-to-back paste waiting a little longer for its window (below).
+constexpr int kDefaultRestoreDelayMs = 600;
 
 /// How many UTF-16 units go into one `SendInput` call.
 ///
@@ -146,10 +154,34 @@ constexpr const char* kCodeCouldNotSendKeys = "couldNotSendKeys";
 constexpr const char* kCodeMoved = "moved";
 constexpr const char* kCodeNotEditable = "notEditable";
 constexpr const char* kCodeBadRequest = "badRequest";
+/// 1.3.0: the window in front runs elevated. Windows' UIPI drops every keystroke a
+/// non-elevated process injects into it — often while `SendInput` still reports success —
+/// so neither path can work. The text is left on the clipboard for the user's own Ctrl+V.
+constexpr const char* kCodeElevated = "elevated";
 
 /// Everything that touches the clipboard takes this. The restore runs on a detached
-/// thread 250 ms later, and by then the main loop may well be inside the next command.
+/// thread `restoreDelayMs` later, and by then the main loop may well be inside the next command.
 std::mutex g_clipboardMutex;
+
+/// THE PASTE WINDOW — the Mac's `PasteWindow`, for the same defect. Signalled when no paste
+/// owns the clipboard; reset from a paste's write until its restore has run. Every insertion
+/// and replacement waits for it first. Since overlapping dictations (1.0) the next insert is
+/// usually ready the moment this one returns, and without the wait it overwrote the clipboard
+/// before the target had read it — the first dictation's text was lost, the second pasted
+/// twice — and snapshotted the FIRST dictation as "the user's clipboard", which the restores
+/// then left behind. Only ever paid back to back.
+HANDLE g_pasteWindowFree = nullptr;
+
+/// How long an insertion waits for the previous paste's restore before going ahead anyway.
+/// Past the restore delay plus a clipboard retry, the restore is stuck on a clipboard another
+/// application is holding, and the user's dictation must not wait on it.
+DWORD PasteWindowWaitMs(int restoreDelayMs) {
+  return static_cast<DWORD>((restoreDelayMs > 0 ? restoreDelayMs : 0) + 1000);
+}
+
+void WaitForPasteWindow(int restoreDelayMs) {
+  if (g_pasteWindowFree != nullptr) WaitForSingleObject(g_pasteWindowFree, PasteWindowWaitMs(restoreDelayMs));
+}
 
 // ---------------------------------------------------------------------------------
 // Text
@@ -243,6 +275,26 @@ std::string HeldModifiers() {
     }
   }
   return held;
+}
+
+bool KeyDown(int vk) { return (GetAsyncKeyState(vk) & 0x8000) != 0; }
+
+/// Ctrl, either side, physically down.
+bool ControlHeld() { return KeyDown(VK_LCONTROL) || KeyDown(VK_RCONTROL); }
+
+/// Alt or a Windows key physically down.
+bool AltOrWinHeld() {
+  return KeyDown(VK_LMENU) || KeyDown(VK_RMENU) || KeyDown(VK_LWIN) || KeyDown(VK_RWIN);
+}
+
+/// Wait, briefly, for Alt and the Windows keys to come up. Typed under Alt, every character
+/// is a WM_SYSCHAR — a menu mnemonic — and a paste under Alt is Ctrl+Alt+V, which is AltGr+V
+/// on half the layouts this app's users type on. Insertion runs after the hotkey is released,
+/// so this is the rare case of a Right Alt binding pressed again before the previous
+/// dictation landed; the wait is bounded well inside the client's request timeout.
+void WaitForAltAndWinReleased(DWORD budgetMs) {
+  const DWORD start = GetTickCount();
+  while (AltOrWinHeld() && GetTickCount() - start < budgetMs) Sleep(10);
 }
 
 /// Synthesise Ctrl+V.
@@ -366,6 +418,45 @@ ClipboardSnapshot SnapshotClipboard() {
   return snapshot;
 }
 
+/// Mark what is being put on the clipboard as not for history. Three registered formats,
+/// each documented by Windows: `CanIncludeInClipboardHistory` = 0 keeps it out of Win+V,
+/// `CanUploadToCloudClipboard` = 0 out of the cloud clipboard synced to the user's other
+/// devices, `ExcludeClipboardContentFromMonitorProcessing` tells clipboard managers to look
+/// away. Without them every dictation pasted this way was recorded in the clipboard history
+/// — and synced — twice: once as the dictation, once more as the user's own contents put
+/// back. Called with the clipboard open, after `EmptyClipboard`. Best effort: a format that
+/// will not register costs the marker, never the paste.
+void MarkNotForHistory(const ClipboardSnapshot* alreadyThere) {
+  struct Marker {
+    const wchar_t* name;
+  };
+  static const Marker kMarkers[] = {
+      {L"CanIncludeInClipboardHistory"},
+      {L"CanUploadToCloudClipboard"},
+      {L"ExcludeClipboardContentFromMonitorProcessing"},
+  };
+  for (const Marker& marker : kMarkers) {
+    const UINT format = RegisterClipboardFormatW(marker.name);
+    if (format == 0) continue;
+    bool present = false;
+    if (alreadyThere != nullptr) {
+      for (const ClipboardItem& item : alreadyThere->items) present = present || item.format == format;
+    }
+    if (present) continue;  // the user's own value for it is being put back as it was
+    const HGLOBAL block = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+    if (block == nullptr) continue;
+    void* target = GlobalLock(block);
+    if (target == nullptr) {
+      GlobalFree(block);
+      continue;
+    }
+    const DWORD zero = 0;
+    std::memcpy(target, &zero, sizeof(zero));
+    GlobalUnlock(block);
+    if (SetClipboardData(format, block) == nullptr) GlobalFree(block);
+  }
+}
+
 bool WriteClipboardText(const std::wstring& text) {
   const SIZE_T bytes = (text.size() + 1) * sizeof(wchar_t);
   const HGLOBAL block = GlobalAlloc(GMEM_MOVEABLE, bytes);
@@ -390,6 +481,7 @@ bool WriteClipboardText(const std::wstring& text) {
     GlobalFree(block);
     return false;
   }
+  MarkNotForHistory(nullptr);
   CloseClipboard();
   return true;
 }
@@ -433,6 +525,8 @@ void RestoreClipboard(const ClipboardSnapshot& snapshot) {
     GlobalUnlock(block);
     if (SetClipboardData(item.format, block) == nullptr) GlobalFree(block);
   }
+  // Already in the history from when the user copied it; putting it back is not a new copy.
+  if (!snapshot.items.empty()) MarkNotForHistory(&snapshot);
   CloseClipboard();
 }
 
@@ -448,6 +542,18 @@ void EnsureAutomation() {
   if (g_automation != nullptr) return;
   CoCreateInstance(__uuidof(CUIAutomation), nullptr, CLSCTX_INPROC_SERVER,
                    __uuidof(IUIAutomation), reinterpret_cast<void**>(&g_automation));
+  if (g_automation == nullptr) return;
+  // UI Automation's own timeouts are tens of seconds, and a hung target application holds
+  // the call for all of them — long past the client's 5 s request timeout, which then
+  // KILLS this helper and counts it against the restart budget, for a polish replace the
+  // session would simply have skipped. Fail fast instead: `notEditable`, helper alive.
+  IUIAutomation2* tunable = nullptr;
+  if (SUCCEEDED(g_automation->QueryInterface(__uuidof(IUIAutomation2), reinterpret_cast<void**>(&tunable))) &&
+      tunable != nullptr) {
+    tunable->put_ConnectionTimeout(1000);
+    tunable->put_TransactionTimeout(1500);
+    tunable->Release();
+  }
 }
 
 struct ReplaceResult {
@@ -577,6 +683,51 @@ ReplaceResult ReplaceViaAutomation(const std::wstring& previous, const std::wstr
 }
 
 // ---------------------------------------------------------------------------------
+// The window in front, elevated?
+// ---------------------------------------------------------------------------------
+
+/// The mandatory integrity level of a token, as its RID (0x2000 medium, 0x3000 high…), or 0.
+DWORD IntegrityOf(HANDLE token) {
+  DWORD size = 0;
+  GetTokenInformation(token, TokenIntegrityLevel, nullptr, 0, &size);
+  if (size == 0) return 0;
+  std::vector<unsigned char> buffer(size);
+  if (!GetTokenInformation(token, TokenIntegrityLevel, buffer.data(), size, &size)) return 0;
+  const TOKEN_MANDATORY_LABEL* label = reinterpret_cast<const TOKEN_MANDATORY_LABEL*>(buffer.data());
+  const PUCHAR count = GetSidSubAuthorityCount(label->Label.Sid);
+  if (count == nullptr || *count == 0) return 0;
+  return *GetSidSubAuthority(label->Label.Sid, static_cast<DWORD>(*count - 1));
+}
+
+/// Whether the foreground window belongs to a process above this one's integrity level —
+/// an app run as administrator, Task Manager, an installer. UIPI then drops what we inject.
+/// "Do not know" is false: a refusal the user cannot act on is worse than an attempt.
+bool ForegroundIsAboveUs() {
+  const HWND window = GetForegroundWindow();
+  if (window == nullptr) return false;
+  DWORD pid = 0;
+  GetWindowThreadProcessId(window, &pid);
+  if (pid == 0 || pid == GetCurrentProcessId()) return false;
+  DWORD ours = 0;
+  HANDLE own = nullptr;
+  if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &own)) {
+    ours = IntegrityOf(own);
+    CloseHandle(own);
+  }
+  if (ours == 0) return false;
+  const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+  if (process == nullptr) return false;
+  DWORD theirs = 0;
+  HANDLE token = nullptr;
+  if (OpenProcessToken(process, TOKEN_QUERY, &token)) {
+    theirs = IntegrityOf(token);
+    CloseHandle(token);
+  }
+  CloseHandle(process);
+  return theirs > ours;
+}
+
+// ---------------------------------------------------------------------------------
 // Responses
 // ---------------------------------------------------------------------------------
 
@@ -597,6 +748,13 @@ void Refuse(const std::string& id, const char* code, const std::string& detail) 
 // Commands
 // ---------------------------------------------------------------------------------
 
+/// Put `text` on the clipboard and leave it there — for the elevated window the user will
+/// paste into themselves. No snapshot, no restore: the text IS what they need on it now.
+bool LeaveOnClipboard(const std::wstring& text) {
+  std::lock_guard<std::mutex> guard(g_clipboardMutex);
+  return WriteClipboardText(text);
+}
+
 void HandleInsert(const kotiba::JsonObject& request, const std::string& id) {
   const std::wstring text = Widen(request.string("text"));
   if (text.empty()) {
@@ -608,11 +766,33 @@ void HandleInsert(const kotiba::JsonObject& request, const std::string& id) {
   const int restoreDelayMs =
       static_cast<int>(request.integer("restoreDelayMs", kDefaultRestoreDelayMs));
   const bool confirm = request.boolean("confirm", true);
+
+  // Never while the previous paste's restore is still owed (see `g_pasteWindowFree`): the
+  // target may not have read its clipboard yet, and typed text would overtake the paste.
+  WaitForPasteWindow(restoreDelayMs);
+
+  if (ForegroundIsAboveUs()) {
+    kotiba::JsonWriter writer;
+    writer.string("id", id)
+        .boolean("ok", false)
+        .string("code", kCodeElevated)
+        .boolean("onClipboard", LeaveOnClipboard(text));
+    Emit(writer.finish());
+    return;
+  }
+
+  WaitForAltAndWinReleased(1000);
   const std::string held = HeldModifiers();
 
   // ---- the primary path: unicode straight at the caret, no clipboard involved -----
+  //
+  // NOT under Ctrl. With overlapping dictations this runs while the user is already holding
+  // Right Ctrl for the NEXT one, and a character typed under Ctrl is Ctrl+<that letter> to
+  // half the applications on the machine — Qt (Telegram Desktop) drops it as a shortcut,
+  // others run the shortcut (Ctrl+W closes the chat). A paste under Ctrl is still Ctrl+V.
   size_t unicodeDelivered = 0;
-  if (wanted == "unicode" || wanted == "auto") {
+  const bool typeIt = wanted == "unicode" || (wanted == "auto" && !ControlHeld());
+  if (typeIt) {
     const size_t delivered = SendUnicodeText(text);
     unicodeDelivered = delivered;
     if (delivered == text.size()) {
@@ -631,36 +811,54 @@ void HandleInsert(const kotiba::JsonObject& request, const std::string& id) {
                  std::to_string(text.size()) + " units");
       return;
     }
-    // `auto` falls through to the clipboard. Anything already delivered has landed in
-    // the target and the paste will follow it, so the caller is told both numbers.
+    // `auto` falls through to the clipboard with WHAT IS LEFT. Whatever was typed has
+    // landed in the target; pasting the whole text after it duplicated that part.
+  }
+  const std::wstring rest = unicodeDelivered < text.size() ? text.substr(unicodeDelivered) : std::wstring();
+  if (rest.empty()) {
+    Refuse(id, kCodeCouldNotSendKeys, "nothing left to paste after a partial delivery");
+    return;
   }
 
   // ---- the fallback: the user's clipboard, borrowed and given back ----------------
-  std::lock_guard<std::mutex> guard(g_clipboardMutex);
+  std::unique_lock<std::mutex> guard(g_clipboardMutex);
+  ResetEvent(g_pasteWindowFree);
   ClipboardSnapshot saved = SnapshotClipboard();
-
-  if (!WriteClipboardText(text)) {
+  const auto giveBack = [&]() {
     RestoreClipboard(saved);
+    SetEvent(g_pasteWindowFree);
+  };
+
+  if (!WriteClipboardText(rest)) {
+    giveBack();
     Refuse(id, kCodeClipboardRefused, "");
     return;
   }
-  if (confirm && !ClipboardHoldsText(text)) {
-    RestoreClipboard(saved);
+  // The clipboard's change counter right after OUR write. Anything that changes it before the
+  // restore is somebody else's copy — the user's, most likely — and it is not overwritten.
+  const DWORD ourSequence = GetClipboardSequenceNumber();
+  if (confirm && !ClipboardHoldsText(rest)) {
+    giveBack();
     Refuse(id, kCodeClipboardStolen, "");
     return;
   }
   if (!SendControlV()) {
-    RestoreClipboard(saved);
+    giveBack();
     Refuse(id, kCodeCouldNotSendKeys, "SendInput refused the paste chord");
     return;
   }
+  guard.unlock();
 
   // Off the critical path, exactly as macOS does it: the text is already delivered, and
-  // the caller is not made to wait for the user's clipboard to be put back.
-  std::thread([saved, restoreDelayMs]() {
+  // the caller is not made to wait for the user's clipboard to be put back. The paste
+  // window stays closed until the restore has run.
+  std::thread([saved, restoreDelayMs, ourSequence]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(restoreDelayMs));
-    std::lock_guard<std::mutex> restoreGuard(g_clipboardMutex);
-    RestoreClipboard(saved);
+    {
+      std::lock_guard<std::mutex> restoreGuard(g_clipboardMutex);
+      if (GetClipboardSequenceNumber() == ourSequence) RestoreClipboard(saved);
+    }
+    SetEvent(g_pasteWindowFree);
   }).detach();
 
   kotiba::JsonWriter writer;
@@ -671,9 +869,8 @@ void HandleInsert(const kotiba::JsonObject& request, const std::string& id) {
       .boolean("clipboardSaved", saved.taken)
       .integer("restoreDelayMs", restoreDelayMs);
   if (unicodeDelivered > 0) {
-    // `auto` fell back after getting part of the way in. Whatever landed is in the
-    // target and the paste followed it, so the caller is told both numbers rather than
-    // being left to explain duplicated text from a success message.
+    // `auto` fell back after getting part of the way in: this many units were typed and
+    // the rest was pasted after them.
     writer.integer("unicodeUnitsBeforeFallback", static_cast<int64_t>(unicodeDelivered));
   }
   if (!saved.dropped.empty()) writer.string("droppedFormats", saved.dropped);
@@ -689,6 +886,18 @@ void HandleReplace(const kotiba::JsonObject& request, const std::string& id) {
     return;
   }
 
+  WaitForPasteWindow(kDefaultRestoreDelayMs);
+  if (ForegroundIsAboveUs()) {
+    Refuse(id, kCodeElevated, "");
+    return;
+  }
+  // The replacement is TYPED over the selection; see HandleInsert for why not under Ctrl,
+  // and why not under Alt.
+  WaitForAltAndWinReleased(1000);
+  if (ControlHeld()) {
+    Refuse(id, kCodeCouldNotSendKeys, "Ctrl is held; typing now would be read as shortcuts");
+    return;
+  }
   const ReplaceResult result = ReplaceViaAutomation(previous, polished);
   if (!result.ok) {
     Refuse(id, result.code, "");
@@ -1055,6 +1264,9 @@ int main(int argc, char** argv) {
   // Single-threaded apartment: UI Automation is happy in one, and the restore thread
   // never touches COM.
   CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+  // Signalled: no paste owns the clipboard yet.
+  g_pasteWindowFree = CreateEventW(nullptr, TRUE, TRUE, nullptr);
 
   std::fprintf(stderr, "kotiba-input %s: ready\n", kVersion);
   std::fflush(stderr);

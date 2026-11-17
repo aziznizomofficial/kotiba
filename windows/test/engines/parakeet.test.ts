@@ -298,7 +298,10 @@ suite('ParakeetEngine', () => {
     store.failDownload?.(new Error('HTTP 503'));
     await flush();
     expect(states[states.length - 1]).toEqual({ kind: 'failed', reason: 'HTTP 503' });
-    await expect(engine.prepare()).rejects.toThrow(/last attempt failed: HTTP 503/);
+    // The next press starts a new attempt, and what it says is about THAT one: the old failure
+    // is cleared the moment it starts (it used to linger as "the last attempt failed").
+    await expect(engine.prepare()).rejects.toThrow(/still downloading/);
+    expect(states[states.length - 1]?.kind).toBe('downloading');
     expect(store.ensures).toBe(2);
   });
 
@@ -469,5 +472,163 @@ suite('ParakeetStream', () => {
     feed(stream, buffer(30));
     await flush();
     expect(runtime.decoded).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------------
+// Decoding at pauses — the Mac's ParakeetStreamTests, ported with its audio
+// ---------------------------------------------------------------------------------
+
+/** A quiet room: deterministic noise at ±0.001, the Swift test's LCG. */
+function room(seconds: number, seed = { state: 7n }): Float32Array {
+  const out = new Float32Array(Math.round(seconds * SAMPLE_RATE));
+  const mask = (1n << 64n) - 1n;
+  for (let i = 0; i < out.length; i += 1) {
+    seed.state = (seed.state * 6364136223846793005n + 1442695040888963407n) & mask;
+    out[i] = (Number(seed.state >> 40n) / 2 ** 24 - 0.5) * 0.002;
+  }
+  return out;
+}
+
+/** Syllables: 160 ms of 220 Hz in every 200 ms, over the room. */
+function voice(seconds: number): Float32Array {
+  const out = room(seconds);
+  const period = SAMPLE_RATE / 5;
+  const on = (SAMPLE_RATE * 4) / 25;
+  for (let i = 0; i < out.length; i += 1) {
+    if (i % period < on) out[i]! += 0.14 * Math.sin((2 * Math.PI * 220 * i) / SAMPLE_RATE);
+  }
+  return out;
+}
+
+function joined(...parts: Float32Array[]): Float32Array {
+  const out = new Float32Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let at = 0;
+  for (const part of parts) {
+    out.set(part, at);
+    at += part.length;
+  }
+  return out;
+}
+
+suite('ParakeetStream — decoding at pauses (the Mac speculation, C1)', () => {
+  async function loaded(runtime = new FakeRuntime()) {
+    const store = new FakeStore();
+    store.installed = true;
+    const made = engineWith({ store, runtime });
+    await made.engine.prepare();
+    runtime.decoded.length = 0;
+    return made;
+  }
+
+  /** 20 ms chunks, letting any decode land between them: a machine that keeps up. */
+  async function feedLive(stream: { append(samples: Float32Array): void }, samples: Float32Array): Promise<void> {
+    for (let at = 0; at < samples.length; at += 320) {
+      stream.append(samples.slice(at, at + 320));
+      await flush();
+    }
+  }
+
+  const audioOf = (samples: Float32Array): AudioBuffer => ({ samples, droppedSamples: 0 }) as AudioBuffer;
+
+  test('speech then a pause: the pause decode is adopted, and key-up decodes nothing', async () => {
+    const { engine, runtime } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const samples = joined(voice(3), room(0.6));
+    await feedLive(stream, samples);
+    await settle();
+    expect(runtime.decoded.length).toBe(1);
+    const result = await stream.finish(audioOf(samples), 'en');
+    expect(runtime.decoded.length).toBe(1);
+    expect(stream.settlement).toBe('speculation');
+    expect(result.raw).toBe(`piece of ${runtime.decoded[0]}`);
+  });
+
+  test('a pause decode is offered as the transcript so far, for the polish to prime', async () => {
+    const { engine, runtime } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const progress: string[] = [];
+    stream.onProgress((text) => progress.push(text));
+    await feedLive(stream, joined(voice(3), room(0.6)));
+    await settle();
+    expect(progress).toEqual([`piece of ${runtime.decoded[0]}`]);
+  });
+
+  test('speech after the pause: key-up decodes the whole recording, never the stale pause decode', async () => {
+    const { engine, runtime } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const samples = joined(voice(3), room(0.6), voice(1));
+    await feedLive(stream, samples);
+    const result = await stream.finish(audioOf(samples), 'en');
+    expect(stream.settlement).toBe('decoded');
+    expect(result.raw).toBe(`piece of ${samples.length}`);
+    // The pause decode ran, and was not pasted.
+    expect(runtime.decoded).toContain(samples.length);
+    expect(runtime.decoded.length).toBe(2);
+  });
+
+  test('released on the last word, while the pause decode of it is still running: it is waited for, not repeated', async () => {
+    const { engine, runtime } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const samples = joined(voice(3), room(0.25));
+    for (let at = 0; at < samples.length; at += 320) stream.append(samples.slice(at, at + 320));
+    // No turn has passed: a speculation was started on the last chunk and has not landed.
+    const result = await stream.finish(audioOf(samples), 'en');
+    expect(stream.settlement).toBe('speculation');
+    expect(runtime.decoded.length).toBe(1);
+    expect(result.raw).toBe(`piece of ${runtime.decoded[0]}`);
+  });
+
+  test('a cold engine is never loaded by a speculation', async () => {
+    const store = new FakeStore();
+    store.installed = true;
+    const { engine, runtime, loads } = engineWith({ store });
+    const stream = engine.openStream();
+    await feedLive(stream, joined(voice(2), room(0.6)));
+    await settle();
+    expect(runtime.decoded).toEqual([]);
+    expect(loads()).toBe(0);
+  });
+
+  test('a long hold commits a window, and key-up adopts the pause decode of the rest', async () => {
+    const { engine, runtime } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const samples = joined(voice(15), room(0.6));
+    await feedLive(stream, samples);
+    await settle();
+    const result = await stream.finish(audioOf(samples), 'en');
+    expect(stream.settlement).toBe('speculation');
+    // The window and the pause decode, nothing at key-up, nothing in batch.
+    expect(runtime.decoded.length).toBe(2);
+    // Everything up to the pause; only the trailing silence after it is never decoded.
+    const covered = runtime.decoded[0]! + runtime.decoded[1]!;
+    expect(covered).toBeLessThanOrEqual(samples.length);
+    expect(covered).toBeGreaterThanOrEqual(samples.length - 0.6 * SAMPLE_RATE);
+    expect(result.raw).toBe(`piece of ${runtime.decoded[0]} piece of ${runtime.decoded[1]}`);
+  });
+
+  test('a stream fed something other than the recording falls back to batch', async () => {
+    const { engine, runtime } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const samples = joined(voice(3), room(0.6));
+    await feedLive(stream, samples);
+    await settle();
+    runtime.decoded.length = 0;
+    const shorter = samples.subarray(0, samples.length - 3200);
+    await stream.finish(audioOf(shorter), 'en');
+    expect(stream.settlement).toBe('batch');
+    expect(runtime.decoded).toEqual([shorter.length]);
+  });
+
+  test('audio the pump never saw is classified at key-up: speech in it voids the pause decode', async () => {
+    const { engine } = await loaded();
+    const stream = engine.openStream() as import('../../src/engines/parakeet.js').ParakeetStream;
+    const fed = joined(voice(3), room(0.6));
+    await feedLive(stream, fed);
+    await settle();
+    const recording = joined(fed, voice(1));
+    const result = await stream.finish(audioOf(recording), 'en');
+    expect(stream.settlement).toBe('decoded');
+    expect(result.raw).toBe(`piece of ${recording.length}`);
   });
 });

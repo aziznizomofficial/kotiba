@@ -104,6 +104,13 @@ export const HOOK_LINE_PATTERN = /^(DOWN|UP) (\d{1,3})( S)?$/;
  */
 export const HOOK_STATE_PATTERN = /^STATE (\d{1,3}) ([01])$/;
 
+/**
+ * kotiba-hook 1.3.0: Windows had silently removed the low-level hook (a callback past
+ * `LowLevelHooksTimeout`), the helper noticed through Raw Input and installed it again. The
+ * helper follows it with ordinary DOWN/UP lines for every key whose state changed meanwhile.
+ */
+export const HOOK_REHOOKED_LINE = 'REHOOKED';
+
 /** What "Record new key" reports, one result per hook transition while recording. */
 export type HotkeyRecordingResult =
   | { readonly kind: 'recording' }

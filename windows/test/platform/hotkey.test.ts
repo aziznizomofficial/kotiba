@@ -366,6 +366,46 @@ describe('when the helper dies', () => {
     await h.source.stop();
   });
 
+  it('a helper that dies on every start stays announced — the relaunch does not clear the sentence', async () => {
+    // exit 2 is "SetWindowsHookEx refused": it will fail again every time. The tray used to
+    // read healthy for all but a few milliseconds of each cycle.
+    const h = harness([], { exit: 2, restartDelayMs: 20 });
+    await h.source.start();
+    await waitFor(() => h.notes.filter((note) => note.includes('exited with code 2')).length >= 3);
+    // Sampled repeatedly across several relaunch cycles: never clean.
+    for (let i = 0; i < 10; i += 1) {
+      expect(h.source.failure).not.toBeNull();
+      await new Promise((resolve) => setTimeout(resolve, 7));
+    }
+    await h.source.stop();
+  });
+
+  it('a relaunched helper that reports a key is healthy again', async () => {
+    let spawns = 0;
+    const events: HotkeyEvent[] = [];
+    const source = createHotkeySource({
+      helperPath: FAKE_HOOK,
+      binding: DEFAULT_HOTKEY,
+      restartDelayMs: 20,
+      sweepWindowMs: 0,
+      spawnProcess: (path) => {
+        spawns += 1;
+        const env: NodeJS.ProcessEnv =
+          spawns === 1
+            ? { ...process.env, KOTIBA_FAKE_HOOK_LINES: '', KOTIBA_FAKE_HOOK_EXIT: '3' }
+            : { ...process.env, KOTIBA_FAKE_HOOK_LINES: `@30;DOWN ${RIGHT_CTRL};UP ${RIGHT_CTRL}` };
+        return spawn(process.execPath, [path], { stdio: ['pipe', 'pipe', 'pipe'], env });
+      },
+    });
+    source.onEvent((event) => events.push(event));
+    await source.start();
+    await waitFor(() => spawns >= 2 && source.failure !== null);
+    await waitFor(() => events.length >= 2);
+    expect(source.failure).toBeNull();
+    expect(kinds(events)).toEqual(['pressed', 'released']);
+    await source.stop();
+  });
+
   it('reports a missing helper instead of throwing', async () => {
     const events: HotkeyEvent[] = [];
     const notes: string[] = [];
@@ -418,6 +458,30 @@ describe('a line that is not a transition', () => {
     const strays = h.notes.filter((note) => note.includes('not a transition'));
     expect(strays.length).toBe(2);
     expect(strays.join(' ')).not.toContain('hello there');
+    await h.source.stop();
+  });
+});
+
+describe('a hook Windows removed and the helper put back (kotiba-hook 1.3.0)', () => {
+  it('notes REHOOKED, and the re-sweep DOWN of a key held through the gap opens the dictation', async () => {
+    // The press itself was lost with the hook; the helper's re-sweep reports the key as
+    // down once the hook is back, and the user is still holding it.
+    const h = harness(['@30', 'REHOOKED', `DOWN ${RIGHT_CTRL}`, `UP ${RIGHT_CTRL}`]);
+    await h.source.start();
+    h.endStartupSweep();
+    await waitFor(() => h.events.length >= 2);
+    expect(kinds(h.events)).toEqual(['pressed', 'released']);
+    expect(h.notes.some((note) => note.includes('re-installed (1 this session)'))).toBe(true);
+    expect(h.notes.some((note) => note.includes('not a transition'))).toBe(false);
+    await h.source.stop();
+  });
+
+  it('a re-sweep UP closes a hold whose key-up was lost with the hook', async () => {
+    const h = harness(['@30', `DOWN ${RIGHT_CTRL}`, 'REHOOKED', `UP ${RIGHT_CTRL}`]);
+    await h.source.start();
+    h.endStartupSweep();
+    await waitFor(() => h.events.length >= 2);
+    expect(kinds(h.events)).toEqual(['pressed', 'released']);
     await h.source.stop();
   });
 });

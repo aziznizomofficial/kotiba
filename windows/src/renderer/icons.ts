@@ -75,9 +75,3 @@ export function icon(name: string, size = 16, strokeWidth = 1.8): SVGSVGElement 
   svg.innerHTML = ICONS[name] ?? ICONS['app'] ?? '';
   return svg;
 }
-
-export function hasIcon(name: string): boolean {
-  return ICONS[name] !== undefined;
-}
-
-export const ICON_NAMES: readonly string[] = Object.keys(ICONS);

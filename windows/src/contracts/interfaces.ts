@@ -383,6 +383,8 @@ export interface ModelStore {
   /** Idempotent BY CHECKSUM, not by existence: a stale file is refetched, and a corrupt download never lands. */
   ensure(id: ModelId, onProgress?: (progress: ModelDownloadProgress) => void): Promise<string>;
   status(id: ModelId): Promise<ModelStatus>;
+  /** Stop every download now and refuse new ones (quit); each partial stays and is resumed next launch. */
+  cancelDownloads?(): void;
   /** Every decision and refusal, in order, for the diagnostics pane. */
   readonly notes: readonly string[];
 }
@@ -398,6 +400,8 @@ export type CreateDiagnosticsSink = (options: {
 export type CreateModelStore = (options: {
   readonly modelsDirectory: string;
   readonly bundledDirectory: string;
+  /** The transport — the app passes Electron's `net.fetch`. Absent: the global `fetch`, at call time. */
+  readonly fetch?: typeof fetch;
 }) => ModelStore;
 
 // ---------------------------------------------------------------------------------

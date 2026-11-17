@@ -65,17 +65,28 @@ export function mountHud(root: HTMLElement): void {
 }
 
 let context: AudioContext | null = null;
+/** Suspends the context once the last blip has played. See `playFeedback`. */
+let idleTimer: number | null = null;
 
-/** A quiet synthesised blip. Fire and forget: a sound that will not play is not an error. */
+/**
+ * A quiet synthesised blip. Fire and forget: a sound that will not play is not an error.
+ *
+ * The context is SUSPENDED between blips. A running `AudioContext` renders silence to the
+ * output device for as long as it exists, and this page lives as long as the app — an
+ * always-on tray app that never let a laptop core idle, for four blips per dictation.
+ */
 function playFeedback(event: FeedbackEvent): void {
   try {
     context ??= new AudioContext();
     const audio = context;
     void audio.resume();
+    if (idleTimer !== null) window.clearTimeout(idleTimer);
     const start = audio.currentTime + 0.01;
+    let last = 0;
     for (const tone of FEEDBACK_TONES[event] ?? []) {
       const at = start + tone.at / 1000;
       const end = at + tone.ms / 1000;
+      last = Math.max(last, tone.at + tone.ms);
       const oscillator = audio.createOscillator();
       const gain = audio.createGain();
       oscillator.type = 'sine';
@@ -88,6 +99,10 @@ function playFeedback(event: FeedbackEvent): void {
       oscillator.start(at);
       oscillator.stop(end + 0.02);
     }
+    idleTimer = window.setTimeout(() => {
+      idleTimer = null;
+      void audio.suspend().catch(() => undefined);
+    }, last + 250);
   } catch {
     /* no audio device, or none yet: the dictation does not care */
   }

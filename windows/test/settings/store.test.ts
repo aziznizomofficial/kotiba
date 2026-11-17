@@ -15,7 +15,12 @@ import {
   SETTINGS_UNREADABLE_FILE_NAME,
 } from '../../src/contracts/index.js';
 import { WINDOWS_DEFAULT_SETTINGS, serialiseSettings } from '../../src/core/settings/index.js';
-import { createFileSettingsStore, writeFileAtomic } from '../../src/platform/settings.js';
+import {
+  RENAME_RETRY_DELAYS_MS,
+  createFileSettingsStore,
+  renameWithRetry,
+  writeFileAtomic,
+} from '../../src/platform/settings.js';
 
 let directory: string;
 let file: string;
@@ -193,5 +198,43 @@ describe('atomic writes', () => {
     await store.load();
     await store.update({ soundFeedback: true });
     expect(await exists(path.join(nested, SETTINGS_FILE_NAME))).toBe(true);
+  });
+});
+
+describe('replacing a file Windows says is busy', () => {
+  const busy = (code: string): NodeJS.ErrnoException => Object.assign(new Error(code), { code });
+
+  it('retries while Defender or the indexer holds the target, then succeeds', async () => {
+    let calls = 0;
+    const slept: number[] = [];
+    await renameWithRetry(
+      'a',
+      'b',
+      async () => {
+        calls += 1;
+        if (calls <= 3) throw busy(calls === 2 ? 'EBUSY' : 'EPERM');
+      },
+      async (ms) => {
+        slept.push(ms);
+      },
+    );
+    expect(calls).toBe(4);
+    expect(slept).toEqual(RENAME_RETRY_DELAYS_MS.slice(0, 3));
+  });
+
+  it('throws at once for a real error, and after the schedule for a lock that stays', async () => {
+    await expect(
+      renameWithRetry('a', 'b', async () => {
+        throw busy('ENOENT');
+      }, async () => undefined),
+    ).rejects.toThrow('ENOENT');
+    let calls = 0;
+    await expect(
+      renameWithRetry('a', 'b', async () => {
+        calls += 1;
+        throw busy('EACCES');
+      }, async () => undefined),
+    ).rejects.toThrow('EACCES');
+    expect(calls).toBe(RENAME_RETRY_DELAYS_MS.length + 1);
   });
 });

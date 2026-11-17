@@ -115,10 +115,10 @@ class Lead implements StreamingSttEngine {
   }
 }
 
-function build(lead: Lead) {
+function build(lead: Lead, settings: Partial<typeof DEFAULT_SETTINGS> = {}) {
   const whisper = whisperFactory();
   const manager = createEngineManagerWith({
-    settings: { ...DEFAULT_SETTINGS },
+    settings: { ...DEFAULT_SETTINGS, ...settings },
     models: createModelStore({ modelsDirectory: models, bundledDirectory: '' }),
     createEngine: whisper.createEngine,
     cpuCount: 4,
@@ -164,6 +164,35 @@ suite('the unified family, led by Parakeet', () => {
     expect((await unified.transcribe(audio, 'en')).engineId).toBe('parakeet-ultra');
     const stream = (unified as StreamingSttEngine).openStream();
     expect((await stream.finish(audio, 'ru')).raw).toBe('Streamed Parakeet.');
+  });
+
+  test('an Uzbek default still pages Parakeet in — the Mac rule — but never its whisper fallback', async () => {
+    const lead = new Lead();
+    lead.installed = true;
+    const { manager, whisper } = build(lead, { defaultLanguage: 'uz' });
+    await manager.prepare({ eagerly: false });
+    expect(lead.prepares).toBe(1);
+    expect(await lead.isReady()).toBe(true);
+    // The turbo file behind it is not loaded for this.
+    expect(whisper.made.filter((made) => made.prepares > 0)).toHaveLength(0);
+  });
+
+  test('a press pinned to Uzbek does not page Parakeet in; one pinned to Russian does, on an Uzbek default', async () => {
+    const lead = new Lead();
+    lead.installed = true;
+    const { manager } = build(lead, { defaultLanguage: 'uz' });
+    await manager.prepare({ eagerly: false, language: 'uz' });
+    expect(lead.prepares).toBe(0);
+    await manager.prepare({ eagerly: false, language: 'ru' });
+    expect(lead.prepares).toBe(1);
+  });
+
+  test('English and Russian both off: Parakeet is never paged in', async () => {
+    const lead = new Lead();
+    lead.installed = true;
+    const { manager } = build(lead, { defaultLanguage: 'uz', enabledLanguages: ['uz'] });
+    await manager.prepare({ eagerly: false });
+    expect(lead.prepares).toBe(0);
   });
 
   test('readiness does not lie: a cold lead makes the family not ready', async () => {

@@ -246,14 +246,20 @@ export function startParakeetWorker(
   const worker = new Worker(workerPath);
   let dead: string | null = null;
   let nextId = 1;
-  const pending = new Map<number, { resolve: (text: string) => void; reject: (error: Error) => void }>();
+  const pending = new Map<
+    number,
+    { resolve: (text: string) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
+  >();
 
   return new Promise<ParakeetRuntime>((resolveLoad, rejectLoad) => {
     let loaded = false;
     const die = (why: string): void => {
       if (dead !== null) return;
       dead = why;
-      for (const [, waiter] of pending) waiter.reject(new Error(`the Parakeet worker stopped: ${why}`));
+      for (const [, waiter] of pending) {
+        clearTimeout(waiter.timer);
+        waiter.reject(new Error(`the Parakeet worker stopped: ${why}`));
+      }
       pending.clear();
       if (!loaded) rejectLoad(new Error(`the Parakeet worker stopped while loading: ${why}`));
     };
@@ -273,6 +279,7 @@ export function startParakeetWorker(
       const waiter = pending.get(reply.id);
       if (waiter === undefined) return;
       pending.delete(reply.id);
+      clearTimeout(waiter.timer);
       if (reply.kind === 'text') waiter.resolve(reply.text);
       else waiter.reject(new Error(reply.message));
     });
@@ -285,7 +292,16 @@ export function startParakeetWorker(
         // A copy, transferred: the caller keeps its buffer, and the copy crosses for free.
         const copy = samples.slice();
         return new Promise<string>((resolve, reject) => {
-          pending.set(id, { resolve, reject });
+          // A hung decode would hold the engine's queue for good (see `parakeetRequestTimeoutMs`):
+          // end the thread; `alive()` then reads false and the next prepare starts a new one.
+          const limit = 30_000 + Math.ceil((samples.length / 16_000) * 2_000);
+          const timer = setTimeout(() => {
+            if (!pending.delete(id)) return;
+            reject(new Error(`the Parakeet worker did not answer within ${Math.round(limit / 1000)} s — restarting it`));
+            void worker.terminate();
+          }, limit);
+          timer.unref?.();
+          pending.set(id, { resolve, reject, timer });
           worker.postMessage({ kind: 'transcribe', id, samples: copy, script } satisfies WorkerRequest, [copy.buffer]);
         });
       },

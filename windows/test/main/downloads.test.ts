@@ -26,6 +26,10 @@ import {
   uzbekRowState,
   wantedDownloads,
   withAccepted,
+  AUTO_RETRY_DELAYS_MS,
+  autoRetryDelayMs,
+  autoRetryIds,
+  worthRetrying,
   type DownloadRow,
 } from '../../src/main/downloads-model.js';
 import { ONBOARDING_STEP_IDS } from '../../src/main/onboarding-model.js';
@@ -123,7 +127,7 @@ describe('Getting Kotiba ready', () => {
 
   it('one bar over the core, the size still to come, gone once it is here', () => {
     const fresh = coreReadiness(all(), core);
-    expect(fresh).toEqual({ remainingBytes: PARAKEET + QWEN, fraction: 0, failed: null });
+    expect(fresh).toEqual({ remainingBytes: PARAKEET + QWEN, fraction: 0, failed: null, retrying: false });
     expect(megabytes(fresh?.remainingBytes ?? 0)).toBe('1.95 GB');
     const half = coreReadiness(all({ parakeet_ultra: { kind: 'installed' }, qwen3_1_7b: { kind: 'downloading', receivedBytes: QWEN / 2, totalBytes: QWEN } }), core);
     expect(half?.remainingBytes).toBe(QWEN / 2);
@@ -134,6 +138,12 @@ describe('Getting Kotiba ready', () => {
   it('an optional language’s files are not on this card (its own rows show them)', () => {
     const done = all({ parakeet_ultra: { kind: 'installed' }, qwen3_1_7b: { kind: 'installed' } });
     expect(coreReadiness(done, ['uz', 'en', 'ar'])).toBeNull();
+  });
+
+  it('says "reconnecting" while a core download waits out a dropped connection', () => {
+    const waiting = all({ parakeet_ultra: { kind: 'downloading', receivedBytes: 5, totalBytes: PARAKEET, retrying: true } });
+    expect(coreReadiness(waiting, core)?.retrying).toBe(true);
+    expect(coreReadiness(all({ parakeet_ultra: { kind: 'downloading', receivedBytes: 5, totalBytes: PARAKEET } }), core)?.retrying).toBe(false);
   });
 
   it('a failure says why only when nothing else is still downloading', () => {
@@ -214,5 +224,59 @@ describe('the wiring', () => {
 
   it('a press for a language still downloading is told how far it has got', () => {
     expect(index).toContain('gettingReady: (language) => gettingReadyPercent(language, downloadRows(state), state.queued)');
+  });
+});
+
+describe('trying again by itself (1.0.3)', () => {
+  const passing = { retryLater: true };
+  const final = { retryLater: false };
+
+  it('retries only what failed for a reason that can pass, and only what the languages want', () => {
+    const rows = all({
+      parakeet_ultra: { kind: 'failed', reason: 'line down' },
+      qwen3_1_7b: { kind: 'failed', reason: 'corrupt' },
+      large_v3_turbo: { kind: 'failed', reason: 'line down' },
+    });
+    const failure = (id: string): unknown => (id === 'qwen3_1_7b' ? final : passing);
+    // Turbo is Turkish's: not wanted while Turkish is off.
+    expect(autoRetryIds(rows, ['uz', 'en', 'ru'], failure)).toEqual(['parakeet_ultra']);
+    expect(autoRetryIds(rows, ['uz', 'en', 'tr'], failure)).toEqual(['parakeet_ultra', 'large_v3_turbo']);
+    // Nothing is retried that is not `failed` — a download under way is left alone.
+    expect(autoRetryIds(all(), ['uz', 'en'], () => passing)).toEqual([]);
+  });
+
+  it('reads the flag the downloader set, never the sentence', () => {
+    expect(worthRetrying(passing)).toBe(true);
+    expect(worthRetrying(final)).toBe(false);
+    expect(worthRetrying(new Error('the connection dropped'))).toBe(false);
+    expect(worthRetrying(null)).toBe(false);
+  });
+
+  it('waits longer each round, then every 15 minutes', () => {
+    expect(autoRetryDelayMs(0)).toBe(60_000);
+    expect(autoRetryDelayMs(1)).toBe(120_000);
+    expect(autoRetryDelayMs(99)).toBe(AUTO_RETRY_DELAYS_MS.at(-1));
+    expect(AUTO_RETRY_DELAYS_MS.at(-1)).toBe(900_000);
+  });
+
+  // "Written, tested, called from nowhere" is this repo's defect: the wiring, asserted.
+  const index = readFileSync(join(__dirname, '../../src/main/index.ts'), 'utf8');
+  const compose = readFileSync(join(__dirname, '../../src/main/compose.ts'), 'utf8');
+
+  it('the queue skips a model already here — the installer\'s Uzbek model is not fetched again', () => {
+    expect(index).toMatch(/if \(row !== undefined && isPresent\(row\.state\)\) return;\s*if \(id === 'uzbek_stt_v1'/u);
+  });
+
+  it('every queued download that ends decides the next automatic try; waking from sleep tries soon', () => {
+    expect(index).toMatch(/finally \{\s*state\.queued\.delete\(id\);[\s\S]*?afterDownload\(state, id\);/u);
+    expect(index).toContain("powerMonitor.on('resume', () => retryDownloadsAfterWake(state));");
+    expect(index).toContain('if (!net.isOnline())');
+  });
+
+  it('downloads go through Chromium\'s stack, and a quit stops them with the partials kept', () => {
+    expect(index).toMatch(/fetch: downloadTransport\(\(input, init\) => net\.fetch\(/u);
+    expect(compose).toContain('...(deps.fetch === undefined ? {} : { fetch: deps.fetch })');
+    expect(index).toMatch(/pipeline\.onDevice\?\.bundles\.cancelAll\?\.\(\);\s*pipeline\.models\.cancelDownloads\?\.\(\);/u);
+    expect(compose).toMatch(/onDevice\?\.bundles\.cancelAll\?\.\(\);\s*models\.cancelDownloads\?\.\(\);/u);
   });
 });

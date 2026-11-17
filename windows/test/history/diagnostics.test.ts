@@ -241,6 +241,25 @@ describe('trimming', () => {
     expect(back.length).toBeLessThan(200);
   });
 
+  it('appends landing while a trim is in flight are never lost or glued together', async () => {
+    // Two dictations finishing close together each append-then-trim. Before the writes were
+    // serialised, an append between another's read and its atomic rewrite vanished with the
+    // rename, and the file could hold a half-line. Every line must parse, and the newest
+    // record — the one explaining the problem being reported — must still be there.
+    const store = sink(4000);
+    await store.open();
+    await Promise.all(
+      Array.from({ length: 120 }, (_, i) => store.append(record({ engineID: `engine-${String(i).padStart(3, '0')}` }))),
+    );
+    const raw = await fs.readFile(file, 'utf8');
+    const lines = raw.split('\n').filter((line) => line !== '');
+    for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
+    expect(raw.endsWith('\n')).toBe(true);
+    const ids = (await store.records()).map((row) => row.engineID);
+    expect(ids).toContain('engine-119');
+    expect(lines.length).toBeGreaterThan(0);
+  });
+
   it('never deletes the file itself', async () => {
     const store = sink(200);
     await store.open();

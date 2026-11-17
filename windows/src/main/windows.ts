@@ -28,6 +28,7 @@ import {
   CAPTURE_WORKLET_SOURCE,
 } from '../audio/index.js';
 
+import { isAllowedExternalLink } from './about-model.js';
 import { captureBootstrap } from './audio-host.js';
 import { preloadScript, rendererFile } from './paths.js';
 import { PILL_CANVAS_HEIGHT, PILL_CANVAS_WIDTH, PILL_MAX_MESSAGE_WIDTH, pillCanvasBounds, pillMaxMessageWidth } from './pill-model.js';
@@ -47,6 +48,10 @@ function webPreferences(): Electron.WebPreferences {
     nodeIntegration: false,
     sandbox: false,
     spellcheck: false,
+    // A shipped build has no DevTools: Ctrl+Shift+I on a page that holds the whole
+    // `window.kotiba` bridge (`secret:set`, `app:quit-for-real`, …) is a console a user can
+    // be talked into pasting into. A dev run keeps them.
+    devTools: !app.isPackaged,
   };
 }
 
@@ -59,7 +64,10 @@ function webPreferences(): Electron.WebPreferences {
  */
 function openLinksExternally(window: BrowserWindow): void {
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://')) void shell.openExternal(url);
+    // The same allow-list `app:open-external` enforces: no page here has a reason to open
+    // anything else, and "any https URL" is a page made to open a phishing site in the
+    // user's own browser.
+    if (isAllowedExternalLink(url)) void shell.openExternal(url);
     return { action: 'deny' };
   });
   stayOnPage(window);
@@ -77,6 +85,27 @@ function openLinksExternally(window: BrowserWindow): void {
 function stayOnPage(window: BrowserWindow): void {
   window.webContents.on('will-navigate', (event) => {
     event.preventDefault();
+  });
+}
+
+/** How many times a crashed HUD or main-window renderer is reloaded before it is left down. */
+export const WINDOW_RELOAD_LIMIT = 3;
+
+/**
+ * A renderer that crashes is reloaded, up to `WINDOW_RELOAD_LIMIT` times.
+ *
+ * `closed` does not fire for a renderer crash: the window stays, around a dead page. For the
+ * HUD that is every dictation for the rest of the session with no pill at all — the one sign
+ * the key was heard — and for the app window a blank rectangle the next time it is opened
+ * from the tray. The capture window has its own, stricter version (`createAudioWindow`).
+ */
+export function reloadOnCrash(window: BrowserWindow, limit = WINDOW_RELOAD_LIMIT): void {
+  let reloads = 0;
+  window.webContents.on('render-process-gone', (_event: unknown, details: { reason: string }) => {
+    if (details.reason === 'clean-exit' || window.isDestroyed()) return;
+    reloads += 1;
+    if (reloads > limit) return;
+    window.webContents.reload();
   });
 }
 
@@ -145,6 +174,7 @@ export function createHudWindow(): BrowserWindow {
   hud.setFocusable(false);
   guardAgainstFocus(hud);
   openLinksExternally(hud);
+  reloadOnCrash(hud);
 
   void hud.loadFile(rendererFile('hud'));
   return hud;
@@ -157,7 +187,13 @@ export function createHudWindow(): BrowserWindow {
 export function positionHud(hud: BrowserWindow): void {
   const point = screen.getCursorScreenPoint();
   const { workArea } = screen.getDisplayNearestPoint(point);
-  hud.setBounds(pillCanvasBounds(workArea), false);
+  const bounds = pillCanvasBounds(workArea);
+  hud.setBounds(bounds, false);
+  // Moved onto a monitor with a different scale factor, Windows can resize the window by the
+  // ratio of the two DPIs on the way (WM_DPICHANGED is answered for the OLD position), and the
+  // fixed canvas arrives cropped or doubled. A second call, now on the right monitor, lands it.
+  const landed = hud.getBounds();
+  if (landed.width !== bounds.width || landed.height !== bounds.height) hud.setBounds(bounds, false);
   hudMessageWidth = pillMaxMessageWidth(workArea.width);
 }
 
@@ -243,9 +279,32 @@ export function createMainWindow(
     options.onClose?.();
   });
   openLinksExternally(main);
+  withoutBrowserChrome(main);
+  reloadOnCrash(main);
 
   void main.loadFile(rendererFile('main'));
   return main;
+}
+
+/**
+ * The app window is an app, not a browser tab.
+ *
+ * No `Menu.setApplicationMenu` call exists, so Electron gives every Windows window its
+ * DEFAULT menu — hidden by `autoHideMenuBar`, but with all its accelerators live: Ctrl+R and
+ * F5 reload the page (onboarding restarts from its first step mid-setup), Ctrl+W closes,
+ * Ctrl+Shift+I opens DevTools, Ctrl+= / Ctrl+- zoom a layout drawn for 100 %, and Alt pops a
+ * File/Edit/View bar over the black title strip. Removing this window's menu takes all of
+ * them; text fields keep Ctrl+C/V/X/A/Z, which Chromium handles itself on Windows.
+ *
+ * Ctrl+wheel and the touchpad pinch zoom without any menu: put back at once. Windows' own
+ * display scaling is the size control, as it is for every native app.
+ */
+function withoutBrowserChrome(window: BrowserWindow): void {
+  window.removeMenu();
+  window.webContents.on('zoom-changed', () => {
+    window.webContents.setZoomLevel(0);
+  });
+  void window.webContents.setVisualZoomLevelLimits(1, 1).catch(() => undefined);
 }
 
 // ---------------------------------------------------------------------------------
@@ -425,6 +484,13 @@ export function createAudioWindow(
     // A fresh gate FIRST, so a press during the reload waits for the new page rather than
     // being answered by the old page's already-resolved promise.
     rearm();
+    // The page lives in %TEMP%, which Storage Sense and disk clean-ups empty while an
+    // always-on app runs for days; a reload of a file that is gone fails for good.
+    try {
+      capturePageFile();
+    } catch {
+      /* the reload's did-fail-load reports it */
+    }
     audio.webContents.reload();
   });
 

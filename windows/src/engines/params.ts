@@ -65,6 +65,33 @@ export function resolveDecodeCores(logicalCount: number): number {
 }
 
 /**
+ * Decode threads for a whisper engine, from the LOGICAL processor count the composition root
+ * hands the manager (`logicalProcessorCount()`): the physical-core estimate, capped at 8 — the
+ * same rule as Parakeet's encoder (`resolveOrtThreads`) and the modes' model
+ * (`resolveLlamaThreads`).
+ *
+ * WHAT SHIPPED BEFORE (2026-11-17), and why it changed: `whisperParamsFor` fed the logical count
+ * straight into the macOS formula, so a 4C/8T laptop decoded on 8 − 2 = 6 threads — two pairs of
+ * them sharing a core's vector units, with ggml's spinning barriers waiting on the slowest — and
+ * left two logical processors for the UI, the audio and the hotkey. The design here (03-ENGINE-
+ * PARITY §2.2) said to halve first and THEN subtract two, which gives that laptop TWO threads: half
+ * the machine idle while the user waits for Uzbek, the language this app exists for. Neither is
+ * right. One thread per physical core is whisper.cpp's own best on x86 (SMT buys a matmul nothing),
+ * and the SMT siblings it leaves are the headroom the Mac's "− 2" buys on Apple silicon, where
+ * there are no siblings.
+ *
+ *     2 logical (CI runner)     → 2 threads
+ *     4 logical (2C/4T)         → 2
+ *     8 logical (4C/8T i5)      → 4
+ *     12 logical (6C/12T)       → 6
+ *     24 logical (8P+16E i9)    → 8 (capped)
+ */
+export function resolveWhisperThreads(logicalCount: number): number {
+  const logical = Number.isFinite(logicalCount) && logicalCount > 0 ? logicalCount : 4;
+  return Math.max(1, Math.min(8, resolveDecodeCores(logical)));
+}
+
+/**
  * The beam width for a family. D-W11: PER MODEL on Windows.
  *
  * The Uzbek model is fixed at 1 whatever the setting says — D-08 measured beam 5 on
@@ -112,11 +139,10 @@ export function whisperParamsFor(options: {
     // on macOS and none is added here.
     noSpeechThold: 0.6,
 
-    // `threads` is the macOS Options field, whose 0 means "decide from the machine".
-    // Nothing in Kotiba ever sets it, so this is always the derived value — but the
-    // sentinel is honoured rather than dropped, because a diagnostics build that pins it
-    // is the only way to isolate a thread-count problem on a machine nobody owns.
-    nThreads: resolveThreadCount(options.cpuCount, 0),
+    // `threads` is the macOS Options field, whose 0 means "decide from the machine". Nothing
+    // in Kotiba ever sets it, so this is always the derived value: `resolveWhisperThreads`,
+    // from the LOGICAL count `cpuCount` is documented as.
+    nThreads: resolveWhisperThreads(options.cpuCount),
 
     // ONLY in the beam branch. In the greedy branch whisper's own -1 must stand.
     beamSearchBeamSize: beam ? beamSize : null,

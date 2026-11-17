@@ -55,8 +55,9 @@ target_include_directories(kotiba-input PRIVATE ${KOTIBA_JSON_DIR})
 
 # uiautomationcore for the verified in-place replace; ole32 for the apartment the
 # automation object lives in and for CoCreateInstance(MMDeviceEnumerator), which the
-# ducking commands use. The Core Audio interfaces are named with __uuidof, so no uuid.lib.
-target_link_libraries(kotiba-input PRIVATE uiautomationcore ole32 oleaut32 user32)
+# ducking commands use; advapi32 for the integrity check on the window in front (1.3.0).
+# The Core Audio interfaces are named with __uuidof, so no uuid.lib.
+target_link_libraries(kotiba-input PRIVATE uiautomationcore ole32 oleaut32 user32 advapi32)
 
 if(MSVC)
   # /utf-8 is load-bearing here and not cosmetic: every string this program handles is

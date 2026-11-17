@@ -142,6 +142,27 @@ export function createFileHistoryStore(options: FileHistoryStoreOptions): FileHi
   const entries = new Map<string, HistoryEntry>();
   const notes: string[] = [];
   let opened = false;
+  /**
+   * The file's last byte is not a newline — a crash cut the final append short. The next
+   * append starts with one, or its line would be glued onto the fragment and both lost.
+   */
+  let unterminated = false;
+
+  /**
+   * EVERY FILE OPERATION, ONE AT A TIME, IN CALL ORDER.
+   *
+   * An append and a rewrite used to run concurrently: a dictation finishing while the user
+   * deleted a row appended its line to the OLD file while the rewrite's temp file (built
+   * from the index a moment earlier) was renamed over it — the new dictation was in the
+   * pane and gone from disk on the next launch. Queued, the rewrite either sees the new
+   * entry in the index or the append lands after the rename.
+   */
+  let queue: Promise<void> = Promise.resolve();
+  function serially(operation: () => Promise<void>): Promise<void> {
+    const run = queue.then(operation);
+    queue = run.catch(() => undefined);
+    return run;
+  }
 
   /**
    * Rewrite the whole file from the index.
@@ -151,14 +172,22 @@ export function createFileHistoryStore(options: FileHistoryStoreOptions): FileHi
    * it gone, not flagged. At 505 records the rewrite is a few hundred kilobytes; the
    * append path is what carries the per-dictation cost, and it stays an append.
    */
-  async function rewrite(): Promise<void> {
-    const lines = [...entries.values()].sort(newestFirst).map(encodeEntry);
-    await writeFileAtomic(file, lines.length === 0 ? '' : `${lines.join('\n')}\n`);
+  function rewrite(): Promise<void> {
+    return serially(async () => {
+      // The index is read when the rewrite RUNS, not when it was asked for, so an insert
+      // queued ahead of it is in the file it writes.
+      const lines = [...entries.values()].sort(newestFirst).map(encodeEntry);
+      await writeFileAtomic(file, lines.length === 0 ? '' : `${lines.join('\n')}\n`);
+      unterminated = false;
+    });
   }
 
-  async function append(entry: HistoryEntry): Promise<void> {
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    await fs.appendFile(file, `${encodeEntry(entry)}\n`, 'utf8');
+  function append(entry: HistoryEntry): Promise<void> {
+    return serially(async () => {
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      await fs.appendFile(file, `${unterminated ? '\n' : ''}${encodeEntry(entry)}\n`, 'utf8');
+      unterminated = false;
+    });
   }
 
   return {
@@ -178,6 +207,7 @@ export function createFileHistoryStore(options: FileHistoryStoreOptions): FileHi
         raw = '';
       }
 
+      unterminated = raw.length > 0 && !raw.endsWith('\n');
       let corrupt = 0;
       for (const line of raw.split('\n')) {
         if (line.trim() === '') continue;
@@ -255,7 +285,7 @@ export function createFileHistoryStore(options: FileHistoryStoreOptions): FileHi
 
     async clearAll(): Promise<void> {
       entries.clear();
-      await writeFileAtomic(file, '');
+      await rewrite();
     },
 
     async close(): Promise<void> {

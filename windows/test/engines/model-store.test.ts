@@ -213,7 +213,7 @@ describe('ensure', () => {
     try {
       const store = createModelStore({ modelsDirectory: models, bundledDirectory: bundled });
       if (PUBLIC_MODELS_LIVE) {
-        await expect(store.ensure('uzbek_stt_v1')).rejects.toThrow(/failed to download: HTTP 404/);
+        await expect(store.ensure('uzbek_stt_v1')).rejects.toThrow(/HTTP 404/);
         expect(asked).toEqual([`${PUBLIC_MODELS_BASE}ggml-uzbek-stt-v1-q5_0.bin`]);
       } else {
         await expect(store.ensure('uzbek_stt_v1')).rejects.toThrow(/ships inside the installer/);
@@ -239,9 +239,9 @@ describe('ensure', () => {
 // What lands, and what is left behind when nothing lands
 // ---------------------------------------------------------------------------------
 //
-// The sha256 above is computed on the in-memory buffer. NOTHING downstream ever hashes
-// what actually reached the disk — `inspectModelFile` reads four bytes and a stat — so
-// every guarantee about the installed file rests on the write and the rename.
+// `inspectModelFile` reads four bytes and a stat, so every guarantee about the installed
+// file rests on the downloader: hashed as it is written, fsynced, renamed only once it
+// verifies (`src/engines/download-file.ts`, with its own suite).
 
 describe('the download lands atomically', () => {
   const SMALL_EN = 'ggml-small.en-q5_1.bin';
@@ -270,36 +270,57 @@ describe('the download lands atomically', () => {
     globalThis.fetch = realFetch;
   });
 
-  it('gives every attempt its own temporary, so two in flight cannot interleave', async () => {
-    // `${destination}.partial` was ONE NAME shared by every writer of this model. Two
-    // ensures at once — two windows, a retry racing the attempt it replaced, a second
-    // instance — wrote into the same file and the rename published a mixture of both.
-    const first = Buffer.alloc(MODEL_MINIMUM_BYTES + 4096, 0x11);
-    first.writeUInt32LE(GGML_MAGIC, 0);
-    const second = Buffer.alloc(MODEL_MINIMUM_BYTES + 4096, 0x22);
-    second.writeUInt32LE(GGML_MAGIC, 0);
+  it('runs ONE download for two callers at once, so two writers can never interleave', async () => {
+    // Two ensures at once — the Languages page's button racing the launch queue — used to each
+    // write their own temporary. Now the second joins the first: one request, one `.partial`,
+    // and what lands is the payload byte for byte.
+    const payload = Buffer.alloc(MODEL_MINIMUM_BYTES + 4096, 0x11);
+    payload.writeUInt32LE(GGML_MAGIC, 0);
 
-    let call = 0;
+    let calls = 0;
     const seenPartials = new Set<string>();
+    // The body holds its second half until the test has looked at the directory, so the
+    // download is mid-write when the partial is looked at — whatever the machine's speed.
+    // (A fixed pause passed under a loaded CI box and failed on an idle one.)
+    let firstHalfWritten = (): void => undefined;
+    const halfway = new Promise<void>((resolve) => {
+      firstHalfWritten = resolve;
+    });
+    let finish = (): void => undefined;
+    const inspected = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const half = Math.floor(payload.length / 2);
     globalThis.fetch = (async () => {
-      call += 1;
-      // Deliver in two chunks with a pause, so both downloads are mid-write together.
-      return respondWith(call === 1 ? first : second, 40);
+      calls += 1;
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => String(payload.length) },
+        body: (async function* () {
+          yield new Uint8Array(payload.subarray(0, half));
+          firstHalfWritten();
+          await inspected;
+          yield new Uint8Array(payload.subarray(half));
+        })(),
+      } as unknown as Response;
     }) as typeof fetch;
 
     const store = createModelStore({ modelsDirectory: models, bundledDirectory: bundled });
     const both = Promise.all([store.ensure('small_en'), store.ensure('small_en')]);
-    // Catch them while both writes are open.
-    await new Promise((resolve) => setTimeout(resolve, 60));
+    await halfway;
+    // The first chunk has been handed over; give the writer a turn to put it on disk.
+    for (let attempt = 0; attempt < 50 && (await partialsIn(models)).length === 0; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
     for (const name of await partialsIn(models)) seenPartials.add(name);
-    await both;
+    finish();
+    const [one, two] = await both;
 
-    expect(seenPartials.size).toBeGreaterThan(0);
-    expect(seenPartials.has(`${SMALL_EN}.partial`)).toBe(false);
-
-    // Whatever landed is one of the two payloads, byte for byte — not a blend.
-    const landed = await readFile(join(models, SMALL_EN));
-    expect([first.toString('hex'), second.toString('hex')]).toContain(landed.toString('hex'));
+    expect(one).toBe(two);
+    expect(calls).toBe(1);
+    expect([...seenPartials]).toEqual([`${SMALL_EN}.partial`]);
+    expect((await readFile(join(models, SMALL_EN))).equals(payload)).toBe(true);
     expect(await partialsIn(models)).toEqual([]);
   });
 

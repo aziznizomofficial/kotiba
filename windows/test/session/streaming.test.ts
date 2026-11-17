@@ -25,7 +25,16 @@ class FakeStream implements TranscriptionStream {
   cancelled = false;
   finished = false;
   readonly listeners: ((text: string) => void)[] = [];
+  readonly progressListeners: ((text: string) => void)[] = [];
   constructor(private readonly text: string, private readonly language: Language) {}
+  onProgress(listener: (text: string) => void): () => void {
+    this.progressListeners.push(listener);
+    return () => undefined;
+  }
+  /** A pause decode landed: the transcript so far. */
+  progress(text: string): void {
+    for (const listener of this.progressListeners) listener(text);
+  }
   append(samples: Float32Array): void {
     this.appended += samples.length;
   }
@@ -273,4 +282,35 @@ suite('incremental polish during the hold', () => {
     // The whole Uzbek transcript went through the polisher once, from the start.
     expect(model.calls.slice(1)).toEqual(['hello world']);
   });
+
+  test('a pause decode primes the polish during the hold; key-up reuses every sentence that survived', async () => {
+    const model = new EchoModel();
+    const polisher = new ModePolisher({ behaviour: 'message', engine: model });
+    const h = harness({ livePolisher: polisher });
+    h.unified.streamText = 'So the seeds came today. We plant them on Friday.';
+    await h.session.arm();
+    // The pause decode: both sentences, the unfinished last one included (Parakeet's stream).
+    h.unified.streams[0]!.progress('So the seeds came today. We plant them on Friday.');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(model.calls).toEqual(['So the seeds came today.', 'We plant them on Friday.']);
+    const record = await h.finish({ polisher, polishInstructions: 'x' });
+    // Nothing asked again after release.
+    expect(model.calls).toHaveLength(2);
+    expect(record.polished).toBe('The seeds came today. We plant them on Friday.');
+    expect(h.inserter.inserted).toEqual(['The seeds came today. We plant them on Friday.']);
+  });
+
+  test('a primed sentence the final transcript revised is polished again, never pasted stale', async () => {
+    const model = new EchoModel();
+    const polisher = new ModePolisher({ behaviour: 'message', engine: model });
+    const h = harness({ livePolisher: polisher });
+    h.unified.streamText = 'So the seeds came today.';
+    await h.session.arm();
+    h.unified.streams[0]!.progress('So the seed come today.');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const record = await h.finish({ polisher, polishInstructions: 'x' });
+    expect(model.calls).toEqual(['So the seed come today.', 'So the seeds came today.']);
+    expect(record.polished).toBe('The seeds came today.');
+  });
 });
+

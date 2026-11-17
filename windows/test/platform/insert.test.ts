@@ -121,6 +121,7 @@ describe('refusals are values, not throws', () => {
     ['couldNotSendKeys', INSERTION_REFUSALS.couldNotSendKeys],
     ['notEditable', INSERTION_REFUSALS.notEditable],
     ['moved', INSERTION_REFUSALS.moved],
+    ['elevated', INSERTION_REFUSALS.elevatedNoClipboard],
   ])('turns code %s into its shipped sentence', async (code, sentence) => {
     const sink = inserter({ KOTIBA_FAKE_INPUT_MODE: `refuse:${code}` });
     expect(await sink.insert('hello')).toEqual({ kind: 'refused', reason: sentence });
@@ -133,6 +134,9 @@ describe('refusals are values, not throws', () => {
     expect(refusalReason('somethingNew', 'the window went away')).toContain('the window went away');
     expect(refusalReason(undefined, undefined)).toContain('no reason given');
     expect(refusalReason('empty', 'ignored')).toBe(INSERTION_REFUSALS.empty);
+    // An elevated target: the sentence promises the clipboard only when the helper put it there.
+    expect(refusalReason('elevated', 'prose is never read', true)).toBe(INSERTION_REFUSALS.elevated);
+    expect(refusalReason('elevated', 'the text is on the clipboard')).toBe(INSERTION_REFUSALS.elevatedNoClipboard);
   });
 
   it('turns a missing helper into a refusal, not an exception', async () => {
@@ -224,6 +228,37 @@ describe('the helper process', () => {
     await expect(helper.request({ op: 'hello' })).rejects.toBeInstanceOf(InputHelperUnavailable);
     // The fourth is refused without a spawn: three deaths in a row is a pattern.
     await expect(helper.request({ op: 'hello' })).rejects.toThrow(/will not be restarted/);
+    await helper.dispose();
+  });
+
+  it('tries again once the cool-off is over, instead of staying dead for the session', async () => {
+    // Three timeouts in a row used to spend the budget FOREVER: every insertion and every
+    // foreground read failed until Kotiba was restarted, long after the fault had cleared.
+    let clock = 1_000_000;
+    let spawns = 0;
+    const crash = spawner({ KOTIBA_FAKE_INPUT_MODE: 'crash' });
+    const healthy = spawner();
+    const notes: string[] = [];
+    const helper = createInputHelper({
+      helperPath: FAKE_INPUT,
+      spawnProcess: (path) => {
+        spawns += 1;
+        return spawns <= 3 ? crash(path) : healthy(path);
+      },
+      onNote: (note) => notes.push(note),
+      requestTimeoutMs: 1_000,
+      retryAfterMs: 30_000,
+      now: () => clock,
+    });
+    for (let i = 0; i < 3; i += 1) {
+      await expect(helper.request({ op: 'hello' })).rejects.toBeInstanceOf(InputHelperUnavailable);
+    }
+    await expect(helper.request({ op: 'hello' })).rejects.toThrow(/will not be restarted again for 30 s/);
+    expect(spawns).toBe(3);
+    clock += 30_001;
+    expect((await helper.request({ op: 'hello' })).ok).toBe(true);
+    expect(spawns).toBe(4);
+    expect(notes.some((note) => note.includes('trying again'))).toBe(true);
     await helper.dispose();
   });
 

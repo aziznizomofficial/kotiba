@@ -108,6 +108,17 @@ registerProcessor('kotiba-capture', KotibaCaptureProcessor);
  *   the next press even after the user had picked another microphone, and a press that
  *   overlapped a dictation kept the old device for the whole new take.
  *
+ * - THE CONTEXT IS SUSPENDED WHILE NOTHING LISTENS. A running `AudioContext` renders
+ *   silence to the output device and calls the worklet's `process()` 125 times a second
+ *   forever — for an always-on tray app that is a core that never reaches deep idle on a
+ *   laptop. Warm-up builds it and leaves it suspended; `release` suspends it again; a press
+ *   resumes it IN PARALLEL with `getUserMedia`, which is the slower of the two, so the press
+ *   pays nothing for it.
+ *
+ * - A track that MUTES (the device stopped delivering — Windows' privacy switch, another
+ *   app taking it exclusively) is as stale as one that ended: it is still `live`, and reused
+ *   it records silence the user is then told they spoke.
+ *
  * - The constraints turn OFF echo cancellation, noise suppression and automatic gain
  *   control. This is the browser's analogue of the iOS `.measurement` mode the macOS app
  *   sets, and it matters more here: Windows APO processing is aggressive, it is tuned for
@@ -223,12 +234,31 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
     state.context = null;
   };
 
+  // How long a press waits for a suspended context to resume before going on anyway. A
+  // resume that never settles must not hold the press hostage; a context that really did not
+  // start delivers no blocks, and the empty capture is reported as the broken microphone it is.
+  const RESUME_WAIT_MS = 1000;
+  const bounded = (work) => Promise.race([
+    Promise.resolve().then(work).catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, RESUME_WAIT_MS)),
+  ]);
+  // ALWAYS asked, never skipped on reading 'running': 'state' changes only when a suspend
+  // has settled, so a suspend still in flight reads as running — and would land after the
+  // press. Context control calls are applied in order, so this resume always wins.
+  const resumeContext = (context) => bounded(() => context.resume());
+  // Idle: stop rendering. Never while capturing or while a stream is still held open.
+  // Awaited by the command that asks, so the NEXT command sees a settled context.
+  const suspendContext = () => {
+    const context = state.context;
+    if (!context || state.capturing || state.stream || context.state === 'closed') return Promise.resolve();
+    return bounded(() => context.suspend());
+  };
+
   const buildContext = async () => {
-    // Rebuild rather than reuse whenever the context is not a running 16 kHz context.
-    // A suspended or closed context is exactly the stale graph this design exists to
-    // notice, and reusing one is how the macOS bug survived a fix at the layer above.
+    // Rebuild rather than reuse whenever the context is closed or not at 16 kHz. A
+    // SUSPENDED one is reused — this page suspends it on purpose while idle (see above) —
+    // and a press resumes it.
     if (state.context && state.context.state !== 'closed' && state.context.sampleRate === TARGET_RATE) {
-      if (state.context.state === 'suspended') await state.context.resume();
       return state.context;
     }
     teardown();
@@ -294,6 +324,8 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
       send({ kind: 'streamEnded', why: 'the input device went away mid-stream' });
     });
     track.addEventListener('mute', () => {
+      // Still 'live', so openStream would reuse it — and record silence.
+      if (state.stream === stream) state.streamStale = true;
       send({ kind: 'streamEnded', why: 'the input device stopped delivering audio' });
     });
     state.stream = stream;
@@ -344,6 +376,8 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
           const inputs = devices.filter((d) => d.kind === 'audioinput');
           if (inputs.length === 0) return fail('noInputAvailable');
           const context = await buildContext();
+          // Built (or found) but not listening to anything: no reason to render.
+          await suspendContext();
           return {
             kind: 'warmedUp',
             sampleRate: context.sampleRate,
@@ -364,8 +398,9 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
             return { kind: 'ok', device: state.device || undefined };
           }
           const context = await buildContext();
-          await openStream(context);
-          if (context.state === 'suspended') await context.resume();
+          // Both at once: getUserMedia is the slow one (100-300 ms on Windows), the resume
+          // rides along under it.
+          await Promise.all([openStream(context), resumeContext(context)]);
           state.segment = command.segment;
           state.totals.set(command.segment, 0);
           state.filled = 0;
@@ -387,6 +422,7 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
         case 'release': {
           state.capturing = false;
           teardownStream();
+          await suspendContext();
           return { kind: 'ok' };
         }
         case 'dispose': {
@@ -404,6 +440,14 @@ export const CAPTURE_RENDERER_SOURCE = String.raw`
       }
       if (error && (error.name === 'NotFoundError' || error.name === 'OverconstrainedError')) {
         return fail('noInputAvailable');
+      }
+      if (error && error.name === 'NotReadableError') {
+        // Chromium's answer when Windows will not open the device at all: the privacy switch
+        // for desktop apps is off, or another app holds the microphone exclusively. "The
+        // audio graph would not start" told the user nothing they could act on.
+        return fail('engineFailedToStart', 'Windows would not open the microphone (' + why + ') — ' +
+          'check Settings › Privacy & security › Microphone › "Let desktop apps access your microphone", ' +
+          'and that no other app is using it exclusively');
       }
       if (why.indexOf('Hz context') !== -1) return fail('conversionFailed', why);
       return fail('engineFailedToStart', why);
